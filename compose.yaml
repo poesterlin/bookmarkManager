@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.rtcam.rule=Host(`${HOST_DOMAIN}`)'
+      - 'traefik.http.services.rtcam.loadbalancer.server.port=3000'
+      # - 'terminate.idle=true'
+    networks:
+      - traefik_web
+
+networks:
+  traefik_web:
+    external: true
