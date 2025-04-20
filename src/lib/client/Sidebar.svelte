@@ -53,7 +53,7 @@
 		const sum = current + value;
 		const clamped = Math.min(1, Math.max(0, sum));
 
-		return `${clamped * 100}%`;
+		return `-${clamped * 100}%`;
 	}
 </script>
 
