@@ -29,7 +29,7 @@
 		<main class="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
 			{#if data.filteredTag}
 				<a
-					href="/?tag="
+					href="/"
 					class="flex mb-4 w-max items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 gap-1"
 				>
 					{data.filteredTag.name}
