@@ -10,6 +10,7 @@ export const GET: RequestHandler = async (event) => {
 
 	const [bookmark] = await db
 		.select({
+			url: bookmarksTable.url,
 			favicon: bookmarksTable.favicon
 		})
 		.from(bookmarksTable)
@@ -24,6 +25,6 @@ export const GET: RequestHandler = async (event) => {
 		return new Response('No favicon found', { status: 404 });
 	}
 
-	const url = new URL(bookmark.favicon);
+	const url = new URL(bookmark.favicon, bookmark.url);
 	return fetch(url.toString(), { method: 'GET' });
 };

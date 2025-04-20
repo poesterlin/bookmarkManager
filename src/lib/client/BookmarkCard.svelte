@@ -27,7 +27,7 @@
 			class="mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm"
 		>
 			{#if bookmark.favicon}
-				<img src={bookmark.favicon} alt={bookmark.title} class="h-6 w-6" />
+				<img src="/icon/{bookmark.id}" alt={bookmark.title} class="h-6 w-6" />
 			{:else}
 				<div
 					class="bg-primary-200 text-primary-500 flex h-6 w-6 items-center justify-center rounded-full font-bold"

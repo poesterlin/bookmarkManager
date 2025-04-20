@@ -27,18 +27,17 @@
 		<Sidebar {isMenuOpen} {handleAddBookmark} categories={data.categories} />
 
 		<main class="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
-			{#if data.filteredTag}
-				<a
-					href="/"
-					class="flex mb-4 w-max items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 gap-1"
-				>
-					{data.filteredTag.name}
-
-					<IconX class="w-3"></IconX>
-				</a>
-			{/if}
-
 			<div class="mx-auto max-w-6xl">
+				{#if data.filteredTag}
+					<a
+						href="/"
+						class="mb-4 flex w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
+					>
+						{data.filteredTag.name}
+
+						<IconX class="w-3"></IconX>
+					</a>
+				{/if}
 				<BookmarkList bookmarks={data.bookmarks} addBookmark={handleAddBookmark} />
 			</div>
 		</main>
@@ -51,12 +50,4 @@
 			existingTags={data.tags}
 		/>
 	{/if}
-
-	<!-- {#if $notification}
-		<NotificationToast />
-	{/if} -->
 </div>
-
-<style>
-	/* Additional styles can go here, but we're mainly using Tailwind utilities */
-</style>
