@@ -11,16 +11,23 @@
 	let isMenuOpen = $state(false);
 	let isSwiping = $state(false);
 	let startX = 0;
+	let startY = 0;
 	let deltaX = $state(0);
 	let { handleAddBookmark, categories }: Props = $props();
 
 	function startSwipe(event: PointerEvent) {
 		isSwiping = true;
 		startX = event.clientX;
+		startY = event.clientY;
 	}
 
 	function swipe(event: PointerEvent) {
 		if (!isSwiping) return;
+
+		if (Math.abs(event.clientY - startY) > 70) {
+			endSwipe();
+			return;
+		}
 
 		deltaX = event.clientX - startX;
 		if (deltaX > 50) {
@@ -36,6 +43,18 @@
 		isSwiping = false;
 		deltaX = 0;
 	}
+
+	function toPercent(valueInPixels: number) {
+		if (valueInPixels === 0) return '';
+
+		const sliderWidth = 64 / 4 * 16;
+		const current = isMenuOpen ? 0 : 1;
+		const value = valueInPixels / sliderWidth;
+		const sum = current + value;
+		const clamped = Math.min(1, Math.max(0, sum));
+
+		return `${clamped * 100}%`;
+	}
 </script>
 
 <svelte:window on:pointerdown={startSwipe} on:pointermove={swipe} on:pointerup={endSwipe} />
@@ -44,7 +63,7 @@
 	class="glass {isMenuOpen
 		? 'translate-x-0'
 		: '-translate-x-full'} fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
-		style:transform="translateX({isMenuOpen ? '0' : `calc(-100% + ${deltaX}px)`})"
+		style:translate={toPercent(deltaX)} class:immediate={deltaX !== 0}
 >
 	<div class="p-4">
 		<button
@@ -101,3 +120,10 @@
 		{/if}
 	</div>
 </aside>
+
+
+<style>
+	.immediate {
+		transition: none;
+	}
+</style>
