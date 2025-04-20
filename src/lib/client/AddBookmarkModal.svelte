@@ -158,8 +158,9 @@
 		>
 			<form
 				use:enhance={() => {
-					return () => {
+					return ({ update }) => {
 						handleCancel();
+						update();
 					};
 				}}
 				class="p-6"

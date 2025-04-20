@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { IconExternalLink, IconTrash } from '@tabler/icons-svelte';
+	import {
+		IconArchive,
+		IconCopy,
+		IconExternalLink,
+		IconRestore,
+		IconTrash
+	} from '@tabler/icons-svelte';
 
 	interface Props {
 		bookmark: Bookmark;
@@ -44,7 +50,7 @@
 			<h3 class="line-clamp-3 text-lg font-semibold text-gray-800">
 				{bookmark.title}
 			</h3>
-			<p class="text-xs text-gray-500 truncate">
+			<p class="truncate text-xs text-gray-500">
 				{formatUrl(bookmark.url)}
 			</p>
 		</div>
@@ -54,7 +60,7 @@
 			<input type="hidden" name="id" value={bookmark.id} />
 			<input type="hidden" name="favorite" value={!bookmark.isFavorite} />
 			<button
-				class="ml-1 hover:text-primary-500 text-gray-400 transition-colors"
+				class="hover:text-primary-500 ml-1 text-gray-400 transition-colors"
 				aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 			>
 				<svg
@@ -105,7 +111,7 @@
 </div>
 
 <!-- buttons -->
-<div class="flex items-center justify-between border-t border-white/30">
+<div class="flex items-center justify-between">
 	<a
 		href="/goto/{bookmark.id}"
 		target="_blank"
@@ -113,26 +119,49 @@
 		class="text-secondary-600 hover:text-secondary-800 flex items-center text-sm font-medium"
 	>
 		Visit Site
-		<IconExternalLink
-			class="h-4"
-		></IconExternalLink>
+		<IconExternalLink class="h-4"></IconExternalLink>
 	</a>
 
 	<div class="flex items-center space-x-1">
-		<!-- <button
-	class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-700"
-	aria-label="Edit"
-	>
-	<IconPencil class="h-4 w-4"></IconPencil>
-	</button> -->
-		<form action="/?/delete" use:enhance method="POST">
-			<input type="hidden" name="id" value={bookmark.id} />
+		{#if bookmark.deletedAt}
+			<form action="/?/restore" use:enhance method="POST" title="Restore">
+				<input type="hidden" name="id" value={bookmark.id} />
+				<button
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-green-500"
+					aria-label="Restore"
+				>
+					<IconRestore class="h-4 w-4"></IconRestore>
+				</button>
+			</form>
+
+			<form action="/?/delete" use:enhance method="POST" title="Delete">
+				<input type="hidden" name="id" value={bookmark.id} />
+				<button
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-red-500"
+					aria-label="Delete"
+				>
+					<IconTrash class="h-4 w-4"></IconTrash>
+				</button>
+			</form>
+		{:else}
 			<button
-				class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-red-500"
-				aria-label="Delete"
+				onclick={() => navigator.clipboard.writeText(bookmark.url)}
+				title="Copy URL"
+				class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-800"
 			>
-				<IconTrash class="h-4 w-4"></IconTrash>
+				<IconCopy
+					class="h-4 w-4 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-800"
+				></IconCopy>
 			</button>
-		</form>
+			<form action="/?/archive" use:enhance method="POST" title="Archive">
+				<input type="hidden" name="id" value={bookmark.id} />
+				<button
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-red-500"
+					aria-label="Delete"
+				>
+					<IconArchive class="h-4 w-4"></IconArchive>
+				</button>
+			</form>
+		{/if}
 	</div>
 </div>

@@ -2,8 +2,7 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
-	import { IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
-
+	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
 	interface Props {
 		handleAddBookmark: () => void;
 		categories: Category[];
@@ -116,6 +115,16 @@
 			>
 				<IconStar class="mr-2 h-5 w-5" />
 				Favorites
+			</a>
+			<a
+				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
+              {page.url.searchParams.get('archived') === ''
+					? 'bg-primary-100 text-primary-700 font-medium'
+					: 'text-gray-700 hover:bg-white/50'}"
+				href="/?archived"
+			>
+				<IconArchive class="mr-2 h-5 w-5" />
+				Archive
 			</a>
 		</nav>
 

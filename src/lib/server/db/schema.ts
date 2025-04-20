@@ -38,6 +38,7 @@ export const bookmarksTable = pgTable('bookmarks', {
 		.notNull()
 		.references(() => usersTable.id, fullCascade),
 	clicks: integer('clicks').notNull().default(0),
+	deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
 });
 
 export type Bookmark = Omit<typeof bookmarksTable.$inferSelect, 'category'> & { tags: Tag[], category: Category };

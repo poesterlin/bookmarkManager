@@ -9,8 +9,8 @@ import {
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
 import { error } from '@sveltejs/kit';
-import { and, eq, exists, getTableColumns, inArray, not, sql } from 'drizzle-orm';
-import { z } from 'zod';
+import { and, eq, exists, getTableColumns, inArray, isNotNull, isNull, not, sql } from 'drizzle-orm';
+import {  z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
 const optionsSchema = z.object({
@@ -19,7 +19,11 @@ const optionsSchema = z.object({
 		.string()
 		.transform((val) => !val || val === 'true')
 		.optional(),
-	tag: z.string().optional()
+	tag: z.string().optional(),
+	archived: z
+		.string()
+		.transform((val) => !val || val === 'true')
+		.optional()
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -38,6 +42,12 @@ export const load: PageServerLoad = async (event) => {
 
 	if (options.favorite) {
 		filters.push(eq(bookmarksTable.isFavorite, options.favorite));
+	}
+
+	if (options.archived) {
+		filters.push(isNotNull(bookmarksTable.deletedAt));
+	} else {
+		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
 	let filteredTag: Tag | undefined = undefined;
@@ -251,6 +261,32 @@ export const actions: Actions = {
 						)
 					)
 				);
+		}
+	),
+	archive: validateForm(
+		z.object({
+			id: z.string()
+		}),
+		async (event, form) => {
+			const locals = validateAuth(event);
+
+			await db
+				.update(bookmarksTable)
+				.set({ deletedAt: new Date() })
+				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)));
+		}
+	),
+	restore: validateForm(
+		z.object({
+			id: z.string()
+		}),
+		async (event, form) => {
+			const locals = validateAuth(event);
+
+			await db
+				.update(bookmarksTable)
+				.set({ deletedAt: null })
+				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)));
 		}
 	),
 	favorite: validateForm(
