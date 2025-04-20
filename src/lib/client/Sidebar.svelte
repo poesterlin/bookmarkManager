@@ -4,22 +4,47 @@
 	import { IconFolder, IconPlus, IconStack, IconStar, IconWorld } from '@tabler/icons-svelte';
 
 	interface Props {
-		isMenuOpen: boolean;
 		handleAddBookmark: () => void;
 		categories: Category[];
 	}
 
-	let { isMenuOpen = $bindable(), handleAddBookmark, categories }: Props = $props();
+	let isMenuOpen = $state(false);
+	let isSwiping = $state(false);
+	let startX = 0;
+	let deltaX = $state(0);
+	let { handleAddBookmark, categories }: Props = $props();
 
-	const toggleMenu = () => {
-		isMenuOpen = !isMenuOpen;
-	};
+	function startSwipe(event: PointerEvent) {
+		isSwiping = true;
+		startX = event.clientX;
+	}
+
+	function swipe(event: PointerEvent) {
+		if (!isSwiping) return;
+
+		deltaX = event.clientX - startX;
+		if (deltaX > 50) {
+			isMenuOpen = true;
+			isSwiping = false;
+		} else if (deltaX < -50) {
+			isMenuOpen = false;
+			isSwiping = false;
+		}
+	}
+
+	function endSwipe() {
+		isSwiping = false;
+		deltaX = 0;
+	}
 </script>
+
+<svelte:window on:pointerdown={startSwipe} on:pointermove={swipe} on:pointerup={endSwipe} />
 
 <aside
 	class="glass {isMenuOpen
 		? 'translate-x-0'
 		: '-translate-x-full'} fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+		style:transform="translateX({isMenuOpen ? '0' : `calc(-100% + ${deltaX}px)`})"
 >
 	<div class="p-4">
 		<button
@@ -76,12 +101,3 @@
 		{/if}
 	</div>
 </aside>
-
-<!-- Overlay to close sidebar on mobile when clicked outside -->
-{#if isMenuOpen}
-	<div
-		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-xs md:hidden"
-		onclick={toggleMenu}
-		aria-hidden="true"
-	></div>
-{/if}

@@ -9,7 +9,6 @@
 	let { data }: { data: PageServerData } = $props();
 
 	let isAddModalOpen = $state(false);
-	let isMenuOpen = $state(false);
 
 	const handleAddBookmark = () => {
 		isAddModalOpen = true;
@@ -24,7 +23,7 @@
 	<Header />
 
 	<div class="flex flex-1 overflow-hidden">
-		<Sidebar {isMenuOpen} {handleAddBookmark} categories={data.categories} />
+		<Sidebar {handleAddBookmark} categories={data.categories} />
 
 		<main class="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
 			<div class="mx-auto max-w-6xl">
