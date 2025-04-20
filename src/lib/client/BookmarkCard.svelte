@@ -32,6 +32,7 @@
 				<div
 					class="bg-primary-200 text-primary-500 flex h-6 w-6 items-center justify-center rounded-full font-bold"
 					style:background={bookmark.theme}
+					aria-hidden="true"
 				>
 					{bookmark.title.charAt(0)}
 				</div>

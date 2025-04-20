@@ -26,5 +26,21 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	const url = new URL(bookmark.favicon, bookmark.url);
-	return fetch(url.toString(), { method: 'GET' });
+
+	const res = await fetch(url.toString(), { method: 'GET' });
+	if (!res.ok) {
+		return new Response(null, {
+			status: 302,
+			headers: {
+				location: '/favicon.png'
+			}
+		});
+	}
+
+	return new Response(res.body, {
+		status: res.status,
+		headers: {
+			'Content-Type': res.headers.get('Content-Type') ?? 'image/png',
+		}
+	});
 };
