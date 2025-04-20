@@ -9,7 +9,7 @@ import {
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
 import { error } from '@sveltejs/kit';
-import { and, eq, exists, getTableColumns, inArray, isNotNull, isNull, not, sql } from 'drizzle-orm';
+import { and, count, eq, exists, getTableColumns, inArray, isNotNull, isNull, not, sql } from 'drizzle-orm';
 import {  z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -101,16 +101,20 @@ export const load: PageServerLoad = async (event) => {
 
 	const tags = await db
 		.select({
-			name: tagsTable.name
+			name: tagsTable.name,
+			id: tagsTable.id,
+			count: count(bookmarkTags.tagId)
 		})
 		.from(tagsTable)
-		.where(eq(tagsTable.userId, locals.user.id));
+		.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
+		.groupBy(tagsTable.id)
+		.where(and(eq(tagsTable.userId, locals.user.id), inArray(bookmarkTags.bookmarkId, bookmarks.map((b) => b.id))));
 
 	return {
 		user: locals.user,
 		bookmarks,
 		categories,
-		tags: tags.map((tag) => tag.name),
+		tags,
 		filteredTag
 	};
 };
