@@ -116,7 +116,9 @@ export const actions: Actions = {
 				.string()
 				.optional()
 				.transform((val) => val?.split(',') ?? []),
-			description: z.string().optional()
+			description: z.string().optional(),
+			theme: z.string().optional(),
+			favicon: z.string().optional()
 		}),
 		async (event, form) => {
 			const locals = validateAuth(event);
@@ -176,7 +178,8 @@ export const actions: Actions = {
 					category: categoryId,
 					description: form.description,
 					isFavorite: false,
-					favicon: null
+					theme: form.theme,
+					favicon: form.favicon
 				} satisfies typeof bookmarksTable.$inferInsert);
 
 				if (form.tags) {

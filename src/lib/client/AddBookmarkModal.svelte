@@ -12,6 +12,8 @@
 	let description = '';
 	let newCategory = '';
 	let showNewCategoryInput = false;
+	let theme: string | undefined = undefined;
+	let favicon: string | undefined = undefined;
 
 	// --- Tag Input State ---
 	let selectedTags: string[] = [];
@@ -64,6 +66,8 @@
 				console.log(data);
 				title = title || data.title;
 				description = description || data.description;
+				theme = data.theme;
+				favicon = data.favicon;
 			} else {
 				console.error('Failed to fetch bookmark info:', await res.text());
 			}
@@ -313,6 +317,13 @@
 					<button type="button" class="button-ghost" on:click={handleCancel}> Cancel </button>
 					<button type="submit" class="button-primary"> Add Bookmark </button>
 				</div>
+
+				{#if theme}
+					<input type="hidden" name="theme" bind:value={theme} />
+				{/if}
+				{#if favicon}
+					<input type="hidden" name="favicon" bind:value={favicon} />
+				{/if}
 			</form>
 		</div>
 	</div>
