@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
 	import { IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
@@ -14,6 +15,12 @@
 	let startY = 0;
 	let deltaX = $state(0);
 	let { handleAddBookmark, categories }: Props = $props();
+
+	beforeNavigate(() => {
+		if (isMenuOpen) {
+			isMenuOpen = false;
+		}
+	});
 
 	function startSwipe(event: PointerEvent) {
 		isSwiping = true;
@@ -35,12 +42,12 @@
 			return;
 		}
 
-		deltaX = event.clientX - startX;
+		deltaX = startX - event.clientX;
 		if (deltaX > 50) {
-			isMenuOpen = true;
+			isMenuOpen = false;
 			isSwiping = false;
 		} else if (deltaX < -50) {
-			isMenuOpen = false;
+			isMenuOpen = true;
 			isSwiping = false;
 		}
 	}
@@ -51,14 +58,15 @@
 	}
 
 	function toPercent(valueInPixels: number) {
-		if (valueInPixels === 0) return '';
+		if (valueInPixels === 0) {
+			return '';
+		}
 
 		const sliderWidth = (64 / 4) * 16;
-		const current = isMenuOpen ? 0 : 1;
-		const value = valueInPixels / sliderWidth;
-		const sum = current + value;
+		const originalPercent = isMenuOpen ? 0 : 1;
+		const movePercent = valueInPixels / sliderWidth;
+		const sum = originalPercent + movePercent;
 		const clamped = Math.min(1, Math.max(0, sum));
-
 		return `-${clamped * 100}%`;
 	}
 </script>
@@ -74,11 +82,10 @@
 />
 
 <aside
-	class="glass {isMenuOpen
-		? 'translate-x-0'
-		: '-translate-x-full'} fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+	class="glass fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform"
 	style:translate={toPercent(deltaX)}
-	class:immediate={deltaX !== 0}
+	class:immediate={isSwiping}
+	class:hide={!isMenuOpen}
 >
 	<div class="p-4">
 		<button
@@ -139,5 +146,9 @@
 <style>
 	.immediate {
 		transition: none;
+	}
+
+	.hide {
+		translate: -100%;
 	}
 </style>
