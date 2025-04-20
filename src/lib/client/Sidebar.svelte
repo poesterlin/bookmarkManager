@@ -1,0 +1,83 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import type { Category } from '$lib/server/db/schema';
+	import { IconFolder, IconPlus, IconStack, IconStar, IconWorld } from '@tabler/icons-svelte';
+
+	export let isMenuOpen: boolean;
+	export let handleAddBookmark: () => void;
+	export let categories: Category[];
+
+	const toggleMenu = () => {
+		isMenuOpen = !isMenuOpen;
+	};
+</script>
+
+<aside
+	class="glass {isMenuOpen
+		? 'translate-x-0'
+		: '-translate-x-full'} fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+>
+	<div class="p-4">
+		<button
+			class="button-primary mb-6 flex w-full items-center justify-center"
+			on:click={handleAddBookmark}
+		>
+			<IconPlus class="mr-2" />
+			Add Bookmark
+		</button>
+
+		<nav class="space-y-1">
+			<a
+				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
+              {Array.from(page.url.searchParams.entries()).length === 0
+					? 'bg-primary-100 text-primary-700 font-medium'
+					: 'text-gray-700 hover:bg-white/50'}"
+				href="/"
+			>
+				<IconWorld class="mr-2 h-5 w-5" />
+				All Bookmarks
+			</a>
+			<a
+				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
+              {page.url.searchParams.get('favorite') === ''
+					? 'bg-primary-100 text-primary-700 font-medium'
+					: 'text-gray-700 hover:bg-white/50'}"
+				href="/?favorite"
+			>
+				<IconStar class="mr-2 h-5 w-5" />
+				Favorites
+			</a>
+		</nav>
+
+		{#if categories.length > 0}
+			<div class="mt-6 mb-3">
+				<h3 class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+					Categories
+				</h3>
+			</div>
+			<nav class="space-y-1">
+				{#each categories as category}
+					<a
+						href="/?category={category.id}"
+						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
+                {page.url.searchParams.get('category') === category.id
+							? 'bg-secondary-100 text-secondary-700 font-medium'
+							: 'text-gray-700 hover:bg-white/50'}"
+					>
+						<IconFolder class="mr-2 h-5 w-5" />
+						{category.name}
+					</a>
+				{/each}
+			</nav>
+		{/if}
+	</div>
+</aside>
+
+<!-- Overlay to close sidebar on mobile when clicked outside -->
+{#if isMenuOpen}
+	<div
+		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-xs md:hidden"
+		on:click={toggleMenu}
+		aria-hidden="true"
+	></div>
+{/if}

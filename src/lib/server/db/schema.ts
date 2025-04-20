@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 const fullCascade = { onDelete: 'cascade', onUpdate: 'cascade' } as const;
 
@@ -22,3 +22,52 @@ export const sessionTable = pgTable('session', {
 });
 
 export type Session = typeof sessionTable.$inferSelect;
+
+export const bookmarksTable = pgTable('bookmarks', {
+	id: text('id').primaryKey(),
+	title: text('title').notNull(),
+	url: text('url').notNull(),
+	description: text('description'),
+	favicon: text('favicon'),
+	theme: text('theme'),
+	category: text('category').references(() => categoriesTable.id, fullCascade),
+	isFavorite: boolean('is_favorite').notNull().default(false),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => usersTable.id, fullCascade)
+});
+
+export type Bookmark = Omit<typeof bookmarksTable.$inferSelect, 'category'> & { tags: Tag[], category: Category };
+
+export const tagsTable = pgTable('tags', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull().unique(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => usersTable.id, fullCascade)
+});
+
+export type Tag = typeof tagsTable.$inferSelect;
+
+export const bookmarkTags = pgTable('bookmark_tags', {
+	bookmarkId: text('bookmark_id')
+		.notNull()
+		.references(() => bookmarksTable.id, fullCascade),
+	tagId: text('tag_id')
+		.notNull()
+		.references(() => tagsTable.id, fullCascade)
+});
+
+export const categoriesTable = pgTable('categories', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull().unique(),
+	userId: text('user_id')
+		.notNull()
+		.references(() => usersTable.id, fullCascade)
+});
+
+export type Category = typeof categoriesTable.$inferSelect;

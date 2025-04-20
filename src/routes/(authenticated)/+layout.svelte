@@ -6,7 +6,7 @@
 </script>
 
 <div class="app-grid">
-	<nav class="bg-white shadow-lg">
+	<!-- <nav class="bg-white shadow-lg">
 		<div class="mx-auto max-w-7xl px-4">
 			<div class="h-18 flex justify-between">
 				<div class="flex items-center">
@@ -19,7 +19,7 @@
 				</div>
 			</div>
 		</div>
-	</nav>
+	</nav> -->
 
 	<section class="overflow-y-auto">
 		{@render children()}
