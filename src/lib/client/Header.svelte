@@ -28,7 +28,7 @@
   
     <div class="flex items-center">
       <a href="/profile" aria-current={page.url.pathname === '/profile'}>
-        <IconUserCircle class="m-auto h-8 w-8 -translate-y-0.5"></IconUserCircle>
+        <IconUserCircle class="m-auto h-8 w-8 -translate-y-0.5 text-slate-500"></IconUserCircle>
       </a>
     </div>
   </header>

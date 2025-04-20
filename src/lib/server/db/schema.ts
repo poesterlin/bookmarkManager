@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
 
 const fullCascade = { onDelete: 'cascade', onUpdate: 'cascade' } as const;
 
@@ -36,7 +36,8 @@ export const bookmarksTable = pgTable('bookmarks', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow(),
 	userId: text('user_id')
 		.notNull()
-		.references(() => usersTable.id, fullCascade)
+		.references(() => usersTable.id, fullCascade),
+	clicks: integer('clicks').notNull().default(0),
 });
 
 export type Bookmark = Omit<typeof bookmarksTable.$inferSelect, 'category'> & { tags: Tag[], category: Category };

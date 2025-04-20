@@ -15,7 +15,7 @@
 	}
 </script>
 
-<div class="flex h-full flex-col items-center justify-center">
+<div class="flex flex-col items-center justify-center h-screen">
 	<div class="card min-w-sm w-max space-y-6 rounded-3xl bg-white p-8 text-center shadow-2xl">
 		<IconUserCircle class="mx-auto h-24 w-24 text-slate-500"></IconUserCircle>
 

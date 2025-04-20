@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { IconTrash } from '@tabler/icons-svelte';
+	import { IconExternalLink, IconTrash } from '@tabler/icons-svelte';
 
 	export let bookmark: Bookmark;
 
@@ -33,6 +33,7 @@
 				</div>
 			{/if}
 		</div>
+
 		<!-- title -->
 		<div class="min-w-0 flex-1">
 			<h3 class="line-clamp-3 text-lg font-semibold text-gray-800">
@@ -42,12 +43,13 @@
 				{formatUrl(bookmark.url)}
 			</p>
 		</div>
+
 		<!-- favorite -->
 		<form action="/?/favorite" use:enhance method="POST">
 			<input type="hidden" name="id" value={bookmark.id} />
 			<input type="hidden" name="favorite" value={!bookmark.isFavorite} />
 			<button
-				class="hover:text-primary-500 text-gray-400 transition-colors"
+				class="ml-1 hover:text-primary-500 text-gray-400 transition-colors"
 				aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 			>
 				<svg
@@ -100,26 +102,15 @@
 <!-- buttons -->
 <div class="flex items-center justify-between border-t border-white/30">
 	<a
-		href={bookmark.url}
+		href="/goto/{bookmark.id}"
 		target="_blank"
 		rel="noopener noreferrer"
 		class="text-secondary-600 hover:text-secondary-800 flex items-center text-sm font-medium"
 	>
 		Visit Site
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			class="ml-1 h-4 w-4"
-			fill="none"
-			viewBox="0 0 24 24"
-			stroke="currentColor"
-		>
-			<path
-				stroke-linecap="round"
-				stroke-linejoin="round"
-				stroke-width="2"
-				d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-			/>
-		</svg>
+		<IconExternalLink
+			class="h-4"
+		></IconExternalLink>
 	</a>
 
 	<div class="flex items-center space-x-1">

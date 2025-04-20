@@ -38,8 +38,8 @@
 				</a>
 			{/if}
 
-			<div class="mx-auto max-w-5xl">
-				<BookmarkList bookmarks={data.bookmarks} />
+			<div class="mx-auto max-w-6xl">
+				<BookmarkList bookmarks={data.bookmarks} addBookmark={handleAddBookmark} />
 			</div>
 		</main>
 	</div>

@@ -2,13 +2,10 @@
 	import { enhance } from '$app/forms';
 	import type { Category } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
-	import { onDestroy } from 'svelte';
 
 	export let onClose: () => void;
 	export let categories: Category[];
-	// Assume you pass in existing tags like this.
-	// If you fetch them, adjust accordingly.
-	export let existingTags: string[] = []; // e.g., ['work', 'reference', 'svelte', 'javascript']
+	export let existingTags: string[] = [];
 
 	let url = '';
 	let title = '';
@@ -48,7 +45,7 @@
 		}
 	}
 
-	async function autofill(event: Event) {
+	async function autofill() {
 		if (!url) {
 			return;
 		}
@@ -142,14 +139,24 @@
 <svelte:window on:click={handleClickOutside} />
 
 <div class="fixed inset-0 z-50 overflow-y-auto">
-	<div class="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity"></div>
+	<div class="fixed inset-0 bg-slate-400/20 backdrop-blur-sm transition-opacity"></div>
 
 	<div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
 		<div
 			class="glass relative transform overflow-hidden rounded-xl text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
 			transition:fade={{ duration: 150 }}
 		>
-			<form use:enhance class="p-6" method="POST" action="/?/add" on:submit={onclose}>
+			<form
+				use:enhance={() => {
+					return () => {
+						handleCancel();
+					};
+				}}
+				class="p-6"
+				method="POST"
+				action="/?/add"
+				on:submit={onclose}
+			>
 				<div class="mb-4">
 					<h3 class="text-primary-900 text-xl font-semibold">Add New Bookmark</h3>
 					<p class="text-sm text-gray-600">Save a link to your collection</p>

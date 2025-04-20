@@ -9,7 +9,7 @@ import {
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
 import { error } from '@sveltejs/kit';
-import { and, eq, exists, getTableColumns, inArray, sql } from 'drizzle-orm';
+import { and, eq, exists, getTableColumns, inArray, not, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -81,6 +81,7 @@ export const load: PageServerLoad = async (event) => {
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
+		.orderBy(bookmarksTable.clicks, bookmarksTable.createdAt)
 		.where(and(...filters));
 
 	const categories = await db
@@ -231,7 +232,22 @@ export const actions: Actions = {
 				.delete(bookmarksTable)
 				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)));
 
-			// TODO: remove empty categories
+			// Remove empty categories
+			await db
+				.delete(categoriesTable)
+				.where(
+					and(
+						eq(categoriesTable.userId, locals.user.id),
+						not(
+							exists(
+								db
+									.select()
+									.from(bookmarksTable)
+									.where(eq(bookmarksTable.category, categoriesTable.id))
+							)
+						)
+					)
+				);
 		}
 	),
 	favorite: validateForm(
