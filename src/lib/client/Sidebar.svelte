@@ -3,9 +3,13 @@
 	import type { Category } from '$lib/server/db/schema';
 	import { IconFolder, IconPlus, IconStack, IconStar, IconWorld } from '@tabler/icons-svelte';
 
-	export let isMenuOpen: boolean;
-	export let handleAddBookmark: () => void;
-	export let categories: Category[];
+	interface Props {
+		isMenuOpen: boolean;
+		handleAddBookmark: () => void;
+		categories: Category[];
+	}
+
+	let { isMenuOpen = $bindable(), handleAddBookmark, categories }: Props = $props();
 
 	const toggleMenu = () => {
 		isMenuOpen = !isMenuOpen;
@@ -20,7 +24,7 @@
 	<div class="p-4">
 		<button
 			class="button-primary mb-6 flex w-full items-center justify-center"
-			on:click={handleAddBookmark}
+			onclick={handleAddBookmark}
 		>
 			<IconPlus class="mr-2" />
 			Add Bookmark
@@ -77,7 +81,7 @@
 {#if isMenuOpen}
 	<div
 		class="fixed inset-0 z-30 bg-black/20 backdrop-blur-xs md:hidden"
-		on:click={toggleMenu}
+		onclick={toggleMenu}
 		aria-hidden="true"
 	></div>
 {/if}

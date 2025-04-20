@@ -3,7 +3,11 @@
 	import type { Bookmark } from '$lib/server/db/schema';
 	import { IconExternalLink, IconTrash } from '@tabler/icons-svelte';
 
-	export let bookmark: Bookmark;
+	interface Props {
+		bookmark: Bookmark;
+	}
+
+	let { bookmark }: Props = $props();
 
 	function formatUrl(url: string): string {
 		try {

@@ -1,29 +1,35 @@
 <script lang="ts">
+	import { run, stopPropagation } from 'svelte/legacy';
+
 	import { enhance } from '$app/forms';
 	import type { Category } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
 
-	export let onClose: () => void;
-	export let categories: Category[];
-	export let existingTags: string[] = [];
+	interface Props {
+		onClose: () => void;
+		categories: Category[];
+		existingTags?: string[];
+	}
 
-	let url = '';
-	let title = '';
-	let description = '';
-	let newCategory = '';
-	let showNewCategoryInput = false;
-	let theme: string | undefined = undefined;
-	let favicon: string | undefined = undefined;
+	let { onClose, categories, existingTags = [] }: Props = $props();
+
+	let url = $state('');
+	let title = $state('');
+	let description = $state('');
+	let newCategory = $state('');
+	let showNewCategoryInput = $state(false);
+	let theme: string | undefined = $state(undefined);
+	let favicon: string | undefined = $state(undefined);
 
 	// --- Tag Input State ---
-	let selectedTags: string[] = [];
-	let tagInput = '';
-	let filteredTags: string[] = [];
-	let showSuggestions = false;
-	let activeSuggestionIndex = -1;
+	let selectedTags: string[] = $state([]);
+	let tagInput = $state('');
+	let filteredTags: string[] = $state([]);
+	let showSuggestions = $state(false);
+	let activeSuggestionIndex = $state(-1);
 
 	// Reactive statement for tag suggestions
-	$: {
+	run(() => {
 		if (tagInput.trim()) {
 			filteredTags = existingTags.filter(
 				(tag) => tag.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(tag)
@@ -34,7 +40,7 @@
 			showSuggestions = false;
 		}
 		activeSuggestionIndex = -1; // Reset active suggestion on input change
-	}
+	});
 
 	function handleCancel() {
 		onClose();
@@ -140,7 +146,7 @@
 	}
 </script>
 
-<svelte:window on:click={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} />
 
 <div class="fixed inset-0 z-50 overflow-y-auto">
 	<div class="fixed inset-0 bg-slate-400/20 backdrop-blur-sm transition-opacity"></div>
@@ -159,7 +165,7 @@
 				class="p-6"
 				method="POST"
 				action="/?/add"
-				on:submit={onclose}
+				onsubmit={onclose}
 			>
 				<div class="mb-4">
 					<h3 class="text-primary-900 text-xl font-semibold">Add New Bookmark</h3>
@@ -178,7 +184,7 @@
 							required
 							class="input mt-1 w-full"
 							placeholder="https://example.com"
-							on:blur={autofill}
+							onblur={autofill}
 						/>
 					</div>
 
@@ -221,7 +227,7 @@
 									class="input w-full"
 									placeholder="New category name"
 								/>
-								<button type="button" class="button-ghost ml-2" on:click={toggleNewCategoryInput}>
+								<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
 									Cancel
 								</button>
 							</div>
@@ -233,7 +239,7 @@
 										<option value={cat.id}>{cat.name}</option>
 									{/each}
 								</select>
-								<button type="button" class="button-ghost ml-2" on:click={toggleNewCategoryInput}>
+								<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
 									New
 								</button>
 							</div>
@@ -248,7 +254,7 @@
 						<div
 							role="input"
 							class="input mt-1 flex w-full flex-wrap items-center gap-1 p-1"
-							on:click={() => document.getElementById('tag-input')?.focus()}
+							onclick={() => document.getElementById('tag-input')?.focus()}
 						>
 							{#each selectedTags as tag (tag)}
 								<span
@@ -258,7 +264,7 @@
 									<button
 										type="button"
 										class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-										on:click|stopPropagation={() => removeTag(tag)}
+										onclick={stopPropagation(() => removeTag(tag))}
 										aria-label={`Remove ${tag} tag`}
 									>
 										<!-- Heroicon: x-mark -->
@@ -279,8 +285,8 @@
 								type="text"
 								id="tag-input"
 								bind:value={tagInput}
-								on:keydown={handleTagInputKeydown}
-								on:focus={() => (showSuggestions = filteredTags.length > 0)}
+								onkeydown={handleTagInputKeydown}
+								onfocus={() => (showSuggestions = filteredTags.length > 0)}
 								class="min-w-[60px] flex-grow border-none bg-transparent p-1 text-sm focus:ring-0 focus:outline-none"
 								placeholder={selectedTags.length === 0 ? 'Add tags...' : ''}
 								autocomplete="off"
@@ -299,8 +305,8 @@
 										index
 											? 'bg-gray-100'
 											: ''}"
-										on:click={() => handleSuggestionClick(tag)}
-										on:mouseenter={() => (activeSuggestionIndex = index)}
+										onclick={() => handleSuggestionClick(tag)}
+										onmouseenter={() => (activeSuggestionIndex = index)}
 									>
 										{tag}
 									</li>
@@ -314,7 +320,7 @@
 				</div>
 
 				<div class="mt-6 flex justify-end space-x-3">
-					<button type="button" class="button-ghost" on:click={handleCancel}> Cancel </button>
+					<button type="button" class="button-ghost" onclick={handleCancel}> Cancel </button>
 					<button type="submit" class="button-primary"> Add Bookmark </button>
 				</div>
 
