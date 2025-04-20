@@ -82,7 +82,7 @@
 />
 
 <aside
-	class="glass fixed z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform"
+	class="glass fixed md:static md:!translate-0 z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform"
 	style:translate={toPercent(deltaX)}
 	class:immediate={isSwiping}
 	class:hide={!isMenuOpen}
