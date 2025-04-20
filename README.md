@@ -1,2 +1,5 @@
-# Project
-This repository was initialized from a template. Please update this README with relevant information.
+# BookmarkManager
+
+A simple bookmark manager that allows you to save, organize and track your bookmarks.
+
+[Hosted here](https://bookmarks.oesterlin.dev)

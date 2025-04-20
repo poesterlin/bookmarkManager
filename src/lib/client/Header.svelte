@@ -8,7 +8,7 @@
     <div class="flex items-center">
       <div class="flex items-center">
         <span class="text-primary-500 text-2xl font-bold mr-1">Bookmark</span>
-        <span class="text-secondary-500 text-2xl font-bold">Buddy</span>
+        <span class="text-secondary-500 text-2xl font-bold">Manager</span>
       </div>
     </div>
   
