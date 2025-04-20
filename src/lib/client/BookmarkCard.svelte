@@ -44,7 +44,7 @@
 			<h3 class="line-clamp-3 text-lg font-semibold text-gray-800">
 				{bookmark.title}
 			</h3>
-			<p class="text-xs text-gray-500">
+			<p class="text-xs text-gray-500 truncate">
 				{formatUrl(bookmark.url)}
 			</p>
 		</div>
