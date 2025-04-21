@@ -23,6 +23,7 @@ body {
   min-width: 320px;
   min-height: 100svh;
   background: linear-gradient(135deg, #f6f0ff 0%, #fff1f8 100%);
+  text-underline-offset: 2px;
 }
 
 h1,
@@ -33,6 +34,10 @@ h5,
 h6 {
   line-height: 1.2;
   margin-bottom: 0.5em;
+}
+
+button {
+  cursor: pointer;
 }
 
 .glass {

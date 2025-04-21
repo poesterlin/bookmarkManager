@@ -15,8 +15,8 @@
 	}
 </script>
 
-<div class="flex flex-col items-center justify-center h-screen">
-	<div class="card min-w-sm w-max space-y-6 rounded-3xl bg-white p-8 text-center shadow-2xl">
+<div class="flex h-screen flex-col items-center justify-center">
+	<div class="card w-max min-w-sm space-y-6 rounded-3xl bg-white p-8 text-center shadow-2xl">
 		<IconUserCircle class="mx-auto h-24 w-24 text-slate-500"></IconUserCircle>
 
 		<h1 class="text-4xl font-extrabold text-slate-500 drop-shadow-md">{user.username}</h1>
@@ -37,17 +37,24 @@
 			Created At: <span class="font-semibold">{formatDate(user.createdAt)}</span>
 		</p>
 
-		<div class="flex flex-col space-y-8">
+		<div class="flex flex-col gap-8">
+			<a
+				href="/export"
+				download="bookmarks.html"
+				class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+				>Export Bookmarks
+			</a>
+
 			<form method="POST" action="/logout">
 				<button
-					class="rounded-full bg-white px-6 py-3 font-semibold tracking-wider text-slate-500 shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-slate-200"
+					class="rounded-full bg-white px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
 					type="submit">Logout</button
 				>
 			</form>
 
 			<form action="?/delete" method="POST">
 				<button
-					class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-slate-200"
+					class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-slate-200 focus:outline-none"
 					type="submit"
 				>
 					Delete Account</button
