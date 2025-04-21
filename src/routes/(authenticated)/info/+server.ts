@@ -33,5 +33,17 @@ export const POST: RequestHandler = async (event) => {
 	// const favicon = doc.querySelector("link[rel='icon'], link[rel='shortcut icon']")?.getAttribute('href') ?? null;
 	const theme = doc.querySelector("meta[name='theme-color']")?.getAttribute('content') ?? null;
 
-	return json({ title, description, favicon, theme });
+	const data = { title, description, favicon, theme, faviconData: undefined as undefined | string };
+	if (favicon) {
+		const fullFaviconUrl = new URL(favicon, url);
+
+		const res = await fetch(fullFaviconUrl.toString(), { method: 'GET' });
+		const icon = await res.arrayBuffer();
+		const buffer = Buffer.from(icon);
+		const base64 = buffer.toString('base64');
+		const fileType = res.headers.get('Content-Type');
+		data.faviconData = `data:${fileType ?? 'image/png'};base64,` + base64;
+	}
+
+	return json(data);
 };

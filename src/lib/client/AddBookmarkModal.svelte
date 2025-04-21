@@ -4,6 +4,7 @@
 	import { enhance } from '$app/forms';
 	import type { Category } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
+	import { IconLoader, IconTimeDuration0 } from '@tabler/icons-svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -13,13 +14,15 @@
 
 	let { onClose, categories, existingTags = [] }: Props = $props();
 
+	let loading = $state(false);
 	let url = $state('');
 	let title = $state('');
 	let description = $state('');
 	let newCategory = $state('');
 	let showNewCategoryInput = $state(false);
-	let theme: string | undefined = $state(undefined);
-	let favicon: string | undefined = $state(undefined);
+	let theme = $state<string>();
+	let favicon = $state<string>();
+	let faviconData = $state<string>();
 
 	// --- Tag Input State ---
 	let selectedTags: string[] = $state([]);
@@ -57,7 +60,8 @@
 		if (!url) {
 			return;
 		}
-		// ... (keep existing autofill logic)
+		loading = true;
+
 		try {
 			const res = await fetch(`/info`, {
 				method: 'POST',
@@ -74,12 +78,13 @@
 				description = description || data.description;
 				theme = data.theme;
 				favicon = data.favicon;
-			} else {
-				console.error('Failed to fetch bookmark info:', await res.text());
+				faviconData = data.faviconData;
 			}
 		} catch (error) {
 			console.error('Error during autofill fetch:', error);
 		}
+
+		loading = false;
 	}
 
 	// --- Tag Input Functions ---
@@ -99,6 +104,7 @@
 	function handleTagInputKeydown(event: KeyboardEvent) {
 		switch (event.key) {
 			case 'Enter':
+			case ' ':
 			case ',': // Add tag on comma as well
 				event.preventDefault(); // Prevent form submission or typing comma
 				if (showSuggestions && activeSuggestionIndex > -1) {
@@ -177,16 +183,26 @@
 					<!-- URL, Title, Description, Category inputs remain the same -->
 					<div>
 						<label for="url" class="block text-sm font-medium text-gray-700">URL</label>
-						<input
-							type="text"
-							id="url"
-							name="url"
-							bind:value={url}
-							required
-							class="input mt-1 w-full"
-							placeholder="https://example.com"
-							onblur={autofill}
-						/>
+						<div class="input mt-1 flex !p-0 overflow-hidden">
+							<input
+								type="text"
+								id="url"
+								name="url"
+								bind:value={url}
+								required
+								class="w-full focus:outline-0 py-2 pl-2"
+								placeholder="https://example.com"
+								onblur={autofill}
+							/>
+
+							{#if loading && !faviconData}
+								<IconLoader class="animate-spin mx-2 h-10"></IconLoader>
+							{/if}
+
+							{#if faviconData}
+								<img src={faviconData} alt="favicon" class="p-2 h-10 rounded-sm" />
+							{/if}
+						</div>
 					</div>
 
 					<div>
