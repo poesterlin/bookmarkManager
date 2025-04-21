@@ -81,7 +81,7 @@
 />
 
 <aside
-	class="glass fixed md:static md:!translate-0 z-40 h-[calc(100vh-64px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform"
+	class="glass fixed z-40 h-[calc(100vh-68px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform md:static md:!translate-0"
 	style:translate={toPercent(deltaX)}
 	class:immediate={isSwiping}
 	class:hide={!isMenuOpen}
@@ -151,6 +151,15 @@
 		{/if}
 	</div>
 </aside>
+
+<!-- fab -->
+<button
+	class="bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 fixed right-8 bottom-10 z-50 flex h-12 w-18 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none md:hidden"
+	onclick={handleAddBookmark}
+	style:transform={isMenuOpen ? 'translateX(15rem)' : 'translateX(0)'}
+>
+	<IconPlus class="h-6 w-6" />
+</button>
 
 <style>
 	.immediate {

@@ -19,13 +19,13 @@
 	};
 </script>
 
-<div class="flex min-h-screen flex-col">
+<div class="flex flex-col">
 	<Header />
 
 	<div class="flex flex-1 overflow-hidden">
 		<Sidebar {handleAddBookmark} categories={data.categories} />
 
-		<main class="flex-1 overflow-auto max-h-[calc(100dvh-58px)] p-4 md:p-6 lg:p-8">
+		<main class="flex-1 overflow-auto max-h-[calc(100svh-68px)] p-4 md:p-6 lg:p-8 pb-30">
 			<div class="mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a

@@ -2,6 +2,7 @@ import { validateAuth } from '$lib/server/util';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { JSDOM } from 'jsdom';
+import { json } from '@sveltejs/kit';
 
 const schema = z.object({
 	url: z.string().url()
@@ -32,9 +33,5 @@ export const POST: RequestHandler = async (event) => {
 	// const favicon = doc.querySelector("link[rel='icon'], link[rel='shortcut icon']")?.getAttribute('href') ?? null;
 	const theme = doc.querySelector("meta[name='theme-color']")?.getAttribute('content') ?? null;
 
-	return new Response(JSON.stringify({ title, description, favicon, theme }), {
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	});
+	return json({ title, description, favicon, theme });
 };

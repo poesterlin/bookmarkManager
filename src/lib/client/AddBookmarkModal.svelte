@@ -149,7 +149,7 @@
 <svelte:window onclick={handleClickOutside} />
 
 <div class="fixed inset-0 z-50 overflow-y-auto">
-	<div class="fixed inset-0 bg-slate-400/20 backdrop-blur-sm transition-opacity"></div>
+	<div class="fixed inset-0 bg-slate-300/20 backdrop-blur-md transition-opacity"></div>
 
 	<div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
 		<div

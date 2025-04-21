@@ -9,8 +9,20 @@ import {
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
 import { error } from '@sveltejs/kit';
-import { and, count, eq, exists, getTableColumns, inArray, isNotNull, isNull, not, sql, desc } from 'drizzle-orm';
-import {  z } from 'zod';
+import {
+	and,
+	count,
+	eq,
+	exists,
+	getTableColumns,
+	inArray,
+	isNotNull,
+	isNull,
+	not,
+	sql,
+	desc
+} from 'drizzle-orm';
+import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
 const optionsSchema = z.object({
@@ -108,7 +120,15 @@ export const load: PageServerLoad = async (event) => {
 		.from(tagsTable)
 		.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
 		.groupBy(tagsTable.id)
-		.where(and(eq(tagsTable.userId, locals.user.id), inArray(bookmarkTags.bookmarkId, bookmarks.map((b) => b.id))))
+		.where(
+			and(
+				eq(tagsTable.userId, locals.user.id),
+				inArray(
+					bookmarkTags.bookmarkId,
+					bookmarks.map((b) => b.id)
+				)
+			)
+		)
 		.orderBy(tagsTable.name);
 
 	return {
