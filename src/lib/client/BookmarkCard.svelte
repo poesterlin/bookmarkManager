@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
 	import {
 		IconArchive,
@@ -26,7 +25,7 @@
 	}
 </script>
 
-<div class:archived={bookmark.deletedAt && !page.url.searchParams.has('archived')}>
+<div >
 	<!-- header -->
 	<div class="flex">
 		<!-- icon -->
@@ -166,13 +165,3 @@
 		{/if}
 	</div>
 </div>
-
-<style>
-	.archived {
-		opacity: 0.8;
-
-		img {
-			opacity: 0.3;
-		}
-	}
-</style>

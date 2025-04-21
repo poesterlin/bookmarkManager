@@ -5,8 +5,8 @@
 	import EmptyState from './EmptyState.svelte';
 	import type { Bookmark } from '$lib/server/db/schema';
 	import { searchStore } from './search.svelte';
+	import { page } from '$app/state';
 
-	// export let bookmarks: Bookmark[] = [];
 	const { bookmarks, addBookmark }: { bookmarks: Bookmark[]; addBookmark: () => void } = $props();
 
 	let list = $derived(searchStore.isSet() ? searchStore.results : bookmarks);
@@ -23,6 +23,7 @@
 					animate:flip={{ duration: 300 }}
 					in:fly={{ y: 20, duration: 300, delay: 100 }}
 					out:fade={{ duration: 200 }}
+					class:archived={bookmark.deletedAt && !page.url.searchParams.has('archived')}
 				>
 					<BookmarkCard {bookmark} />
 				</div>
@@ -30,3 +31,16 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.archived {
+		opacity: 0.9;
+		position: relative;
+		filter: saturate(0.6);
+		background: linear-gradient(135deg, #e9e1f9 3%, rgb(233, 233, 233) 6%, transparent 12%);
+
+		:global(img) {
+			opacity: 0.3;
+		}
+	}
+</style>

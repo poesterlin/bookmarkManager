@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
 	import AddBookmarkModal from '$lib/client/AddBookmarkModal.svelte';
 	import BookmarkList from '$lib/client/BookmarkList.svelte';
 	import Header from '$lib/client/Header.svelte';
+	import { searchStore } from '$lib/client/search.svelte';
 	import Sidebar from '$lib/client/Sidebar.svelte';
 	import { IconX } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
@@ -9,6 +11,10 @@
 	let { data }: { data: PageServerData } = $props();
 
 	let isAddModalOpen = $state(false);
+
+	afterNavigate(() => {
+		searchStore.clear();
+	});
 
 	const handleAddBookmark = () => {
 		isAddModalOpen = true;
@@ -25,7 +31,7 @@
 	<div class="flex flex-1 overflow-hidden">
 		<Sidebar {handleAddBookmark} categories={data.categories} />
 
-		<main class="flex-1 overflow-auto max-h-[calc(100svh-68px)] p-4 md:p-6 lg:p-8 pb-30">
+		<main class="max-h-[calc(100svh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8">
 			<div class="mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
@@ -37,12 +43,14 @@
 						<IconX class="w-3"></IconX>
 					</a>
 				{:else}
-					<div class="mb-3 flex w-max items-center gap-2 overflow-y-auto max-w-screen -mx-4 px-4 pb-1 md:mx-0 md:px-0 md:max-w-full">
+					<div
+						class="-mx-4 mb-3 flex w-max max-w-screen items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
+					>
 						{#each data.tags as tag}
 							{#if tag.name}
 								<a
 									href="/?tag={tag.id}"
-									class="w-max flex gap-1 rounded-full bg-accent-100 px-2 py-1.5 pr-3 text-xs font-medium text-accent-800"
+									class="bg-accent-100 text-accent-800 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
 								>
 									{tag.name}
 
