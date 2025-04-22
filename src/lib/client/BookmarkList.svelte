@@ -19,7 +19,7 @@
 		<div class="grid-cols-cards grid gap-4">
 			{#each list as bookmark (bookmark.id)}
 				<div
-					class="group glass row-span-3 grid grid-rows-subgrid rounded-xl p-4 transition-all duration-300 hover:shadow-xl"
+					class="glass row-span-3 grid grid-rows-subgrid rounded-xl p-4 transition-all duration-300 hover:shadow-xl"
 					animate:flip={{ duration: 300 }}
 					in:fly={{ y: 20, duration: 300, delay: 100 }}
 					out:fade={{ duration: 200 }}

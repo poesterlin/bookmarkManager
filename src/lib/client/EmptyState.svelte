@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	const { addBookmark } = $props();
+	const { addBookmark }: {addBookmark: ()=>{}} = $props();
 
 	const isMain = $derived(Array.from(page.url.searchParams.entries()).length === 0);
 </script>
