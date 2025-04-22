@@ -11,7 +11,12 @@ declare global {
 
 		// interface PageData {}
 		// interface Error {}
-		// interface PageState {}
+		interface PageState {
+			isAddModalOpen?: boolean;
+			isEditModalOpen?: boolean;
+			bookmark?: Bookmark;
+
+		}
 		// interface Platform {}
 	}
 }

@@ -1,38 +1,35 @@
 <script lang="ts">
 	import { run, stopPropagation } from 'svelte/legacy';
-
 	import { enhance } from '$app/forms';
-	import type { Category } from '$lib/server/db/schema';
+	import type { Bookmark, Category, Tag } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
-	import { IconLoader, IconTimeDuration0 } from '@tabler/icons-svelte';
 	import Modal from './Modal.svelte';
 
 	interface Props {
-		onClose: () => void;
+		bookmark: Bookmark;
 		categories: Category[];
-		existingTags?: string[];
+		existingTags?: string[]; // All tags available in the system for suggestions
+		onClose: () => void;
 	}
 
-	let { onClose, categories, existingTags = [] }: Props = $props();
+	let { bookmark, categories, existingTags = [], onClose }: Props = $props();
 
-	let loading = $state(false);
-	let url = $state('');
-	let title = $state('');
-	let description = $state('');
+	// --- Initialize state from the bookmark prop ---
+	let title = $state(bookmark.title);
+	let description = $state(bookmark.description || '');
+	// Ensure categoryId is treated as string for select binding if it comes as number
+	let selectedCategoryId = $state(bookmark.category?.id ?? '');
 	let newCategory = $state('');
 	let showNewCategoryInput = $state(false);
-	let theme = $state<string>();
-	let favicon = $state<string>();
-	let faviconData = $state<string>();
 
-	// --- Tag Input State ---
-	let selectedTags: string[] = $state([]);
+	// --- Tag Input State (Initialized) ---
+	let selectedTags: string[] = $state(bookmark.tags.map((t) => t.name).filter(Boolean));
 	let tagInput = $state('');
 	let filteredTags: string[] = $state([]);
 	let showSuggestions = $state(false);
 	let activeSuggestionIndex = $state(-1);
 
-	// Reactive statement for tag suggestions
+	// Reactive statement for tag suggestions (same as Add modal)
 	run(() => {
 		if (tagInput.trim()) {
 			filteredTags = existingTags.filter(
@@ -54,41 +51,15 @@
 		showNewCategoryInput = !showNewCategoryInput;
 		if (!showNewCategoryInput) {
 			newCategory = '';
+			// If user cancels adding new category, revert to original selection if possible
+			selectedCategoryId = bookmark.category?.id ?? '';
+		} else {
+			// Clear selection when switching to new category input
+			selectedCategoryId = '';
 		}
 	}
 
-	async function autofill() {
-		if (!url) {
-			return;
-		}
-		loading = true;
-
-		try {
-			const res = await fetch(`/info`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ url })
-			});
-
-			if (res.ok) {
-				const data = await res.json();
-				console.log(data);
-				title = title || data.title;
-				description = description || data.description;
-				theme = data.theme;
-				favicon = data.favicon;
-				faviconData = data.faviconData;
-			}
-		} catch (error) {
-			console.error('Error during autofill fetch:', error);
-		}
-
-		loading = false;
-	}
-
-	// --- Tag Input Functions ---
+	// --- Tag Input Functions (same as Add modal) ---
 	function addTag(tag: string) {
 		const trimmedTag = tag.trim();
 		if (trimmedTag && !selectedTags.includes(trimmedTag)) {
@@ -106,8 +77,8 @@
 		switch (event.key) {
 			case 'Enter':
 			case ' ':
-			case ',': // Add tag on comma as well
-				event.preventDefault(); // Prevent form submission or typing comma
+			case ',':
+				event.preventDefault();
 				if (showSuggestions && activeSuggestionIndex > -1) {
 					addTag(filteredTags[activeSuggestionIndex]);
 				} else if (tagInput.trim()) {
@@ -116,18 +87,17 @@
 				break;
 			case 'Backspace':
 				if (tagInput === '' && selectedTags.length > 0) {
-					// Remove last tag on backspace if input is empty
 					removeTag(selectedTags[selectedTags.length - 1]);
 				}
 				break;
 			case 'ArrowDown':
-				event.preventDefault(); // Prevent cursor move
+				event.preventDefault();
 				if (showSuggestions) {
 					activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, filteredTags.length - 1);
 				}
 				break;
 			case 'ArrowUp':
-				event.preventDefault(); // Prevent cursor move
+				event.preventDefault();
 				if (showSuggestions) {
 					activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
 				}
@@ -141,71 +111,68 @@
 
 	function handleSuggestionClick(tag: string) {
 		addTag(tag);
-		document.getElementById('tag-input')?.focus();
+		document.getElementById('edit-tag-input')?.focus(); // Use unique ID if needed
 	}
 
-	// Close suggestions when clicking outside
+	// Close suggestions when clicking outside (same as Add modal)
 	function handleClickOutside(event: MouseEvent) {
 		const target = event.target as HTMLElement;
 		if (!target.closest('.tag-input-wrapper')) {
 			showSuggestions = false;
 		}
 	}
+
+	// Add listener for clicks outside tag input
+	$effect(() => {
+		document.addEventListener('click', handleClickOutside);
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
 </script>
 
-<Modal onClose={handleCancel}>
-	<div
-		class=""
-		transition:fade={{ duration: 150 }}
-	>
+<Modal {onClose}>
+	<div class="" transition:fade={{ duration: 150 }}>
 		<form
 			use:enhance={() => {
 				return ({ update }) => {
-					handleCancel();
+					handleCancel(); 
 					update();
 				};
 			}}
 			class="p-6"
 			method="POST"
-			action="/?/add"
-			onsubmit={onclose}
+			action="/?/update"
 		>
+			<!-- Hidden input to send the bookmark ID -->
+			<input type="hidden" name="id" value={bookmark.id} />
+
 			<div class="mb-4">
-				<h3 class="text-primary-900 text-xl font-semibold">Add New Bookmark</h3>
-				<p class="text-sm text-gray-600">Save a link to your collection</p>
+				<h3 class="text-primary-900 text-xl font-semibold">Edit Bookmark</h3>
+				<p class="text-sm text-gray-600">Update the details for this bookmark.</p>
 			</div>
 
 			<div class="space-y-4">
-				<!-- URL, Title, Description, Category inputs remain the same -->
+				<!-- URL -->
 				<div>
-					<label for="url" class="block text-sm font-medium text-gray-700">URL</label>
-					<div class="input mt-1 flex overflow-hidden !p-0">
-						<input
-							type="text"
-							id="url"
-							name="url"
-							bind:value={url}
-							required
-							class="w-full py-2 pl-2 focus:outline-0"
-							placeholder="https://example.com"
-							onblur={autofill}
-						/>
-
-						{#if loading && !faviconData}
-							<IconLoader class="mx-2 h-10 animate-spin"></IconLoader>
-						{/if}
-
-						{#if faviconData}
-							<img src={faviconData} alt="favicon" class="h-10 rounded-sm p-2" />
-						{/if}
-					</div>
-				</div>
-
-				<div>
-					<label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+					<label for="edit-url" class="block text-sm font-medium text-gray-700">URL</label>
 					<input
 						type="text"
-						id="title"
+						id="edit-url"
+						name="url"
+						value={bookmark.url}
+						readonly
+						class="input mt-1 w-full bg-gray-100 focus:bg-white focus:ring-0 focus:outline-none !focus:box-shadow-none cursor-not-allowed opacity-50"
+						placeholder="https://example.com"
+					/>
+				</div>
+
+				<!-- Title -->
+				<div>
+					<label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
+					<input
+						type="text"
+						id="edit-title"
 						name="title"
 						required
 						bind:value={title}
@@ -214,12 +181,13 @@
 					/>
 				</div>
 
+				<!-- Description -->
 				<div>
-					<label for="description" class="block text-sm font-medium text-gray-700"
+					<label for="edit-description" class="block text-sm font-medium text-gray-700"
 						>Description (optional)</label
 					>
 					<textarea
-						id="description"
+						id="edit-description"
 						name="description"
 						class="input mt-1 w-full"
 						rows="2"
@@ -228,46 +196,62 @@
 					></textarea>
 				</div>
 
+				<!-- Category -->
 				<div>
-					<label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+					<label for="edit-category" class="block text-sm font-medium text-gray-700">Category</label
+					>
 					{#if showNewCategoryInput}
 						<div class="mt-1 flex">
 							<input
 								type="text"
-								id="newCategory"
+								id="edit-newCategory"
 								name="newCategory"
 								bind:value={newCategory}
 								class="input w-full"
 								placeholder="New category name"
 							/>
-							<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
+							<button
+								type="button"
+								class="button-ghost ml-2 flex-shrink-0"
+								onclick={toggleNewCategoryInput}
+							>
 								Cancel
 							</button>
 						</div>
 					{:else}
 						<div class="mt-1 flex">
-							<select id="category" class="input w-full" name="category">
+							<select
+								id="edit-category"
+								class="input w-full"
+								name="category"
+								bind:value={selectedCategoryId}
+								disabled={showNewCategoryInput}
+							>
 								<option value="">Select a category</option>
 								{#each categories as cat}
 									<option value={cat.id}>{cat.name}</option>
 								{/each}
 							</select>
-							<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
+							<button
+								type="button"
+								class="button-ghost ml-2 flex-shrink-0"
+								onclick={toggleNewCategoryInput}
+							>
 								New
 							</button>
 						</div>
 					{/if}
 				</div>
 
-				<!-- New Tag Input UI -->
+				<!-- Tag Input UI (Adapted from Add modal) -->
 				<div class="tag-input-wrapper relative">
-					<label for="tag-input" class="block text-sm font-medium text-gray-700">Tags</label>
+					<label for="edit-tag-input" class="block text-sm font-medium text-gray-700">Tags</label>
 					<!-- svelte-ignore a11y_no_abstract_role -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
 						role="input"
 						class="input mt-1 flex w-full flex-wrap items-center gap-1 p-1"
-						onclick={() => document.getElementById('tag-input')?.focus()}
+						onclick={() => document.getElementById('edit-tag-input')?.focus()}
 					>
 						{#each selectedTags as tag (tag)}
 							<span
@@ -296,7 +280,7 @@
 						{/each}
 						<input
 							type="text"
-							id="tag-input"
+							id="edit-tag-input"
 							bind:value={tagInput}
 							onkeydown={handleTagInputKeydown}
 							onfocus={() => (showSuggestions = filteredTags.length > 0)}
@@ -329,20 +313,13 @@
 					<!-- Hidden input to store the final comma-separated value -->
 					<input type="hidden" name="tags" value={selectedTags.join(',')} />
 				</div>
-				<!-- End New Tag Input UI -->
+				<!-- End Tag Input UI -->
 			</div>
 
 			<div class="mt-6 flex justify-end space-x-3">
 				<button type="button" class="button-ghost" onclick={handleCancel}> Cancel </button>
-				<button type="submit" class="button-primary"> Add Bookmark </button>
+				<button type="submit" class="button-primary"> Save Changes </button>
 			</div>
-
-			{#if theme}
-				<input type="hidden" name="theme" bind:value={theme} />
-			{/if}
-			{#if favicon}
-				<input type="hidden" name="favicon" bind:value={favicon} />
-			{/if}
 		</form>
 	</div>
 </Modal>

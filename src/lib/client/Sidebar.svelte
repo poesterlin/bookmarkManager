@@ -87,7 +87,6 @@
 
 		// Check if distance threshold is met
 		const absDeltaX = Math.abs(deltaX);
-		console.log('deltaX', deltaX, deltaTime);
 
 		let velocityX = 0;
 		if (deltaTime > 0) {

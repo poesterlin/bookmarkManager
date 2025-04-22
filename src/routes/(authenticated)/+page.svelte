@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, pushState, replaceState } from '$app/navigation';
 	import AddBookmarkModal from '$lib/client/AddBookmarkModal.svelte';
 	import BookmarkList from '$lib/client/BookmarkList.svelte';
 	import Header from '$lib/client/Header.svelte';
@@ -7,21 +7,27 @@
 	import Sidebar from '$lib/client/Sidebar.svelte';
 	import { IconX } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
+	import { page } from '$app/state';
+	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
 
 	let { data }: { data: PageServerData } = $props();
-
-	let isAddModalOpen = $state(false);
 
 	afterNavigate(() => {
 		searchStore.clear();
 	});
 
 	const handleAddBookmark = () => {
-		isAddModalOpen = true;
+		pushState('', {
+			isAddModalOpen: true
+		});
 	};
 
 	const handleCloseModal = () => {
-		isAddModalOpen = false;
+		replaceState('', {
+			isAddModalOpen: false,
+			isEditModalOpen: false,
+			bookmark: null
+		});
 	};
 </script>
 
@@ -67,8 +73,17 @@
 		</main>
 	</div>
 
-	{#if isAddModalOpen}
+	{#if page.state.isAddModalOpen}
 		<AddBookmarkModal
+			onClose={handleCloseModal}
+			categories={data.categories}
+			existingTags={data.tags.map((tag) => tag.name)}
+		/>
+	{/if}
+
+	{#if page.state.isEditModalOpen && page.state.bookmark}
+		<EditBookmarkModal
+			bookmark={page.state.bookmark}
 			onClose={handleCloseModal}
 			categories={data.categories}
 			existingTags={data.tags.map((tag) => tag.name)}

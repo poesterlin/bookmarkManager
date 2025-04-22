@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { pushState } from '$app/navigation';
 	import type { Bookmark } from '$lib/server/db/schema';
 	import {
 		IconArchive,
 		IconCopy,
 		IconExternalLink,
+		IconPencil,
 		IconRestore,
 		IconTrash
 	} from '@tabler/icons-svelte';
@@ -22,6 +24,13 @@
 		} catch {
 			return url;
 		}
+	}
+
+	function openEditModal() {
+		pushState('', {
+			isEditModalOpen: true,
+			bookmark: structuredClone(bookmark)
+		});
 	}
 </script>
 
@@ -45,7 +54,7 @@
 	</div>
 
 	<!-- title -->
-	<h3 class="title line-clamp-3 !mb-0 text-lg font-semibold text-gray-800">
+	<h3 class="title !mb-0 line-clamp-3 text-lg font-semibold text-gray-800">
 		{bookmark.title}
 	</h3>
 	<p class="url truncate text-xs text-gray-500">
@@ -148,6 +157,15 @@
 				<IconCopy
 					class="h-4 w-4 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-800"
 				></IconCopy>
+			</button>
+			<button
+				onclick={openEditModal}
+				title="Edit"
+				class="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-800"
+			>
+				<IconPencil
+					class="h-4 w-4 text-gray-500 transition-colors hover:bg-white/50 hover:text-gray-800"
+				></IconPencil>
 			</button>
 			<form action="/?/archive" use:enhance method="POST" title="Archive">
 				<input type="hidden" name="id" value={bookmark.id} />

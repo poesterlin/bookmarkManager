@@ -259,6 +259,147 @@ export const actions: Actions = {
 			});
 		}
 	),
+	update: validateForm(
+		z.object({
+			id: z.string().min(1),
+			title: z.string().min(1).max(100),
+			category: z.string().optional(),
+			newCategory: z.string().optional(),
+			tags: z
+				.string()
+				.optional()
+				.transform((val) => val?.split(',').filter(Boolean) ?? []),
+			description: z.string().optional()
+		}),
+		async (event, form) => {
+			const locals = validateAuth(event);
+
+			// 1. Verify bookmark exists and belongs to user
+			const [existingBookmark] = await db
+				.select({ id: bookmarksTable.id })
+				.from(bookmarksTable)
+				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)))
+				.limit(1);
+
+			if (!existingBookmark) {
+				error(404, 'Bookmark not found or not owned by user');
+			}
+
+			await db.transaction(async (tx) => {
+				let categoryId: string | null = null; // Use null to remove category
+
+				// 2. Determine Category ID (similar logic to 'add')
+				if (form.newCategory) {
+					// User wants to create/assign a new category
+					const [existingCategory] = await tx
+						.select({ id: categoriesTable.id })
+						.from(categoriesTable)
+						.where(
+							and(
+								eq(categoriesTable.userId, locals.user.id),
+								eq(categoriesTable.name, form.newCategory)
+							)
+						)
+						.limit(1);
+
+					if (existingCategory) {
+						categoryId = existingCategory.id;
+					} else {
+						categoryId = generateId();
+						await tx.insert(categoriesTable).values({
+							id: categoryId,
+							name: form.newCategory,
+							userId: locals.user.id
+						});
+					}
+				} else if (form.category) {
+					// User selected an existing category
+					const [category] = await tx
+						.select({ id: categoriesTable.id })
+						.from(categoriesTable)
+						.where(
+							and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
+						)
+						.limit(1);
+
+					if (category) {
+						categoryId = category.id;
+					} else {
+						// Category ID provided but not found/valid for user
+						// Set to null or throw error depending on desired behavior
+						console.warn(
+							`Update: Category ID ${form.category} not found for user ${locals.user.id}`
+						);
+						categoryId = null;
+					}
+				}
+				// If neither newCategory nor category is provided, categoryId remains null
+
+				// 3. Update Bookmark Details
+				await tx
+					.update(bookmarksTable)
+					.set({
+						title: form.title,
+						description: form.description,
+						category: categoryId, // Set determined categoryId or null
+						updatedAt: new Date()
+						// Do NOT update URL here unless intended
+					})
+					.where(and(eq(bookmarksTable.id, form.id), eq(bookmarksTable.userId, locals.user.id))); // Redundant user check, but safe
+
+				// 4. Handle Tags (Delete old, add new)
+				//    This is simpler than diffing for updates.
+
+				// 4a. Delete existing tag associations for this bookmark
+				await tx.delete(bookmarkTags).where(eq(bookmarkTags.bookmarkId, form.id));
+
+				// 4b. Add new tag associations (logic reused from 'add')
+				if (form.tags && form.tags.length > 0) {
+					const existingDbTags = await tx
+						.select()
+						.from(tagsTable)
+						.where(and(eq(tagsTable.userId, locals.user.id), inArray(tagsTable.name, form.tags)));
+
+					const existingTagMap = new Map(existingDbTags.map((tag) => [tag.name, tag.id]));
+					const tagsToInsert: Array<{ tagId: string; bookmarkId: string }> = [];
+					const newTagsToCreate: Array<{ id: string; name: string; userId: string }> = [];
+
+					for (const tagName of form.tags) {
+						// Ensure tag name isn't empty after potential filtering issues
+						if (!tagName) continue;
+
+						if (existingTagMap.has(tagName)) {
+							tagsToInsert.push({ tagId: existingTagMap.get(tagName)!, bookmarkId: form.id });
+						} else {
+							const newTagId = generateId();
+							newTagsToCreate.push({ id: newTagId, name: tagName, userId: locals.user.id });
+							tagsToInsert.push({ tagId: newTagId, bookmarkId: form.id });
+							existingTagMap.set(tagName, newTagId); // Avoid duplicates in this transaction
+						}
+					}
+
+					if (newTagsToCreate.length > 0) {
+						await tx.insert(tagsTable).values(newTagsToCreate);
+					}
+
+					if (tagsToInsert.length > 0) {
+						await tx.insert(bookmarkTags).values(tagsToInsert);
+					}
+				}
+
+				// 5. Optional: Clean up unused tags (globally, maybe less frequently)
+				//    Could be done here or in a separate maintenance task.
+				// await tx.delete(tagsTable).where(and(
+				//     eq(tagsTable.userId, locals.user.id),
+				//     not(exists(
+				//         db.select().from(bookmarkTags).where(eq(bookmarkTags.tagId, tagsTable.id))
+				//     ))
+				// ));
+			});
+			// Success, SvelteKit handles the redirect/update
+		}
+	),
+
 	delete: validateForm(
 		z.object({
 			id: z.string()
