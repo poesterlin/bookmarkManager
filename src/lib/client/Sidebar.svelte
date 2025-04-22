@@ -3,17 +3,24 @@
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
 	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
+
 	interface Props {
 		handleAddBookmark: () => void;
 		categories: Category[];
 	}
+	let { handleAddBookmark, categories }: Props = $props();
 
 	let isMenuOpen = $state(false);
 	let isSwiping = $state(false);
 	let startX = 0;
 	let startY = 0;
 	let deltaX = $state(0);
-	let { handleAddBookmark, categories }: Props = $props();
+	let startTime = 0;
+
+	// --- Constants ---
+	const MIN_SWIPE_DISTANCE = 6; // Pixels needed to trigger open/close
+	const VERTICAL_CANCEL_THRESHOLD = 70; // Max vertical movement allowed for a horizontal swipe
+	const MIN_VELOCITY_THRESHOLD = 0.3; // Pixels per millisecond (adjust as needed)
 
 	beforeNavigate(() => {
 		if (isMenuOpen) {
@@ -21,41 +28,108 @@
 		}
 	});
 
+	$effect(() => {
+		// document.body.style.userSelect = isSwiping ? 'none' : '';
+	});
+
 	function startSwipe(event: PointerEvent) {
+		// Only track primary pointer (e.g., first finger, left mouse button)
+		if (!event.isPrimary) return;
+
+		// Prevent starting swipe if interacting with inputs, buttons, links etc.
+		const targetElement = event.target as HTMLElement;
+		if (targetElement.closest('input, textarea, button, a[href]')) {
+			return;
+		}
+
+		// prevent starting swipe if the target element has horizontal scroll
+		if (targetElement.scrollWidth > targetElement.clientWidth) {
+			return;
+		}
+
 		isSwiping = true;
 		startX = event.clientX;
 		startY = event.clientY;
+		startTime = event.timeStamp; // <-- Added: Record start timestamp
+		deltaX = 0; // Reset deltaX at the start
 	}
-
 	function swipe(event: PointerEvent | TouchEvent | Touch) {
 		if (!isSwiping) {
 			return;
 		}
 
+		let currentEvent: PointerEvent | Touch = event; // Use a variable to hold the correct event type
+
 		if (event instanceof TouchEvent) {
-			event = event.touches[0];
+			// If multiple touches, cancel swipe
+			if (event.touches.length > 1) {
+				endSwipe();
+				return;
+			}
+			currentEvent = event.touches[0];
+		} else if (event instanceof PointerEvent && !event.isPrimary) {
+			// Ignore non-primary pointer events during move
+			return;
 		}
 
-		if (Math.abs(event.clientY - startY) > 70) {
+		// Check for excessive vertical movement first
+		if (Math.abs(currentEvent.clientY - startY) > VERTICAL_CANCEL_THRESHOLD) {
 			endSwipe();
 			return;
 		}
 
-		deltaX = startX - event.clientX;
-		if (deltaX > 50) {
-			isMenuOpen = false;
-			isSwiping = false;
-		} else if (deltaX < -50) {
-			isMenuOpen = true;
-			isSwiping = false;
+		// Calculate movement delta
+		deltaX = startX - currentEvent.clientX;
+		const currentTime = currentEvent.timeStamp;
+		const deltaTime = currentTime - startTime;
+
+		// Check if distance threshold is met
+		const absDeltaX = Math.abs(deltaX);
+
+		if (absDeltaX > MIN_SWIPE_DISTANCE) {
+			// Calculate average velocity only when distance threshold is met
+			let velocityX = 0;
+			if (deltaTime > 0) {
+				// Avoid division by zero
+				velocityX = absDeltaX / deltaTime; // Use absDeltaX for velocity magnitude check
+			}
+
+			// Check if velocity threshold is also met
+			if (velocityX > MIN_VELOCITY_THRESHOLD) {
+				if (deltaX > 0) {
+					// Swiped left
+					isMenuOpen = false;
+					endSwipe(true); // Indicate swipe completed
+				} else {
+					// Swiped right (deltaX is negative)
+					isMenuOpen = true;
+					endSwipe(true); // Indicate swipe completed
+				}
+			} else {
+				// Distance met, but too slow - could potentially reset here or just wait for endSwipe
+				// For now, we just don't trigger the menu change yet.
+				// endSwipe(); // Option: cancel immediately if too slow after distance met
+			}
 		}
+		// If distance threshold not met, deltaX is updated for the style:translate, but no trigger happens yet.
 	}
 
-	function endSwipe() {
+	// Added optional parameter to know if swipe action was completed
+	function endSwipe(swipeCompleted = false) {
+		if (!isSwiping) return; // Avoid running if not currently swiping
+
 		isSwiping = false;
-		deltaX = 0;
+		// Don't reset deltaX immediately if swipe wasn't completed,
+		// allow animation back if needed (handled by CSS transition)
+		// If swipe WAS completed, menu state changes and CSS handles the final position.
+		// Resetting deltaX here might cause a flicker if CSS transition isn't instant.
+		// Let's reset deltaX only if the swipe *didn't* complete, to snap back.
+		if (!swipeCompleted) {
+			deltaX = 0;
+		}
+		// Reset start time just in case
+		startTime = 0;
 	}
-
 	function toPercent(valueInPixels: number) {
 		if (valueInPixels === 0) {
 			return '';
@@ -71,13 +145,14 @@
 </script>
 
 <svelte:window
-	on:pointerdown={startSwipe}
-	on:pointermove={swipe}
-	on:pointerup={endSwipe}
-	on:touchmove={swipe}
-	on:pointerup={endSwipe}
-	on:touchend={endSwipe}
-	on:click={endSwipe}
+	onpointerdown={startSwipe}
+	onpointermove={swipe}
+	onpointerup={() => endSwipe()}
+	onpointercancel={() => endSwipe()}
+	ontouchmove={swipe}
+	ontouchend={() => endSwipe()}
+	ontouchcancel={() => endSwipe()}
+	onselectionchangecapture={() => endSwipe()}
 />
 
 <aside
