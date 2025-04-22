@@ -7,6 +7,8 @@
 	let searchQuery = $state('');
 	let abortController: AbortController | null = null;
 
+	let { isScrolled } = $props();
+
 	$effect(() => {
 		if (abortController) {
 			abortController.abort();
@@ -40,16 +42,16 @@
 	});
 </script>
 
-<header class="glass sticky top-0 z-50 px-4 py-3">
+<header class="z-40 px-4 py-3" class:shadow={isScrolled}>
 	<a class="flex items-center justify-center" href="/">
 		<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
 		<span class="text-primary-500 mr-1 text-2xl font-bold md:hidden">B</span>
 		<span class="text-secondary-500 hidden text-2xl font-bold md:block">Manager</span>
 		<span class="text-secondary-500 text-2xl font-bold md:hidden">M</span>
-  </a>
+	</a>
 
 	<div
-		class="input mx-auto focus-within:!border-primary-500 relative flex max-w-lg w-[70%] min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
+		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
 	>
 		<IconSearch class="ml-3 text-gray-500" size={20} stroke-width={1.5} />
 		<input
@@ -82,7 +84,11 @@
 <style>
 	header {
 		display: grid;
-    gap: 1rem;
+		gap: 1rem;
 		grid-template-columns: 1fr minmax(auto, 75%) 1fr;
+	}
+
+	.shadow {
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 </style>

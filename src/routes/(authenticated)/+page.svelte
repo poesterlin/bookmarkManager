@@ -11,6 +11,10 @@
 	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
 
 	let { data }: { data: PageServerData } = $props();
+	let isScrolled = $state(false);
+	let mainEl: HTMLElement;
+
+	$inspect(isScrolled)
 
 	afterNavigate(() => {
 		searchStore.clear();
@@ -31,13 +35,19 @@
 	};
 </script>
 
+<svelte:window
+	onscrollcapture={() => {
+		isScrolled = (mainEl?.scrollTop ?? 0) > 0;
+	}}
+/>
+
 <div class="flex flex-col">
-	<Header />
+	<Header {isScrolled} />
 
 	<div class="flex flex-1">
 		<Sidebar {handleAddBookmark} categories={data.categories} />
 
-		<main class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8">
+		<main class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8" bind:this={mainEl}>
 			<div class="mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
