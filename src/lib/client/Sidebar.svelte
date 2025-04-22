@@ -18,9 +18,9 @@
 	let startTime = 0;
 
 	// --- Constants ---
-	const MIN_SWIPE_DISTANCE = 6; // Pixels needed to trigger open/close
-	const VERTICAL_CANCEL_THRESHOLD = 70; // Max vertical movement allowed for a horizontal swipe
-	const MIN_VELOCITY_THRESHOLD = 0.12; // Pixels per millisecond (adjust as needed)
+	const MIN_SWIPE_DISTANCE = [100, 60] as const; // Pixels needed to trigger open/close
+	const VERTICAL_CANCEL_THRESHOLD = [70, 70] as const; // Max vertical movement allowed for a horizontal swipe
+	const MIN_VELOCITY_THRESHOLD = [0.8, 0.6] as const; // Pixels per millisecond (adjust as needed)
 
 	beforeNavigate(() => {
 		if (isMenuOpen) {
@@ -29,28 +29,24 @@
 	});
 
 	$effect(() => {
-		// document.body.style.userSelect = isSwiping ? 'none' : '';
+		document.body.style.userSelect = isMenuOpen || Math.abs(deltaX) > 10 ? 'none' : '';
 	});
 
 	function startSwipe(event: PointerEvent) {
 		// Only track primary pointer (e.g., first finger, left mouse button)
 		if (!event.isPrimary) return;
 
-		// Prevent starting swipe if interacting with inputs, buttons, links etc.
-		const targetElement = event.target as HTMLElement;
-		if (targetElement.closest('input, textarea, button, a[href]')) {
-			return;
-		}
-
 		// prevent starting swipe if the target element has horizontal scroll
+		const targetElement = event.target as HTMLElement;
 		if (targetElement.scrollWidth > targetElement.clientWidth) {
+			console.log('swipe canceled: target element has horizontal scroll');
 			return;
 		}
 
 		isSwiping = true;
 		startX = event.clientX;
 		startY = event.clientY;
-		startTime = event.timeStamp; // <-- Added: Record start timestamp
+		startTime = Date.now();
 		deltaX = 0; // Reset deltaX at the start
 	}
 	function swipe(event: PointerEvent | TouchEvent | Touch) {
@@ -58,7 +54,12 @@
 			return;
 		}
 
-		let currentEvent: PointerEvent | Touch = event; // Use a variable to hold the correct event type
+		let currentEvent: PointerEvent = event as any; // Use a variable to hold the correct event type
+		let isTouch = false;
+
+		if (event instanceof PointerEvent) {
+			isTouch = event.pointerType === 'touch';
+		}
 
 		if (event instanceof TouchEvent) {
 			// If multiple touches, cancel swipe
@@ -66,49 +67,45 @@
 				endSwipe();
 				return;
 			}
-			currentEvent = event.touches[0];
+			isTouch = true;
+			currentEvent = event.touches[0] as unknown as PointerEvent;
 		} else if (event instanceof PointerEvent && !event.isPrimary) {
 			// Ignore non-primary pointer events during move
 			return;
 		}
 
 		// Check for excessive vertical movement first
-		if (Math.abs(currentEvent.clientY - startY) > VERTICAL_CANCEL_THRESHOLD) {
+		if (Math.abs(currentEvent.clientY - startY) > get(VERTICAL_CANCEL_THRESHOLD, isTouch)) {
 			endSwipe();
 			return;
 		}
 
 		// Calculate movement delta
 		deltaX = startX - currentEvent.clientX;
-		const currentTime = currentEvent.timeStamp;
+		const currentTime = Date.now();
 		const deltaTime = currentTime - startTime;
 
 		// Check if distance threshold is met
 		const absDeltaX = Math.abs(deltaX);
+		console.log('deltaX', deltaX, deltaTime);
 
-		if (absDeltaX > MIN_SWIPE_DISTANCE) {
-			// Calculate average velocity only when distance threshold is met
-			let velocityX = 0;
-			if (deltaTime > 0) {
-				// Avoid division by zero
-				velocityX = absDeltaX / deltaTime; // Use absDeltaX for velocity magnitude check
-			}
+		let velocityX = 0;
+		if (deltaTime > 0) {
+			velocityX = absDeltaX / deltaTime; // Use absDeltaX for velocity magnitude check
+		}
 
-			// Check if velocity threshold is also met
-			if (velocityX > MIN_VELOCITY_THRESHOLD) {
-				if (deltaX > 0) {
-					// Swiped left
-					isMenuOpen = false;
-					endSwipe(true); // Indicate swipe completed
-				} else {
-					// Swiped right (deltaX is negative)
-					isMenuOpen = true;
-					endSwipe(true); // Indicate swipe completed
-				}
+		if (
+			absDeltaX > get(MIN_SWIPE_DISTANCE, isTouch) ||
+			velocityX > get(MIN_VELOCITY_THRESHOLD, isTouch)
+		) {
+			if (deltaX > 0) {
+				// Swiped left
+				isMenuOpen = false;
+				endSwipe(true); // Indicate swipe completed
 			} else {
-				// Distance met, but too slow - could potentially reset here or just wait for endSwipe
-				// For now, we just don't trigger the menu change yet.
-				// endSwipe(); // Option: cancel immediately if too slow after distance met
+				// Swiped right
+				isMenuOpen = true;
+				endSwipe(true); // Indicate swipe completed
 			}
 		}
 		// If distance threshold not met, deltaX is updated for the style:translate, but no trigger happens yet.
@@ -127,7 +124,8 @@
 		if (!swipeCompleted) {
 			deltaX = 0;
 		}
-		// Reset start time just in case
+
+		// Reset start time
 		startTime = 0;
 	}
 	function toPercent(valueInPixels: number) {
@@ -142,17 +140,36 @@
 		const clamped = Math.min(1, Math.max(0, sum));
 		return `-${clamped * 100}%`;
 	}
+
+	function get(val: readonly [number, number], isTouch: boolean) {
+		if (isTouch) {
+			return val[1];
+		}
+		return val[0];
+	}
+
+	function cancelOnSelect() {
+		const selection = document.getSelection();
+		if (selection && selection.rangeCount > 0) {
+			const range = selection.getRangeAt(0);
+			if (range.startOffset > 1) {
+				console.log('swipe canceled: text selected');
+				endSwipe();
+			}
+		}
+	}
 </script>
 
+<!-- onpointercancel={() => endSwipe()} -->
+
 <svelte:window
-	onpointerdown={startSwipe}
-	onpointermove={swipe}
 	onpointerup={() => endSwipe()}
-	onpointercancel={() => endSwipe()}
-	ontouchmove={swipe}
 	ontouchend={() => endSwipe()}
+	onpointerdown={startSwipe}
 	ontouchcancel={() => endSwipe()}
-	onselectionchangecapture={() => endSwipe()}
+	onpointermove={swipe}
+	ontouchmove={swipe}
+	onselectionchangecapture={cancelOnSelect}
 />
 
 <aside

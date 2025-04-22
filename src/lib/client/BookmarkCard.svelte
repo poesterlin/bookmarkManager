@@ -166,7 +166,7 @@
 	.card-grid {
 		display: grid;
 		grid-template-areas: 'icon title star' 'icon url url' 'description description description';
-		grid-template-columns: 3rem auto 1fr;
+		grid-template-columns: 3rem minmax(auto, 100%) 1fr;
 		grid-template-rows: auto auto 1fr;
 		gap: 0 0.25rem;
 
