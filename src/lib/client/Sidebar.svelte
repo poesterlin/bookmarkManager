@@ -20,7 +20,7 @@
 	// --- Constants ---
 	const MIN_SWIPE_DISTANCE = 6; // Pixels needed to trigger open/close
 	const VERTICAL_CANCEL_THRESHOLD = 70; // Max vertical movement allowed for a horizontal swipe
-	const MIN_VELOCITY_THRESHOLD = 0.2; // Pixels per millisecond (adjust as needed)
+	const MIN_VELOCITY_THRESHOLD = 0.12; // Pixels per millisecond (adjust as needed)
 
 	beforeNavigate(() => {
 		if (isMenuOpen) {
