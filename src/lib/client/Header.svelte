@@ -49,7 +49,7 @@
   </a>
 
 	<div
-		class="input mx-auto focus-within:!border-primary-500 relative flex max-w-lg w-[70%] min-w-max flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
+		class="input mx-auto focus-within:!border-primary-500 relative flex max-w-lg w-[70%] min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
 	>
 		<IconSearch class="ml-3 text-gray-500" size={20} stroke-width={1.5} />
 		<input

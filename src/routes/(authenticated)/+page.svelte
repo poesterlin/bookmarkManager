@@ -28,10 +28,10 @@
 <div class="flex flex-col">
 	<Header />
 
-	<div class="flex flex-1 overflow-hidden">
+	<div class="flex flex-1">
 		<Sidebar {handleAddBookmark} categories={data.categories} />
 
-		<main class="max-h-[calc(100svh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8">
+		<main class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8">
 			<div class="mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
@@ -44,7 +44,7 @@
 					</a>
 				{:else}
 					<div
-						class="-mx-4 mb-3 flex w-max max-w-screen items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
+						class="-mx-4 mb-3 flex w-max max-w-[calc(100%+2rem)] items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
 					>
 						{#each data.tags as tag}
 							{#if tag.name}

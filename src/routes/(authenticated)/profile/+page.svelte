@@ -16,7 +16,7 @@
 </script>
 
 <div class="flex h-screen flex-col items-center justify-center">
-	<div class="card w-max min-w-sm space-y-6 rounded-3xl bg-white p-8 text-center shadow-2xl">
+	<div class="card w-max space-y-6 rounded-3xl bg-white p-8 text-center shadow-2xl">
 		<IconUserCircle class="mx-auto h-24 w-24 text-slate-500"></IconUserCircle>
 
 		<h1 class="text-4xl font-extrabold text-slate-500 drop-shadow-md">{user.username}</h1>
