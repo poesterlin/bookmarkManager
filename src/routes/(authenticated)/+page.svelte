@@ -14,8 +14,6 @@
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
 
-	$inspect(isScrolled)
-
 	afterNavigate(() => {
 		searchStore.clear();
 	});

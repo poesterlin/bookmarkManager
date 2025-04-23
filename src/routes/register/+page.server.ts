@@ -15,12 +15,20 @@ export const load: PageServerLoad = async (event) => {
 	return {};
 };
 
+const zEmptyStrToUndefined = z.preprocess((arg) => {
+	if (typeof arg === 'string' && arg === '') {
+	  return undefined
+	} else {
+	  return arg
+	}
+  }, z.string().optional())
+
 export const actions: Actions = {
 	register: validateForm(
 		z.object({
 			username: z.string(),
 			password: z.string(),
-			email: z.string().optional(),
+			email: zEmptyStrToUndefined,
 			redirect: z.string().optional()
 		}),
 		async (event, form) => {
@@ -61,7 +69,24 @@ export const actions: Actions = {
 				const sessionToken = auth.generateSessionToken();
 				const session = await auth.createSession(sessionToken, userId);
 				auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
-			} catch {
+			} catch (e) {
+				console.error('Error creating user:', e);
+
+				// handle PostgresError: duplicate key value violates unique constraint
+				if (e instanceof Error && 'code' in e && e.code === '23505' && 'constraint' in e) {
+					if (e.constraint === 'user_email_unique') {
+						return fail(400, {
+							message:
+								'Oopsie! It looks like this email is already in use. Please try again! 😊'
+						});
+					} else if (e.constraint === 'user_username_unique') {
+						return fail(400, {
+							message:
+								'Oopsie! It looks like this username is already in use. Please try again! 😊'
+						});
+					}
+				}
+
 				return fail(500, {
 					message: 'Oopsie! It looks like something went wrong. Please try again! 😊'
 				});
@@ -71,8 +96,10 @@ export const actions: Actions = {
 			const redirectUrl = 'http://t' + form.redirect;
 			try {
 				const url = new URL(redirectUrl);
-				to = url.searchParams.get('redirect') || '/';
-			} catch {}
+				to = url.searchParams.get('redirect') ?? '/';
+			} catch {
+				// ignore
+			}
 
 			return redirect(302, to);
 		}

@@ -7,7 +7,7 @@ export const usersTable = pgTable('user', {
 	email: text('email').unique('user_email_unique', { nulls: 'distinct' }),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull(),
 	lastLogin: timestamp('last_login', { withTimezone: true, mode: 'date' }),
-	username: text('username').notNull().unique(),
+	username: text('username').notNull().unique('user_username_unique'),
 	passwordHash: text('password_hash').notNull()
 });
 
