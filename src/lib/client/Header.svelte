@@ -42,17 +42,12 @@
 	});
 
 	function toggleDarkMode() {
-		document.documentElement.classList.toggle(
-			'dark',
+		const darkModeEnabled =
 			localStorage.theme === 'dark' ||
-				(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-		);
+			(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-		if (localStorage.theme === 'dark') {
-			localStorage.theme = 'light';
-		} else {
-			localStorage.theme = 'dark';
-		}
+		document.documentElement.classList.toggle('dark', !darkModeEnabled);
+		localStorage.theme = darkModeEnabled ? 'light' : 'dark';
 	}
 </script>
 
