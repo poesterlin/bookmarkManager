@@ -3,6 +3,7 @@
 	import type { Bookmark } from '$lib/server/db/schema';
 	import { IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
 	import { searchStore } from './search.svelte';
+	import { onMount } from 'svelte';
 
 	let searchQuery = $state('');
 	let abortController: AbortController | null = null;
