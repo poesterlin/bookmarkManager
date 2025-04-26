@@ -43,7 +43,11 @@
 		class="icon mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm dark:bg-gray-800/70"
 	>
 		{#if bookmark.favicon}
-			<img src="/icon/{bookmark.id}" alt={bookmark.title} class="h-6 w-6 rounded-sm" />
+			<img
+				src="/icon/{bookmark.id}"
+				alt={bookmark.title}
+				class="filter-invert h-6 w-6 rounded-sm"
+			/>
 		{:else}
 			<div
 				class="bg-primary-200 text-primary-500 dark:bg-primary-700 dark:text-primary-200 flex h-6 w-6 items-center justify-center rounded-full font-bold"
@@ -78,7 +82,7 @@
 		<input type="hidden" name="id" value={bookmark.id} />
 		<input type="hidden" name="favorite" value={!bookmark.isFavorite} />
 		<button
-			class="hover:text-primary-500 ml-1 text-gray-400 transition-colors duration-200 hover:bg-white/50 dark:text-gray-500 dark:hover:bg-transparent rounded-sm"
+			class="hover:text-primary-500 ml-1 rounded-sm text-gray-400 transition-colors duration-200 hover:bg-white/50 dark:text-gray-500 dark:hover:bg-transparent"
 			aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 		>
 			{#if bookmark.isFavorite}
@@ -101,7 +105,7 @@
 	{#if bookmark.category?.name}
 		<a
 			href="/?category={bookmark.category.id}"
-			class="bg-secondary-100 text-secondary-800 rounded-full px-2 py-1 text-xs font-medium dark:bg-secondary-700 dark:text-secondary-200"
+			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-700 dark:text-secondary-200 rounded-full px-2 py-1 text-xs font-medium"
 		>
 			{bookmark.category.name}
 		</a>
@@ -109,7 +113,7 @@
 	{#each bookmark.tags as tag}
 		{#if tag.name}
 			<a
-				class="bg-accent-100 text-accent-800 rounded-full px-2 py-1 text-xs font-medium dark:bg-accent-700 dark:text-accent-200"
+				class="bg-accent-100 text-accent-800 dark:bg-accent-700 dark:text-accent-200 rounded-full px-2 py-1 text-xs font-medium"
 				href="/?tag={tag.id}"
 			>
 				{tag.name}
@@ -124,7 +128,7 @@
 		href="/goto/{bookmark.id}"
 		target="_blank"
 		rel="noopener noreferrer"
-		class="text-secondary-600 hover:text-secondary-800 flex items-center text-sm font-medium dark:text-secondary-200 dark:hover:text-secondary-400"
+		class="text-secondary-600 hover:text-secondary-800 dark:text-secondary-200 dark:hover:text-secondary-400 flex items-center text-sm font-medium"
 	>
 		Visit Site
 		<IconExternalLink class="h-4"></IconExternalLink>
@@ -135,7 +139,7 @@
 			<form action="/?/restore" use:enhance method="POST" title="Restore">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
-					class="rounded-full p-1.5 text-gray-500 transition-colors hover:outline hover:text-green-500 dark:hover:text-green-400"
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-green-500 hover:outline dark:hover:text-green-400"
 					aria-label="Restore"
 				>
 					<IconRestore class="h-4 w-4"></IconRestore>
@@ -145,7 +149,7 @@
 			<form action="/?/delete" use:enhance method="POST" title="Delete">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
-					class="rounded-full p-1.5 text-gray-500 transition-colors hover:outline hover:text-red-500 dark:hover:text-red-400"
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
 					aria-label="Delete"
 				>
 					<IconTrash class="h-4 w-4"></IconTrash>
@@ -155,25 +159,21 @@
 			<button
 				onclick={() => navigator.clipboard.writeText(bookmark.url)}
 				title="Copy URL"
-				class="rounded-full p-1.5 text-gray-500 transition-colors hover:outline hover:text-gray-800 dark:hover:text-gray-400"
+				class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
 			>
-				<IconCopy
-					class="h-4 w-4"
-				></IconCopy>
+				<IconCopy class="h-4 w-4"></IconCopy>
 			</button>
 			<button
 				onclick={openEditModal}
 				title="Edit"
-				class="rounded-full p-1.5 text-gray-500 transition-colors hover:outline hover:text-gray-800 dark:hover:text-gray-400"
+				class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
 			>
-				<IconPencil
-					class="h-4 w-4"
-				></IconPencil>
+				<IconPencil class="h-4 w-4"></IconPencil>
 			</button>
 			<form action="/?/archive" use:enhance method="POST" title="Archive">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
-					class="rounded-full p-1.5 text-gray-500 transition-colors hover:outline hover:text-red-500 dark:hover:text-red-400"
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
 					aria-label="Delete"
 				>
 					<IconArchive class="h-4 w-4"></IconArchive>
@@ -210,5 +210,9 @@
 		p.description {
 			grid-area: description;
 		}
+	}
+
+	:global(.dark) .filter-invert {
+		filter: invert(1) hue-rotate(190deg) saturate(1.5);
 	}
 </style>
