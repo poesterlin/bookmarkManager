@@ -190,8 +190,8 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
               {Array.from(page.url.searchParams.entries()).length === 0
-					? 'bg-primary-100 text-primary-700 font-medium'
-					: 'text-gray-700 hover:bg-white/50'}"
+					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200'
+					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 dark:hover:bg-white/10'}"
 				href="/"
 			>
 				<IconWorld class="mr-2 h-5 w-5" />
@@ -200,8 +200,8 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
               {page.url.searchParams.get('favorite') === ''
-					? 'bg-primary-100 text-primary-700 font-medium'
-					: 'text-gray-700 hover:bg-white/50'}"
+					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200'
+					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 dark:hover:bg-white/10'}"
 				href="/?favorite"
 			>
 				<IconStar class="mr-2 h-5 w-5" />
@@ -210,8 +210,8 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
               {page.url.searchParams.get('archived') === ''
-					? 'bg-primary-100 text-primary-700 font-medium'
-					: 'text-gray-700 hover:bg-white/50'}"
+					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200'
+					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 dark:hover:bg-white/10'}"
 				href="/?archived"
 			>
 				<IconArchive class="mr-2 h-5 w-5" />
@@ -221,7 +221,7 @@
 
 		{#if categories.length > 0}
 			<div class="mt-6 mb-3">
-				<h3 class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+				<h3 class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
 					Categories
 				</h3>
 			</div>
@@ -231,8 +231,8 @@
 						href="/?category={category.id}"
 						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all
                 {page.url.searchParams.get('category') === category.id
-							? 'bg-secondary-100 text-secondary-700 font-medium'
-							: 'text-gray-700 hover:bg-white/50'}"
+							? 'bg-secondary-100 text-secondary-700 font-medium dark:outline dark:bg-transparent dark:text-secondary-200'
+							: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 dark:hover:bg-white/10'}"
 					>
 						<IconFolder class="mr-2 h-5 w-5" />
 						{category.name}
@@ -245,7 +245,7 @@
 
 <!-- fab -->
 <button
-	class="bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 fixed right-8 bottom-10 z-50 flex h-12 w-18 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none md:hidden"
+	class="bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 fixed right-8 bottom-10 z-50 flex h-12 w-18 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none md:hidden dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-offset-gray-800"
 	onclick={handleAddBookmark}
 	style:transform={isMenuOpen ? 'translateX(15rem)' : 'translateX(0)'}
 >

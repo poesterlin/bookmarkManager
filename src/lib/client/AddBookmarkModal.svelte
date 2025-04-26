@@ -4,7 +4,7 @@
 	import { enhance } from '$app/forms';
 	import type { Category } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
-	import { IconLoader, IconTimeDuration0 } from '@tabler/icons-svelte';
+	import { IconLoader, IconTimeDuration0, IconX } from '@tabler/icons-svelte';
 	import Modal from './Modal.svelte';
 
 	interface Props {
@@ -154,10 +154,7 @@
 </script>
 
 <Modal onClose={handleCancel}>
-	<div
-		class=""
-		transition:fade={{ duration: 150 }}
-	>
+	<div class="" transition:fade={{ duration: 150 }}>
 		<form
 			use:enhance={() => {
 				return ({ update }) => {
@@ -178,7 +175,9 @@
 			<div class="space-y-4">
 				<!-- URL, Title, Description, Category inputs remain the same -->
 				<div>
-					<label for="url" class="block text-sm font-medium text-gray-700">URL</label>
+					<label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+						URL
+					</label>
 					<div class="input mt-1 flex overflow-hidden !p-0">
 						<input
 							type="text"
@@ -202,7 +201,9 @@
 				</div>
 
 				<div>
-					<label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+					<label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+						Title</label
+					>
 					<input
 						type="text"
 						id="title"
@@ -215,8 +216,11 @@
 				</div>
 
 				<div>
-					<label for="description" class="block text-sm font-medium text-gray-700"
-						>Description (optional)</label
+					<label
+						for="description"
+						class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+					>
+						Description (optional)</label
 					>
 					<textarea
 						id="description"
@@ -229,7 +233,9 @@
 				</div>
 
 				<div>
-					<label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+					<label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+						>Category</label
+					>
 					{#if showNewCategoryInput}
 						<div class="mt-1 flex">
 							<input
@@ -246,10 +252,19 @@
 						</div>
 					{:else}
 						<div class="mt-1 flex">
-							<select id="category" class="input w-full" name="category">
-								<option value="">Select a category</option>
+							<select
+								id="category"
+								class="input w-full bg-white dark:bg-gray-800 dark:text-gray-200"
+								bind:value={newCategory}
+								name="category"
+							>
+								<option value="" selected class="bg-white dark:bg-gray-900 dark:text-gray-200/60">
+									Select a category</option
+								>
 								{#each categories as cat}
-									<option value={cat.id}>{cat.name}</option>
+									<option value={cat.id} class="bg-white dark:bg-gray-800 dark:text-gray-200">
+										{cat.name}</option
+									>
 								{/each}
 							</select>
 							<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
@@ -261,7 +276,9 @@
 
 				<!-- New Tag Input UI -->
 				<div class="tag-input-wrapper relative">
-					<label for="tag-input" class="block text-sm font-medium text-gray-700">Tags</label>
+					<label for="tag-input" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+						Tags</label
+					>
 					<!-- svelte-ignore a11y_no_abstract_role -->
 					<!-- svelte-ignore a11y_click_events_have_key_events -->
 					<div
@@ -271,26 +288,16 @@
 					>
 						{#each selectedTags as tag (tag)}
 							<span
-								class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
+								class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
 							>
 								{tag}
 								<button
 									type="button"
-									class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+									class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
 									onclick={stopPropagation(() => removeTag(tag))}
 									aria-label={`Remove ${tag} tag`}
 								>
-									<!-- Heroicon: x-mark -->
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 16 16"
-										fill="currentColor"
-										class="h-3 w-3"
-									>
-										<path
-											d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z"
-										/>
-									</svg>
+									<IconX class="h-3 w-3" />
 								</button>
 							</span>
 						{/each}
@@ -308,7 +315,7 @@
 					<!-- Suggestions Dropdown -->
 					{#if showSuggestions && filteredTags.length > 0}
 						<ul
-							class="ring-opacity-5 absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border border-gray-300 bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm"
+							class="ring-opacity-5 absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border border-gray-300 bg-white py-1 text-base shadow-lg ring-1 ring-black focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
 						>
 							{#each filteredTags as tag, index (tag)}
 								<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -316,7 +323,7 @@
 								<li
 									class="relative cursor-pointer px-3 py-2 select-none hover:bg-gray-100 {activeSuggestionIndex ===
 									index
-										? 'bg-gray-100'
+										? 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200'
 										: ''}"
 									onclick={() => handleSuggestionClick(tag)}
 									onmouseenter={() => (activeSuggestionIndex = index)}

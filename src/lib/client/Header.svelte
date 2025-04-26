@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
+	import { IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
 	import { searchStore } from './search.svelte';
 
 	let searchQuery = $state('');
@@ -40,9 +40,23 @@
 
 		search();
 	});
+
+	function toggleDarkMode() {
+		document.documentElement.classList.toggle(
+			'dark',
+			localStorage.theme === 'dark' ||
+				(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+		);
+
+		if (localStorage.theme === 'dark') {
+			localStorage.theme = 'light';
+		} else {
+			localStorage.theme = 'dark';
+		}
+	}
 </script>
 
-<header class="z-40 px-4 py-3" class:shadow={isScrolled}>
+<header class="border-secondary-200/20 z-40 border-b-2 px-4 py-3" class:shadow={isScrolled}>
 	<a class="flex items-center justify-center" href="/">
 		<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
 		<span class="text-primary-500 mr-1 text-2xl font-bold md:hidden">B</span>
@@ -74,10 +88,19 @@
 		{/if}
 	</div>
 
-	<div class="flex items-center justify-end">
+	<div class="flex items-center justify-end gap-4">
 		<a href="/profile" aria-current={page.url.pathname === '/profile'} title="Profile">
 			<IconUserCircle class="m-auto h-8 w-8 -translate-y-0.5 text-slate-500"></IconUserCircle>
 		</a>
+
+		<button
+			type="button"
+			class="flex items-center justify-center rounded-full bg-slate-200 p-1 text-slate-500 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600"
+			onclick={toggleDarkMode}
+			title="Toggle Dark Mode"
+		>
+			<IconMoon></IconMoon>
+		</button>
 	</div>
 </header>
 
