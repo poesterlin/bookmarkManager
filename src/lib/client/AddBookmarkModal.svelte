@@ -42,6 +42,8 @@
 			url = shareData.url || '';
 			title = shareData.title || '';
 			description = shareData.description || '';
+
+			autofill();
 		}
 	});
 

@@ -9,15 +9,25 @@
 	import type { PageServerData } from './$types';
 	import { page } from '$app/state';
 	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
+	import { onMount } from 'svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
-	let shareData = $state({ title: "", text: "", url: "" });
+	let shareData = $state({ title: '', text: '', url: '' });
 
 	afterNavigate(() => {
 		searchStore.clear();
 	});
+
+	onMount(()=>{
+		navigator.serviceWorker.addEventListener("message", (event) => {
+			if (event.data.type === 'web-share-target') {
+				shareData = event.data;
+				handleAddBookmark();
+			}
+		});
+	})
 
 	const handleAddBookmark = () => {
 		pushState('', {
@@ -32,20 +42,12 @@
 			bookmark: null
 		});
 	};
-
-	function onmessage(event: MessageEvent) {
-		if (event.data.type === 'web-share-target') {
-			shareData = event.data.payload;
-			handleAddBookmark();
-		} 
-	}
 </script>
 
 <svelte:window
 	onscrollcapture={() => {
 		isScrolled = (mainEl?.scrollTop ?? 0) > 0;
 	}}
-	onmessagecapture={onmessage}
 />
 
 <div class="flex flex-col">
@@ -54,7 +56,10 @@
 	<div class="flex flex-1">
 		<Sidebar {handleAddBookmark} categories={data.categories} />
 
-		<main class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8" bind:this={mainEl}>
+		<main
+			class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8"
+			bind:this={mainEl}
+		>
 			<div class="mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
@@ -73,7 +78,7 @@
 							{#if tag.name}
 								<a
 									href="/?tag={tag.id}"
-									class="bg-accent-100 text-accent-800 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium dark:bg-accent-900 dark:text-accent-300"
+									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-300 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
 								>
 									{tag.name}
 
