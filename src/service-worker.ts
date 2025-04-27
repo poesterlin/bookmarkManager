@@ -103,7 +103,8 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	console.log('Web Share Target', event.request.url);
+	console.log('Web Share Target', event.request);
+	debugger;
 
 	event.respondWith(
 		(async () => {
