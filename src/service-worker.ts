@@ -15,9 +15,13 @@ const staticAssets = new Set(to_cache);
 
 self.addEventListener('install', async (event) => {
 	async function cacheAssets(files: string[]) {
-		const cache = await caches.open(ASSETS);
-		await cache.addAll(files);
-		await self.skipWaiting();
+		try {
+			const cache = await caches.open(ASSETS);
+			await cache.addAll(files);
+			await self.skipWaiting();
+		} catch (err) {
+			console.error('Failed to cache assets', err);
+		}
 	}
 
 	if (enabled) {
@@ -144,27 +148,25 @@ self.addEventListener('fetch', (event) => {
 	);
 });
 
-
 // Function to send a message to all controlled clients
 async function sendMessageToClients(message: Record<string, unknown>) {
 	try {
-	  // Get all window clients controlled by this service worker
-	  const clients = await self.clients.matchAll({
-		type: "window",
-		includeUncontrolled: true, // Often useful to include clients not yet fully controlled
-	  });
-  
-	  if (!clients || clients.length === 0) {
-		console.log("SW: No clients to send message to.");
-		return;
-	  }
-  
-	  console.log("SW: Sending message to clients:", clients, message);
-	  clients.forEach((client) => {
-		client.postMessage(message);
-	  });
+		// Get all window clients controlled by this service worker
+		const clients = await self.clients.matchAll({
+			type: 'window',
+			includeUncontrolled: true // Often useful to include clients not yet fully controlled
+		});
+
+		if (!clients || clients.length === 0) {
+			console.log('SW: No clients to send message to.');
+			return;
+		}
+
+		console.log('SW: Sending message to clients:', clients, message);
+		clients.forEach((client) => {
+			client.postMessage(message);
+		});
 	} catch (error) {
-	  console.error("SW Error sending message:", error);
+		console.error('SW Error sending message:', error);
 	}
-  }
-  
+}
