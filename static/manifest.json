@@ -27,7 +27,7 @@
 		"params": {
 			"url": "url",
             "title": "title",
-            "text": "description"
+            "text": "text"
 		}
 	},
 	"screenshots": [

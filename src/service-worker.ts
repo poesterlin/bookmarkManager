@@ -96,7 +96,7 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	const { origin, pathname } = new URL(event.request.url);
+	const { pathname } = new URL(event.request.url);
 
 	if (pathname !== '/_/web-share-target') {
 		event.respondWith(fetch(event.request));
@@ -108,10 +108,15 @@ self.addEventListener('fetch', (event) => {
 
 	event.respondWith(
 		(async () => {
+			console.log("Received FormData Entries:");
 			const formData = await event.request.formData();
-			const url = formData.get('url') as string | null;
-			const title = formData.get('title') as string;
-			const description = formData.get('description') as string;
+			for (const [key, value] of formData.entries()) {
+				console.log(`${key}: ${value}`);
+			}
+
+			const url = formData.get('url') as string | undefined;
+			const title = formData.get('title') as string | undefined;
+			const description = formData.get('text') as string | undefined;
 			console.log('Web Share Target', { url, title, description });
 
 			if (url && URL.canParse(url)) {
@@ -122,7 +127,7 @@ self.addEventListener('fetch', (event) => {
 				await saveBookmark({ url: description, title });
 			}
 
-			return Response.redirect(origin, 303);
+			return Response.redirect('/', 303);
 		})()
 	);
 });
