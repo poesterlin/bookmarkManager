@@ -118,47 +118,27 @@ self.addEventListener('fetch', (event) => {
 			const url = formData.get('url') as string | undefined;
 			const title = formData.get('title') as string | undefined;
 			const description = formData.get('text') as string | undefined;
+
 			console.log('Web Share Target', { url, title, description });
 
 			if (url && URL.canParse(url)) {
-				await saveBookmark(origin, { url, title, description });
+				postMessage({
+					type: 'web-share-target',
+					url,
+					title,
+					description
+				});
 			}
 			// sometimes the URL is not passed in the url field, but in the description
 			else if (description && URL.canParse(description)) {
-				await saveBookmark(origin, { url: description, title });
+				postMessage({
+					type: 'web-share-target',
+					url: description,
+					title
+				});
 			}
 
 			return Response.redirect('/', 303);
 		})()
 	);
 });
-
-async function saveBookmark(
-	origin: string,
-	bookmark: { url: string; title?: string; description?: string }
-) {
-	const res = await fetch(origin + 'info', {
-		method: 'POST',
-		body: JSON.stringify({ url: bookmark.url }),
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	});
-
-	if (!res.ok) {
-		throw new Error('Failed to save bookmark');
-	}
-
-	const info = await res.json();
-
-	const form = new FormData();
-	form.append('url', bookmark.url);
-	form.append('title', bookmark.title ?? info.title);
-	form.append('description', bookmark.description ?? info.description);
-	form.append('favicon', info.favicon);
-
-	await fetch(origin + '/?/add', {
-		method: 'POST',
-		body: form
-	});
-}

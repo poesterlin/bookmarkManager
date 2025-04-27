@@ -11,9 +11,14 @@
 		onClose: () => void;
 		categories: Category[];
 		existingTags?: string[];
+		shareData?: {
+			title?: string;
+			description?: string;
+			url?: string;
+		};
 	}
 
-	let { onClose, categories, existingTags = [] }: Props = $props();
+	let { onClose, categories, existingTags = [], shareData }: Props = $props();
 
 	let loading = $state(false);
 	let url = $state('');
@@ -31,6 +36,14 @@
 	let filteredTags: string[] = $state([]);
 	let showSuggestions = $state(false);
 	let activeSuggestionIndex = $state(-1);
+
+	$effect(() => {
+		if (shareData) {
+			url = shareData.url || '';
+			title = shareData.title || '';
+			description = shareData.description || '';
+		}
+	});
 
 	// Reactive statement for tag suggestions
 	run(() => {

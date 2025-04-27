@@ -13,6 +13,7 @@
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
+	let shareData = $state({ title: "", text: "", url: "" });
 
 	afterNavigate(() => {
 		searchStore.clear();
@@ -31,12 +32,20 @@
 			bookmark: null
 		});
 	};
+
+	function onmessage(event: MessageEvent) {
+		if (event.data.type === 'web-share-target') {
+			shareData = event.data.payload;
+			handleAddBookmark();
+		} 
+	}
 </script>
 
 <svelte:window
 	onscrollcapture={() => {
 		isScrolled = (mainEl?.scrollTop ?? 0) > 0;
 	}}
+	onmessagecapture={onmessage}
 />
 
 <div class="flex flex-col">
@@ -86,6 +95,7 @@
 			onClose={handleCloseModal}
 			categories={data.categories}
 			existingTags={data.tags.map((tag) => tag.name)}
+			{shareData}
 		/>
 	{/if}
 
