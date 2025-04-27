@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
 	}
 
 	const { origin, pathname } = new URL(event.request.url);
-	
+
 	if (pathname !== '/_/web-share-target') {
 		event.respondWith(fetch(event.request));
 		return;
@@ -110,8 +110,13 @@ self.addEventListener('fetch', (event) => {
 			const title = formData.get('title') as string;
 			const description = formData.get('description') as string;
 
-			if (url) {
+			if (url && URL.canParse(url)) {
 				await saveBookmark(origin, { url, title, description });
+			}
+
+			// sometimes the URL is not passed in the url field, but in the description
+			if (description && URL.canParse(description)) {
+				await saveBookmark(origin, { title, url: description });
 			}
 
 			return Response.redirect(origin, 303);
