@@ -53,7 +53,6 @@
 			"platform": "android",
             "form_factor": "narrow",
 			"label": "Home screen showing main navigation and featured content"
-		},
-
+		}
 	]
 }
