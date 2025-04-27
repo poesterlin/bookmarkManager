@@ -62,18 +62,18 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	if (event.request.method !== 'GET') {
+	if (request.method !== 'GET') {
 		return;
 	}
 
-	const url = new URL(event.request.url);
+	const url = new URL(request.url);
 
 	// don't try to handle e.g. data: URIs
 	const isHttp = url.protocol.startsWith('http');
 	const isDevServerRequest =
 		url.hostname === self.location.hostname && url.port !== self.location.port;
 	const isStaticAsset = url.host === self.location.host && staticAssets.has(url.pathname);
-	const skipBecauseUncached = event.request.cache === 'only-if-cached' && !isStaticAsset;
+	const skipBecauseUncached = request.cache === 'only-if-cached' && !isStaticAsset;
 
 	if (isHttp && !isDevServerRequest && !skipBecauseUncached) {
 		event.respondWith(
@@ -81,35 +81,37 @@ self.addEventListener('fetch', (event) => {
 				// always serve static files and bundler-generated assets from cache.
 				// if your application has other URLs with data that will never change,
 				// set this variable to true for them and they will only be fetched once.
-				const cachedAsset = isStaticAsset && (await caches.match(event.request));
+				const cachedAsset = isStaticAsset && (await caches.match(request));
 
-				return cachedAsset || fetchAndCache(event.request);
+				return cachedAsset || fetchAndCache(request);
 			})()
 		);
 	}
 });
 
 self.addEventListener('fetch', (event) => {
+	const { request } = event;
+
 	// Regular requests not related to Web Share Target.
-	if (event.request.method !== 'POST') {
-		event.respondWith(fetch(event.request));
+	if (request.method !== 'POST') {
+		event.respondWith(fetch(request));
 		return;
 	}
 
-	const { pathname } = new URL(event.request.url);
+	const { pathname } = new URL(request.url);
 
 	if (pathname !== '/_/web-share-target') {
-		event.respondWith(fetch(event.request));
+		event.respondWith(fetch(request));
 		return;
 	}
 
-	console.log('Web Share Target', event.request);
+	console.info('Web Share Target', request);
 	debugger;
 
 	event.respondWith(
 		(async () => {
-			console.log("Received FormData Entries:");
-			const formData = await event.request.formData();
+			console.log('Received FormData Entries:');
+			const formData = await request.formData();
 			for (const [key, value] of formData.entries()) {
 				console.log(`${key}: ${value}`);
 			}

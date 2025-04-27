@@ -2,7 +2,7 @@
 	"name": "Bookmark Manager",
 	"short_name": "Bookmarks",
 	"theme_color": "#FF6B98",
-	"background_color": "#5EEAD4",
+	"background_color": "#FFC5DB",
 	"orientation": "any",
 	"display": "standalone",
 	"dir": "auto",
@@ -43,14 +43,6 @@
 			"sizes": "390x844",
 			"type": "image/webp",
 			"platform": "ios",
-            "form_factor": "narrow",
-			"label": "Home screen showing main navigation and featured content"
-		},
-		{
-			"src": "screenshots/home_mobile.webp",
-			"sizes": "390x844",
-			"type": "image/webp",
-			"platform": "android",
             "form_factor": "narrow",
 			"label": "Home screen showing main navigation and featured content"
 		}
