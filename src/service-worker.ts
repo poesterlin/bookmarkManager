@@ -98,15 +98,14 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	const { pathname } = new URL(request.url);
+	const { pathname, origin } = new URL(request.url);
 
 	if (pathname !== '/_/web-share-target') {
 		event.respondWith(fetch(request));
 		return;
 	}
 
-	console.info('Web Share Target', request);
-	debugger;
+	console.info('Web Share Target', request, origin);
 
 	event.respondWith(
 		(async () => {
@@ -122,11 +121,11 @@ self.addEventListener('fetch', (event) => {
 			console.log('Web Share Target', { url, title, description });
 
 			if (url && URL.canParse(url)) {
-				await saveBookmark({ url, title, description });
+				await saveBookmark(origin, { url, title, description });
 			}
 			// sometimes the URL is not passed in the url field, but in the description
 			else if (description && URL.canParse(description)) {
-				await saveBookmark({ url: description, title });
+				await saveBookmark(origin, { url: description, title });
 			}
 
 			return Response.redirect('/', 303);
@@ -134,8 +133,11 @@ self.addEventListener('fetch', (event) => {
 	);
 });
 
-async function saveBookmark(bookmark: { url: string; title?: string; description?: string }) {
-	const res = await fetch('/info', {
+async function saveBookmark(
+	origin: string,
+	bookmark: { url: string; title?: string; description?: string }
+) {
+	const res = await fetch(origin + 'info', {
 		method: 'POST',
 		body: JSON.stringify({ url: bookmark.url }),
 		headers: {
@@ -155,7 +157,7 @@ async function saveBookmark(bookmark: { url: string; title?: string; description
 	form.append('description', bookmark.description ?? info.description);
 	form.append('favicon', info.favicon);
 
-	await fetch('/?/add', {
+	await fetch(origin + '/?/add', {
 		method: 'POST',
 		body: form
 	});
