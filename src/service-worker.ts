@@ -88,3 +88,63 @@ self.addEventListener('fetch', (event) => {
 		);
 	}
 });
+
+self.addEventListener('fetch', (event) => {
+	// Regular requests not related to Web Share Target.
+	if (event.request.method !== 'POST') {
+		event.respondWith(fetch(event.request));
+		return;
+	}
+
+	const { origin, pathname } = new URL(event.request.url);
+	
+	if (pathname !== '/_/web-share-target') {
+		event.respondWith(fetch(event.request));
+		return;
+	}
+
+	event.respondWith(
+		(async () => {
+			const formData = await event.request.formData();
+			const url = formData.get('url') as string | null;
+			const title = formData.get('title') as string;
+			const description = formData.get('description') as string;
+
+			if (url) {
+				await saveBookmark(origin, { url, title, description });
+			}
+
+			return Response.redirect(origin, 303);
+		})()
+	);
+});
+
+async function saveBookmark(
+	host: string,
+	bookmark: { url: string; title?: string; description?: string }
+) {
+	const res = await fetch(host + '/info', {
+		method: 'POST',
+		body: JSON.stringify({ url: bookmark.url }),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
+
+	if (!res.ok) {
+		throw new Error('Failed to save bookmark');
+	}
+
+	const info = await res.json();
+
+	const form = new FormData();
+	form.append('url', bookmark.url);
+	form.append('title', bookmark.title ?? info.title);
+	form.append('description', bookmark.description ?? info.description);
+	form.append('favicon', info.favicon);
+
+	await fetch(host + '/?/add', {
+		method: 'POST',
+		body: form
+	});
+}
