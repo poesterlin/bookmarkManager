@@ -62,11 +62,11 @@ async function fetchAndCache(request) {
 }
 
 self.addEventListener('fetch', (event) => {
-	const { request } = event;
 	if (!enabled) {
 		return;
 	}
-
+	
+	const { request } = event;
 	if (request.method !== 'GET') {
 		return;
 	}
@@ -93,80 +93,3 @@ self.addEventListener('fetch', (event) => {
 		);
 	}
 });
-
-self.addEventListener('fetch', (event) => {
-	const { request } = event;
-
-	// Regular requests not related to Web Share Target.
-	if (request.method !== 'POST') {
-		event.respondWith(fetch(request));
-		return;
-	}
-
-	const { pathname, origin } = new URL(request.url);
-
-	if (pathname !== '/_/web-share-target') {
-		event.respondWith(fetch(request));
-		return;
-	}
-
-	console.info('Web Share Target', request, origin);
-
-	event.respondWith(
-		(async () => {
-			console.log('Received FormData Entries:');
-			const formData = await request.formData();
-			for (const [key, value] of formData.entries()) {
-				console.log(`${key}: ${value}`);
-			}
-
-			const url = formData.get('url') as string | undefined;
-			const title = formData.get('title') as string | undefined;
-			const description = formData.get('text') as string | undefined;
-
-			console.log('Web Share Target', { url, title, description });
-
-			if (url && URL.canParse(url)) {
-				await sendMessageToClients({
-					type: 'web-share-target',
-					url,
-					title,
-					description
-				});
-			}
-			// sometimes the URL is not passed in the url field, but in the description
-			else if (description && URL.canParse(description)) {
-				await sendMessageToClients({
-					type: 'web-share-target',
-					url: description,
-					title
-				});
-			}
-
-			return Response.redirect('/', 303);
-		})()
-	);
-});
-
-// Function to send a message to all controlled clients
-async function sendMessageToClients(message: Record<string, unknown>) {
-	try {
-		// Get all window clients controlled by this service worker
-		const clients = await self.clients.matchAll({
-			type: 'window',
-			includeUncontrolled: true // Often useful to include clients not yet fully controlled
-		});
-
-		if (!clients || clients.length === 0) {
-			console.log('SW: No clients to send message to.');
-			return;
-		}
-
-		console.log('SW: Sending message to clients:', clients, message);
-		clients.forEach((client) => {
-			client.postMessage(message);
-		});
-	} catch (error) {
-		console.error('SW Error sending message:', error);
-	}
-}

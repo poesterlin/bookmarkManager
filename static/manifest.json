@@ -21,9 +21,8 @@
 		}
 	],
 	"share_target": {
-		"action": "/_/web-share-target",
-        "method": "POST",
-        "enctype": "multipart/form-data",
+		"action": "/?sharetarget=true",
+        "method": "GET",
         "params": {
             "title": "title",
             "text": "text",

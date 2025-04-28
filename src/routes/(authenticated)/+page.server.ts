@@ -35,7 +35,13 @@ const optionsSchema = z.object({
 	archived: z
 		.string()
 		.transform((val) => !val || val === 'true')
-		.optional()
+		.optional(),
+
+	// share target params
+	sharetarget: z.string().optional().transform((val) => val === 'true'),
+	title: z.string().optional(),
+	text: z.string().optional(),
+	url: z.string().optional()
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -136,7 +142,12 @@ export const load: PageServerLoad = async (event) => {
 		bookmarks,
 		categories,
 		tags,
-		filteredTag
+		filteredTag,
+		shareTarget: {
+			title: options.title,
+			text: options.text,
+			url: options.url
+		},
 	};
 };
 
@@ -245,8 +256,11 @@ export const actions: Actions = {
 						newTags.map((tag, i) => ({
 							id: newTagsIds[i],
 							name: tag,
-							userId: locals.user.id
-						}))
+							userId: locals.user.id,
+							createdAt: new Date(),
+							updatedAt: new Date()
+						} satisfies typeof tagsTable.$inferInsert
+					))
 					);
 
 					await tx.insert(bookmarkTags).values(

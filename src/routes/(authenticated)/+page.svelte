@@ -1,33 +1,22 @@
 <script lang="ts">
 	import { afterNavigate, pushState, replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	import AddBookmarkModal from '$lib/client/AddBookmarkModal.svelte';
 	import BookmarkList from '$lib/client/BookmarkList.svelte';
+	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
 	import Header from '$lib/client/Header.svelte';
 	import { searchStore } from '$lib/client/search.svelte';
 	import Sidebar from '$lib/client/Sidebar.svelte';
 	import { IconX } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
-	import { page } from '$app/state';
-	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
-	import { onMount } from 'svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
-	let shareData = $state({ title: '', text: '', url: '' });
 
 	afterNavigate(() => {
 		searchStore.clear();
 	});
-
-	onMount(()=>{
-		navigator.serviceWorker.addEventListener("message", (event) => {
-			if (event.data.type === 'web-share-target') {
-				shareData = event.data;
-				handleAddBookmark();
-			}
-		});
-	})
 
 	const handleAddBookmark = () => {
 		pushState('', {
@@ -100,7 +89,7 @@
 			onClose={handleCloseModal}
 			categories={data.categories}
 			existingTags={data.tags.map((tag) => tag.name)}
-			{shareData}
+			shareData={data.shareTarget}
 		/>
 	{/if}
 
