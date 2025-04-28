@@ -172,7 +172,7 @@
 />
 
 <aside
-	class="glass fixed z-40 h-[calc(100vh-68px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform md:static md:!translate-0"
+	class="glass fixed z-40 h-[calc(100vh-68px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform md:static md:!translate-0 dark:!border-0"
 	style:translate={toPercent(deltaX)}
 	class:immediate={isSwiping}
 	class:hide={!isMenuOpen}
@@ -238,6 +238,10 @@
 						{category.name}
 					</a>
 				{/each}
+
+				<a href="/?title=bookmark&link=https://facebook.com">
+					Bookmark
+				></a>
 			</nav>
 		{/if}
 	</div>

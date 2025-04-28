@@ -62,7 +62,7 @@
 				{#if data.filteredTag}
 					<a
 						href="/"
-						class="mb-4 flex w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+						class="mb-4 flex w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-100"
 					>
 						{data.filteredTag.name}
 
@@ -76,7 +76,7 @@
 							{#if tag.name}
 								<a
 									href="/?tag={tag.id}"
-									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-300 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
+									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
 								>
 									{tag.name}
 
