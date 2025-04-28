@@ -21,10 +21,10 @@
 	let { onClose, categories, existingTags = [], shareData }: Props = $props();
 
 	let loading = $state(false);
-	let url = $state('');
-	let title = $state('');
-	let description = $state('');
-	let newCategory = $state('');
+	let url = $state<string>();
+	let title = $state<string>();
+	let description = $state<string>();
+	let newCategory = $state<string>();
 	let showNewCategoryInput = $state(false);
 	let theme = $state<string>();
 	let favicon = $state<string>();
@@ -32,26 +32,26 @@
 
 	// --- Tag Input State ---
 	let selectedTags: string[] = $state([]);
-	let tagInput = $state('');
+	let tagInput = $state<string>();
 	let filteredTags: string[] = $state([]);
 	let showSuggestions = $state(false);
 	let activeSuggestionIndex = $state(-1);
 
 	$effect(() => {
-		if (shareData) {
-			url = shareData.url || '';
-			title = shareData.title || '';
-			description = shareData.description || '';
+		if (shareData && shareData.url) {
+			url = shareData.url;
+			title = shareData.title;
+			description = shareData.description;
 
 			autofill();
 		}
 	});
 
 	// Reactive statement for tag suggestions
-	run(() => {
-		if (tagInput.trim()) {
+	$effect(() => {
+		if (tagInput && tagInput.trim()) {
 			filteredTags = existingTags.filter(
-				(tag) => tag.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(tag)
+				(tag) => tag.toLowerCase().includes(tagInput!.toLowerCase()) && !selectedTags.includes(tag)
 			);
 			showSuggestions = filteredTags.length > 0;
 		} else {
@@ -118,6 +118,11 @@
 	}
 
 	function handleTagInputKeydown(event: KeyboardEvent) {
+		if (!tagInput || tagInput.trim() === '') {
+			showSuggestions = false; // Hide suggestions if input is empty
+			return;
+		}
+
 		switch (event.key) {
 			case 'Enter':
 			case ' ':
