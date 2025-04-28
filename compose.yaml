@@ -7,7 +7,6 @@ services:
       - 'traefik.enable=true'
       - 'traefik.http.routers.rtcam.rule=Host(`${HOST_DOMAIN}`)'
       - 'traefik.http.services.rtcam.loadbalancer.server.port=3000'
-      # - 'terminate.idle=true'
     networks:
       - traefik_web
 

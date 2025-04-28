@@ -71,7 +71,6 @@
 				{:then imageUrl}
 					{@render img(imageUrl)}
 				{:catch error}
-					{@const log = console.error('Error loading image', error)}
 					{@render fallbackIcon()}
 				{/await}
 			{:else}

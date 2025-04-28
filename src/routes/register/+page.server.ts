@@ -6,22 +6,43 @@ import { hash } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
+import { env } from '$env/dynamic/private';
+import { count } from 'drizzle-orm';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
 		return redirect(302, '/');
 	}
 
+	if (env.MAX_USER_COUNT) {
+		const maxUserCount = parseInt(env.MAX_USER_COUNT, 10);
+		const userCount = await numberOfUsers();
+
+		if (userCount >= maxUserCount) {
+			return redirect(302, '/login');
+		}
+	}
+
 	return {};
 };
 
+async function numberOfUsers() {
+	const [{ value }] = await db
+		.select({
+			value: count()
+		})
+		.from(table.usersTable);
+
+	return value ?? 0;
+}
+
 const zEmptyStrToUndefined = z.preprocess((arg) => {
 	if (typeof arg === 'string' && arg === '') {
-	  return undefined
+		return undefined;
 	} else {
-	  return arg
+		return arg;
 	}
-  }, z.string().optional())
+}, z.string().optional());
 
 export const actions: Actions = {
 	register: validateForm(
@@ -32,6 +53,15 @@ export const actions: Actions = {
 			redirect: z.string().optional()
 		}),
 		async (event, form) => {
+			if (env.MAX_USER_COUNT) {
+				const maxUserCount = parseInt(env.MAX_USER_COUNT, 10);
+				const userCount = await numberOfUsers();
+
+				if (userCount >= maxUserCount) {
+					return fail(400, { message: 'Oopsie! It looks like we have reached the maximum number of registered users. Please try again later! 😊' });
+				}
+			}
+
 			const { username, password } = form;
 
 			if (!validateUsername(username)) {
@@ -76,13 +106,11 @@ export const actions: Actions = {
 				if (e instanceof Error && 'code' in e && e.code === '23505' && 'constraint' in e) {
 					if (e.constraint === 'user_email_unique') {
 						return fail(400, {
-							message:
-								'Oopsie! It looks like this email is already in use. Please try again! 😊'
+							message: 'Oopsie! It looks like this email is already in use. Please try again! 😊'
 						});
 					} else if (e.constraint === 'user_username_unique') {
 						return fail(400, {
-							message:
-								'Oopsie! It looks like this username is already in use. Please try again! 😊'
+							message: 'Oopsie! It looks like this username is already in use. Please try again! 😊'
 						});
 					}
 				}

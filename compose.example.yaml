@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
