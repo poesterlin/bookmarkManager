@@ -45,10 +45,11 @@
 		"vite": "^6.3.3"
 	},
 	"dependencies": {
+		"@node-rs/argon2": "^2.0.2",
 		"@tabler/icons-svelte": "^3.31.0",
 		"@types/jsdom": "^21.1.7",
-		"@node-rs/argon2": "^2.0.2",
 		"autoprefixer": "^10.4.21",
+		"comlink": "^4.4.2",
 		"drizzle-orm": "^0.40.1",
 		"jsdom": "^26.1.0",
 		"zod": "^3.24.3"

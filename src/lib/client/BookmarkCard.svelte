@@ -6,12 +6,15 @@
 		IconArchive,
 		IconCopy,
 		IconExternalLink,
+		IconLoader,
 		IconPencil,
 		IconRestore,
 		IconStar,
 		IconStarFilled,
 		IconTrash
 	} from '@tabler/icons-svelte';
+	import { app } from './app.svelte';
+	import { getWorkerInstance } from './util';
 
 	interface Props {
 		bookmark: Bookmark;
@@ -34,7 +37,26 @@
 			bookmark: structuredClone(bookmark)
 		});
 	}
+
+	function getImageUrl(isDarkMode: boolean) {
+		if (!isDarkMode) {
+			return `/icon/${bookmark.id}`;
+		}
+
+		const worker = getWorkerInstance();
+		return worker.getProcessedImageUrl(bookmark.id);
+	}
 </script>
+
+{#snippet fallbackIcon()}
+	<div
+		class="bg-primary-200 text-primary-500 dark:bg-primary-700 dark:text-primary-200 flex h-6 w-6 items-center justify-center rounded-full font-bold uppercase"
+		style:background={bookmark.theme}
+		aria-hidden="true"
+	>
+		{bookmark.title.charAt(0)}
+	</div>
+{/snippet}
 
 <!-- header -->
 <div class="card-grid">
@@ -43,19 +65,15 @@
 		class="icon mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm dark:bg-gray-800/70"
 	>
 		{#if bookmark.favicon}
-			<img
-				src="/icon/{bookmark.id}"
-				alt={bookmark.title}
-				class="filter-invert h-6 w-6 rounded-sm"
-			/>
+			{#await getImageUrl(app.isDarkMode)}
+				<IconLoader class="h-6 w-6 animate-spin text-gray-400" />
+			{:then imageUrl}
+				<img src={imageUrl} alt="" class="h-6 w-6 rounded-sm" />
+			{:catch _error}
+				{@render fallbackIcon()}
+			{/await}
 		{:else}
-			<div
-				class="bg-primary-200 text-primary-500 dark:bg-primary-700 dark:text-primary-200 flex h-6 w-6 items-center justify-center rounded-full font-bold"
-				style:background={bookmark.theme}
-				aria-hidden="true"
-			>
-				{bookmark.title.charAt(0)}
-			</div>
+			{@render fallbackIcon()}
 		{/if}
 	</div>
 
@@ -210,9 +228,5 @@
 		p.description {
 			grid-area: description;
 		}
-	}
-
-	:global(.dark) .filter-invert {
-		filter: invert(1) hue-rotate(190deg) saturate(1.5);
 	}
 </style>

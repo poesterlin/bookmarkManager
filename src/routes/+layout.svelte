@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import '../app.css';
+	import { app } from '$lib/client/app.svelte';
 
 	let { children } = $props();
 
@@ -10,6 +11,7 @@
 			(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
 		document.documentElement.classList.toggle('dark', darkModeEnabled);
+		app.setDarkMode(darkModeEnabled);
 	});
 </script>
 
