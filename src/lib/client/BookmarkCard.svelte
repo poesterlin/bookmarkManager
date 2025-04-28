@@ -104,9 +104,9 @@
 			aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 		>
 			{#if bookmark.isFavorite}
-				<IconStar></IconStar>
-			{:else}
 				<IconStarFilled></IconStarFilled>
+			{:else}
+				<IconStar></IconStar>
 			{/if}
 		</button>
 	</form>
