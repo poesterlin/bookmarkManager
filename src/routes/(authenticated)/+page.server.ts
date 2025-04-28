@@ -41,7 +41,7 @@ const optionsSchema = z.object({
 	sharetarget: z.string().optional().transform((val) => val === 'true'),
 	title: z.string().optional(),
 	text: z.string().optional(),
-	url: z.string().optional()
+	link: z.string().url().optional()
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -146,7 +146,7 @@ export const load: PageServerLoad = async (event) => {
 		shareTarget: {
 			title: options.title,
 			text: options.text,
-			url: options.url
+			url: options.link
 		},
 	};
 };

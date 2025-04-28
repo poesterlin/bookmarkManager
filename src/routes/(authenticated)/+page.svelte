@@ -9,6 +9,7 @@
 	import Sidebar from '$lib/client/Sidebar.svelte';
 	import { IconX } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
+	import { tick } from 'svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
@@ -18,19 +19,27 @@
 		searchStore.clear();
 	});
 
-	const handleAddBookmark = () => {
+	$effect(() => {
+		if (data.shareTarget.url) {
+			tick().then(() => {
+				handleAddBookmark();
+			});
+		}
+	});
+
+	function handleAddBookmark() {
 		pushState('', {
 			isAddModalOpen: true
 		});
-	};
+	}
 
-	const handleCloseModal = () => {
+	function handleCloseModal() {
 		replaceState('', {
 			isAddModalOpen: false,
 			isEditModalOpen: false,
 			bookmark: null
 		});
-	};
+	}
 </script>
 
 <svelte:window
