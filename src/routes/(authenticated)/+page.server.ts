@@ -137,6 +137,12 @@ export const load: PageServerLoad = async (event) => {
 		)
 		.orderBy(tagsTable.name);
 
+	// sometimes share target text is used for the link, not the link property
+	if (options.text && !options.link && URL.canParse(options.text)) {
+		options.link = options.text;
+		options.text = undefined;
+	}
+
 	return {
 		user: locals.user,
 		bookmarks,
