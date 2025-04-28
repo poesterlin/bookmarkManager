@@ -38,11 +38,7 @@
 		});
 	}
 
-	function getImageUrl(isDarkMode: boolean) {
-		if (!isDarkMode) {
-			return `/icon/${bookmark.id}`;
-		}
-
+	function getImageUrl() {
 		const worker = getWorkerInstance();
 		return worker.getProcessedImageUrl(bookmark.id);
 	}
@@ -50,12 +46,16 @@
 
 {#snippet fallbackIcon()}
 	<div
-		class="bg-primary-200 text-primary-500 dark:bg-primary-700 dark:text-primary-200 flex h-6 w-6 items-center justify-center rounded-full font-bold uppercase"
+		class="bg-primary-100 text-primary-600 dark:bg-primary-700 dark:text-primary-200 flex h-6 w-6 items-center justify-center rounded-full font-bold uppercase"
 		style:background={bookmark.theme}
 		aria-hidden="true"
 	>
 		{bookmark.title.charAt(0)}
 	</div>
+{/snippet}
+
+{#snippet img(src: string)}
+	<img {src} alt="" class="h-6 w-6 rounded-sm" />
 {/snippet}
 
 <!-- header -->
@@ -65,13 +65,18 @@
 		class="icon mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm dark:bg-gray-800/70"
 	>
 		{#if bookmark.favicon}
-			{#await getImageUrl(app.isDarkMode)}
-				<IconLoader class="h-6 w-6 animate-spin text-gray-400" />
-			{:then imageUrl}
-				<img src={imageUrl} alt="" class="h-6 w-6 rounded-sm" />
-			{:catch _error}
-				{@render fallbackIcon()}
-			{/await}
+			{#if app.isDarkMode}
+				{#await getImageUrl()}
+					<IconLoader class="h-6 w-6 animate-spin text-gray-400" />
+				{:then imageUrl}
+					{@render img(imageUrl)}
+				{:catch error}
+					{@const log = console.error('Error loading image', error)}
+					{@render fallbackIcon()}
+				{/await}
+			{:else}
+				{@render img(`/icon/${bookmark.id}`)}
+			{/if}
 		{:else}
 			{@render fallbackIcon()}
 		{/if}

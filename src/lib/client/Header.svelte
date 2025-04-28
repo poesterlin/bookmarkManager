@@ -4,6 +4,7 @@
 	import { IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
 	import { searchStore } from './search.svelte';
 	import { onMount } from 'svelte';
+	import { app } from './app.svelte';
 
 	let searchQuery = $state('');
 	let abortController: AbortController | null = null;
@@ -49,6 +50,7 @@
 
 		document.documentElement.classList.toggle('dark', !darkModeEnabled);
 		localStorage.theme = darkModeEnabled ? 'light' : 'dark';
+		app.setDarkMode(!darkModeEnabled);
 	}
 </script>
 
