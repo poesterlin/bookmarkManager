@@ -80,10 +80,6 @@ async function getProcessedImageUrl(id: string): Promise<string> {
 		const { blob, isSvg, svgText } = await getImage(id);
 
 		if (isSvg) {
-            console.log('http://localhost:5173/icon/' + id);
-            const blob = await fetch('http://localhost:5173/icon/' + id).then((res) => res.blob());
-            const url = URL.createObjectURL(blob);
-            console.log('Blob URL:', url);
 			return whiteSvg(svgText);
 		}
 
