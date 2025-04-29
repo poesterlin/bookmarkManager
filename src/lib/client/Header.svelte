@@ -69,7 +69,7 @@
 		<input
 			type="text"
 			placeholder="Search bookmarks..."
-			class="w-full border-none bg-transparent p-2 focus:outline-none"
+			class="w-full border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
 			bind:value={searchQuery}
 		/>
 		{#if searchQuery}
