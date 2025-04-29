@@ -2,6 +2,37 @@
 
 import { expose } from 'comlink';
 
+const cache = new Map<string, string>();
+
+async function getProcessedImageUrl(id: string): Promise<string> {
+	if (cache.has(id)) {
+		return cache.get(id)!;
+	}
+
+	try {
+		const { blob, isSvg, svgText } = await getImage(id);
+
+		if (isSvg) {
+			const svg = await whiteSvg(svgText);
+			cache.set(id, svg);
+			return svg;
+		}
+
+		const imageData = await processImage(blob);
+		const { canvas, ctx } = makeCanvas(imageData);
+		ctx.putImageData(imageData, 0, 0);
+		const output = await canvas.convertToBlob();
+		const url = URL.createObjectURL(output);
+		cache.set(id, url);
+		return url;
+	} catch (error) {
+		console.error('Error processing image:', error);
+		const url = `/icon/${id}`;
+		cache.set(id, url);
+		return url;
+	}
+}
+
 function isImageTooDark(imageData: ImageData) {
 	const { data } = imageData;
 	let totalBrightness = 0;
@@ -75,25 +106,6 @@ async function processImage(blob: Blob) {
 	}
 }
 
-async function getProcessedImageUrl(id: string): Promise<string> {
-	try {
-		const { blob, isSvg, svgText } = await getImage(id);
-
-		if (isSvg) {
-			return whiteSvg(svgText);
-		}
-
-		const imageData = await processImage(blob);
-		const { canvas, ctx } = makeCanvas(imageData);
-		ctx.putImageData(imageData, 0, 0);
-		const output = await canvas.convertToBlob();
-		return URL.createObjectURL(output);
-	} catch (error) {
-		console.error('Error processing image:', error);
-		return `/icon/${id}`;
-	}
-}
-
 function extractPathDataWithRegex(svgText: string): string[] {
 	const pathDataList: string[] = [];
 	const pathRegex = /<path\s+(?:[^>]*?\s+)?d\s*=\s*(["'])(.*?)\1[^>]*>/gi;
@@ -106,17 +118,17 @@ function extractPathDataWithRegex(svgText: string): string[] {
 		}
 	}
 
-    return pathDataList;
+	return pathDataList;
 }
 
 async function whiteSvg(svgText: string) {
 	try {
-        const viewBox = svgText.match(/viewBox="([^"]+)"/);
-        const width = viewBox ? viewBox[1].split(' ')[2] : 32; // Default to 100 if not found
+		const viewBox = svgText.match(/viewBox="([^"]+)"/);
+		const width = viewBox ? viewBox[1].split(' ')[2] : 32; // Default to 100 if not found
 
 		const { ctx, canvas } = makeCanvas({ width: Number(width), height: Number(width) });
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'black';
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = 'black';
 
 		const dAttributes = extractPathDataWithRegex(svgText);
 		if (dAttributes.length === 0) {
@@ -124,7 +136,7 @@ async function whiteSvg(svgText: string) {
 		}
 
 		for (let i = 0; i < dAttributes.length; i++) {
-            const dAttribute = dAttributes[i];
+			const dAttribute = dAttributes[i];
 			const path2d = new Path2D(dAttribute);
 
 			ctx.fillStyle = lerp(220, 20, i / dAttributes.length);
@@ -140,11 +152,11 @@ async function whiteSvg(svgText: string) {
 }
 
 function lerp(a: number, b: number, t: number) {
-    const brightness = a + (b - a) * t;
+	const brightness = a + (b - a) * t;
 
-    const round = Math.round(brightness);
-    const hex = round.toString(16).padStart(2, '0');
-    return `#${hex}${hex}${hex}`;
+	const round = Math.round(brightness);
+	const hex = round.toString(16).padStart(2, '0');
+	return `#${hex}${hex}${hex}`;
 }
 
 function makeCanvas(config: { width: number; height: number }) {
