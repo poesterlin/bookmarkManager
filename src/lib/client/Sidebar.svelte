@@ -238,10 +238,6 @@
 						{category.name}
 					</a>
 				{/each}
-
-				<a href="/?title=bookmark&link=https://facebook.com">
-					Bookmark
-				></a>
 			</nav>
 		{/if}
 	</div>
