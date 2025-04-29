@@ -35,8 +35,8 @@
           <div>
             <h3 class="text-white font-semibold mb-3">Legal</h3>
             <ul class="space-y-2">
-              <li><a href="/" class="text-gray-400 hover:text-primary-400 transition-colors">Privacy Policy</a></li>
-              <li><a href="/" class="text-gray-400 hover:text-primary-400 transition-colors">Terms of Service</a></li>
+              <li><a href="/privacy" class="text-gray-400 hover:text-primary-400 transition-colors">Privacy Policy</a></li>
+              <!-- <li><a href="/" class="text-gray-400 hover:text-primary-400 transition-colors">Terms of Service</a></li> -->
             </ul>
           </div>
         </div>
