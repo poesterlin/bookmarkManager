@@ -6,7 +6,7 @@ A simple bookmark manager that allows you to save, organize and track your bookm
 
 ## Features
 
-- Add, edit and delete bookmarks
+- Add and edit bookmarks
 - Organize bookmarks into categories
 - Search bookmarks
 - Tag bookmarks

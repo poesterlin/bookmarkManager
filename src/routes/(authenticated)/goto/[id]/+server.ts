@@ -10,7 +10,7 @@ export const GET: RequestHandler = async (event) => {
 
 	const [bookmark] = await db
 		.update(bookmarksTable)
-		.set({ clicks: sql`${bookmarksTable.clicks} + 1` })
+		.set({ clicks: sql`${bookmarksTable.clicks} + 1`, lastClicked: new Date() })
 		.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, id)))
 		.returning();
 

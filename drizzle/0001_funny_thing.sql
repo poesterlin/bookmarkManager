@@ -1,0 +1,1 @@
+ALTER TABLE "bookmarks" ADD COLUMN "last_clicked" timestamp with time zone;

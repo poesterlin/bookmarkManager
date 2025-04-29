@@ -38,6 +38,7 @@ export const bookmarksTable = pgTable('bookmarks', {
 		.notNull()
 		.references(() => usersTable.id, fullCascade),
 	clicks: integer('clicks').notNull().default(0),
+	lastClicked: timestamp('last_clicked', { withTimezone: true, mode: 'date' }),
 	deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
 });
 
