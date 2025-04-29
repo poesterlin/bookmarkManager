@@ -6,6 +6,12 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	if (!sessionToken) {
 		event.locals.user = null;
 		event.locals.session = null;
+
+		const isHomePage = event.url.pathname === '/';
+		if (isHomePage) {
+			return Response.redirect(new URL('/intro', event.url), 302);
+		}
+
 		return resolve(event);
 	}
 
