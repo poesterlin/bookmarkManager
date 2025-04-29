@@ -6,6 +6,7 @@
 	import { fade } from 'svelte/transition';
 	import { IconLoader, IconTimeDuration0, IconX } from '@tabler/icons-svelte';
 	import Modal from './Modal.svelte';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		onClose: () => void;
@@ -62,6 +63,10 @@
 	});
 
 	function handleCancel() {
+		if (shareData?.url) {
+			return goto('/');
+		}
+
 		onClose();
 	}
 
