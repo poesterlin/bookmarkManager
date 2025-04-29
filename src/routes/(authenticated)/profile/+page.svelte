@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmSubmit from '$lib/client/ConfirmSubmit.svelte';
 	import { IconBell, IconBellRingingFilled, IconUserCircle } from '@tabler/icons-svelte';
 
 	let { data } = $props();
@@ -57,12 +58,9 @@
 			</form>
 
 			<form action="?/delete" method="POST">
-				<button
-					class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-slate-200 focus:outline-none"
-					type="submit"
-				>
-					Delete Account</button
-				>
+				<ConfirmSubmit class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-slate-200 focus:outline-none">
+					Delete Account
+				</ConfirmSubmit>
 			</form>
 		</div>
 	</div>

@@ -8,6 +8,12 @@ export function assert(condition: unknown, message: string): asserts condition {
 	}
 }
 
+export function assertInstanceOf<T>(p: any, type: new (...args: any[]) => T): asserts p is T {
+    if (!(p instanceof type)) {
+        throw new Error('Assertion failed');
+    }
+}
+
 let workerInstance: ImageWorker | null = null;
 
 export function getWorkerInstance(): ImageWorker {
