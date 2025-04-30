@@ -9,7 +9,7 @@
 <div class="background flex h-screen items-center justify-center bg-slate-50">
 	<div class="card w-md w-full overflow-hidden rounded-lg bg-white shadow-xl">
 		<div class="px-6 py-8">
-			<h2 class="mb-6 text-center text-3xl font-semibold">Register</h2>
+			<h2 class="mb-6 text-center text-3xl font-semibold text-secondary-500">Register</h2>
 
 			<form method="POST" action="?/register" use:enhance class="space-y-4">
 				<div>
@@ -71,7 +71,7 @@
 
 			<p class="mt-4 text-center text-gray-600">
 				Already have an account?
-				<a href="/login{page.url.search}" class="text-violet-500 hover:text-violet-700">
+				<a href="/login{page.url.search}" class="text-secondary-500 hover:text-secondary-700">
 					Log in here!
 				</a>
 			</p>

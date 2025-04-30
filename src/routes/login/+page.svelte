@@ -9,7 +9,7 @@
 <div class="background flex h-screen items-center justify-center">
 	<div class="card w-md w-full overflow-hidden rounded-lg bg-white shadow-xl">
 		<div class="px-6 py-8">
-			<h2 class="mb-6 text-center text-3xl font-semibold">Welcome Back!</h2>
+			<h2 class="mb-6 text-center text-3xl font-semibold text-primary-500">Welcome Back!</h2>
 
 			<form method="POST" action="?/login" use:enhance class="space-y-4">
 				<div>
@@ -60,7 +60,7 @@
 
 			<p class="mt-4 text-center text-gray-600">
 				New around here?
-				<a href="/register{page.url.search}" class="text-rose-500 hover:text-rose-700">
+				<a href="/register{page.url.search}" class="text-primary-500 hover:text-primary-700">
 					Create an account!
 				</a>
 			</p>

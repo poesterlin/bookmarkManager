@@ -11,7 +11,7 @@
 			<!-- <a href="#demo" class="text-white hover:text-primary-300 transition-colors">Demo</a> -->
 			<!-- <ThemeToggle /> -->
 			<a
-				href="https://bookmarks.oesterlin.dev"
+				href="/login"
 				class="bg-primary-500 hover:bg-primary-600 transform rounded-full px-5 py-2 text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
 			>
 				Try Now
