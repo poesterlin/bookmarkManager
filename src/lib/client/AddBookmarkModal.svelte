@@ -21,6 +21,7 @@
 
 	let { onClose, categories, existingTags = [], shareData }: Props = $props();
 
+	let form = $state<HTMLFormElement>();
 	let loading = $state(false);
 	let url = $state<string>();
 	let title = $state<string>();
@@ -169,18 +170,20 @@
 		document.getElementById('tag-input')?.focus();
 	}
 
-	// Close suggestions when clicking outside
-	function handleClickOutside(event: MouseEvent) {
-		const target = event.target as HTMLElement;
-		if (!target.closest('.tag-input-wrapper')) {
-			showSuggestions = false;
+	function handleCtrlEnterSubmit(event: KeyboardEvent) {
+		if (event.ctrlKey && event.key === 'Enter' && form) {
+			event.preventDefault();
+			form.requestSubmit();
 		}
 	}
 </script>
 
 <Modal onClose={handleCancel}>
 	<div class="" transition:fade={{ duration: 150 }}>
+		<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 		<form
+			onkeyup={handleCtrlEnterSubmit}
+			bind:this={form}
 			use:enhance={() => {
 				return ({ update }) => {
 					handleCancel();
