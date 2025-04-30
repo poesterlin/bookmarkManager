@@ -308,7 +308,6 @@ export const actions: Actions = {
 			await db.transaction(async (tx) => {
 				let categoryId: string | null = null; // Use null to remove category
 
-				// 2. Determine Category ID (similar logic to 'add')
 				if (form.newCategory) {
 					// User wants to create/assign a new category
 					const [existingCategory] = await tx
@@ -406,17 +405,7 @@ export const actions: Actions = {
 						await tx.insert(bookmarkTags).values(tagsToInsert);
 					}
 				}
-
-				// 5. Optional: Clean up unused tags (globally, maybe less frequently)
-				//    Could be done here or in a separate maintenance task.
-				// await tx.delete(tagsTable).where(and(
-				//     eq(tagsTable.userId, locals.user.id),
-				//     not(exists(
-				//         db.select().from(bookmarkTags).where(eq(bookmarkTags.tagId, tagsTable.id))
-				//     ))
-				// ));
 			});
-			// Success, SvelteKit handles the redirect/update
 		}
 	),
 
