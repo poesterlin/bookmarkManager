@@ -8,14 +8,21 @@ import ipaddr from 'ipaddr.js';
 import { assertInstanceOf } from '$lib/client/util';
 
 const schema = z.object({
-	url: z.string().url()
+	url: z.string().url().trim()
 });
 
 export const POST: RequestHandler = async (event) => {
 	validateAuth(event);
 
 	const form = await event.request.json();
-	const { url } = schema.parse(form);
+	let { url } = schema.parse(form);
+
+	// assure url starts with a protocol
+	if (url && !url.includes('://')) {
+		url = 'https://' + url;
+	} else {
+		url = 'https://' + url.substring(2);
+	}
 
 	const sanitizedUrl = sanitizeUrl(url);
 
