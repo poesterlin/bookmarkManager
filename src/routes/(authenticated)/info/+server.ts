@@ -15,15 +15,7 @@ export const POST: RequestHandler = async (event) => {
 	validateAuth(event);
 
 	const form = await event.request.json();
-	let { url } = schema.parse(form);
-
-	// assure url starts with a protocol
-	if (url && !url.includes('://')) {
-		url = 'https://' + url;
-	} else {
-		url = 'https://' + url.substring(2);
-	}
-
+	const { url } = schema.parse(form);
 	const sanitizedUrl = sanitizeUrl(url);
 
 	const error = await checkDNS(sanitizedUrl);
@@ -50,7 +42,14 @@ export const POST: RequestHandler = async (event) => {
 function sanitizeUrl(url: string) {
 	// Check if the URL is valid
 	if (!URL.canParse(url)) {
-		error(400, 'Invalid URL');
+
+		// Check if adding 'https://' makes it valid
+		const withProtocol = 'https://' + url;
+		if (URL.canParse(withProtocol)) {
+			url = withProtocol;
+		} else {
+			error(400, 'Invalid URL');
+		}
 	}
 
 	const parsedUrl = URL.parse(url);
