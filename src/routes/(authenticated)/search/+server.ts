@@ -8,7 +8,7 @@ import {
 	type Tag
 } from '$lib/server/db/schema';
 import { validateAuth } from '$lib/server/util';
-import { sql, and, eq, or, getTableColumns } from 'drizzle-orm';
+import { sql, and, eq, or, getTableColumns, desc } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
 
@@ -46,7 +46,8 @@ export const GET: RequestHandler = async (event) => {
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(
-			sql`similarity(${bookmarksTable.title}, ${searchTerm}) + similarity(${bookmarksTable.description}, ${searchTerm}) DESC`
+			desc(bookmarksTable.deletedAt),
+			sql`similarity(${bookmarksTable.title}, ${searchTerm}) + similarity(${bookmarksTable.description}, ${searchTerm}) DESC`,
 		)
 		.limit(20);
 

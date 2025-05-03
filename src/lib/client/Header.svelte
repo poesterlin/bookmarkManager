@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
+	import { IconLoader, IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
 	import { searchStore } from './search.svelte';
-	import { onMount } from 'svelte';
 	import { app } from './app.svelte';
+	import { fade } from 'svelte/transition';
 
 	let searchQuery = $state('');
+	let isSearching = $state(false);
 	let abortController: AbortController | null = null;
 
 	let { isScrolled } = $props();
@@ -26,6 +27,7 @@
 
 		const search = async () => {
 			try {
+				isSearching = true;
 				const response = await fetch(`/search?query=${searchQuery}`, { signal });
 				if (!response.ok) {
 					throw new Error('Network response was not ok');
@@ -37,6 +39,8 @@
 				if (error.name !== 'AbortError') {
 					console.error('Fetch error:', error);
 				}
+			} finally {
+				isSearching = false;
 			}
 		};
 
@@ -65,11 +69,28 @@
 	<div
 		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
 	>
-		<IconSearch class="ml-3 text-gray-500" size={20} stroke-width={1.5} />
+		{#if isSearching}
+			<div
+				in:fade={{ duration: 200 }}
+				out:fade={{ duration: 200, delay: 500 }}
+				class="absolute left-0"
+			>
+				<IconLoader
+					class="ml-3 animate-spin text-gray-500"
+					size={20}
+					stroke-width={1.5}
+					aria-label="Loading"
+				/>
+			</div>
+		{:else}
+			<div class="absolute left-0" in:fade={{ duration: 200, delay: 500 }}>
+				<IconSearch class="ml-3 text-gray-500" size={20} stroke-width={1.5} />
+			</div>
+		{/if}
 		<input
 			type="text"
 			placeholder="Search bookmarks..."
-			class="w-full border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
+			class="ml-12 w-full border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
 			bind:value={searchQuery}
 		/>
 		{#if searchQuery}
