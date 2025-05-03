@@ -162,7 +162,7 @@ export const actions: Actions = {
 		z.object({
 			title: z.string().min(1).max(100),
 			url: z.string().url(),
-			categoryId: z.string().optional(),
+			category: z.string().optional(),
 			newCategory: z.string().optional(),
 			tags: z
 				.string()
@@ -177,12 +177,12 @@ export const actions: Actions = {
 
 			let categoryId: string | undefined = undefined;
 
-			if (form.categoryId) {
+			if (form.category) {
 				const [category] = await db
 					.select()
 					.from(categoriesTable)
 					.where(
-						and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.categoryId))
+						and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
 					)
 					.limit(1);
 
@@ -303,6 +303,21 @@ export const actions: Actions = {
 
 			if (!existingBookmark) {
 				error(404, 'Bookmark not found or not owned by user');
+			}
+
+			// 2. Check if category exists and belongs to user
+			if (form.category) {
+				const [category] = await db
+					.select({ id: categoriesTable.id })
+					.from(categoriesTable)
+					.where(
+						and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
+					)
+					.limit(1);
+
+				if (!category) {
+					error(404, 'Category not found or not owned by user');
+				}
 			}
 
 			await db.transaction(async (tx) => {
