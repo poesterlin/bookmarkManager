@@ -50,7 +50,7 @@
 		}
 	}
 
-	.dark .archived {
+	:global(.dark) .archived {
 		background: linear-gradient(135deg, #1f1f1f 3%, rgb(30, 30, 30) 6%, transparent 12%);
 	}
 </style>
