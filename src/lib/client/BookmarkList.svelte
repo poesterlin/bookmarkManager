@@ -26,9 +26,7 @@
 			{#each list as bookmark (bookmark.id)}
 				<div
 					class="glass row-span-3 grid grid-rows-subgrid rounded-xl p-4 transition-all duration-300 hover:shadow-xl"
-					animate:flip={{ duration: 300 }}
-					in:fly={{ y: 20, duration: 300, delay: 100 }}
-					out:fade={{ duration: 200 }}
+					animate:flip={{ duration: 250 }}
 					class:archived={bookmark.deletedAt && !page.url.searchParams.has('archived')}
 				>
 					<BookmarkCard {bookmark} />
