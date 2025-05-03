@@ -8,7 +8,7 @@ import {
 	type Tag
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import {
 	and,
 	count,
@@ -38,10 +38,9 @@ const optionsSchema = z.object({
 		.optional(),
 
 	// share target params
-	sharetarget: z.string().optional().transform((val) => val === 'true'),
 	title: z.string().optional(),
 	text: z.string().optional(),
-	link: z.string().url().optional()
+	link: z.string().optional()
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -50,7 +49,14 @@ export const load: PageServerLoad = async (event) => {
 	const params = event.url.searchParams.entries();
 	const search = Object.fromEntries(params);
 
-	const options = optionsSchema.parse(search);
+	const parsedOptions = optionsSchema.safeParse(search);
+
+	if (!parsedOptions.success) {
+		console.error('Invalid options:', parsedOptions.error);
+		error(400, 'Invalid options');
+	}
+
+	const options = parsedOptions.data;
 
 	const filters = [eq(bookmarksTable.userId, locals.user.id)];
 
@@ -277,6 +283,8 @@ export const actions: Actions = {
 					);
 				}
 			});
+
+			redirect(302, '/');
 		}
 	),
 	update: validateForm(
