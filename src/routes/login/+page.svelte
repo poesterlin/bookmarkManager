@@ -52,7 +52,7 @@
 
 				<button
 					type="submit"
-					class="focus:shadow-outline rounde0d w-full bg-black px-4 py-2 font-bold text-white hover:bg-gray-700 focus:outline-none"
+					class="button-primary focus:shadow-outline rounde0d w-full bg-black px-4 py-2 font-bold text-white hover:bg-gray-700 focus:outline-none"
 				>
 					Login
 				</button>
