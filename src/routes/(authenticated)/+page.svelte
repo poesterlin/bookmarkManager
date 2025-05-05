@@ -62,7 +62,7 @@
 				{#if data.filteredTag}
 					<a
 						href="/"
-						class="mb-4 flex w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+						class="mb-4 flex w-max min-w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-blue-800 dark:bg-blue-900 dark:text-blue-100"
 					>
 						{data.filteredTag.name}
 
@@ -70,13 +70,13 @@
 					</a>
 				{:else}
 					<div
-						class="-mx-4 mb-3 flex w-max max-w-[calc(100%+2rem)] items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
+						class="-mx-4 mb-3 flex w-max min-w-max items-center gap-2 overflow-y-auto px-4 pb-1 whitespace-nowrap md:mx-0 md:max-w-full md:px-0"
 					>
 						{#each data.tags as tag}
 							{#if tag.name}
 								<a
 									href="/?tag={tag.id}"
-									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
+									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max max-w-[calc(100%+2rem)] gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
 								>
 									{tag.name}
 
