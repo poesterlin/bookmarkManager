@@ -39,14 +39,14 @@
 		</p>
 
 		<div class="flex flex-col gap-8">
-			<a href="/privacy" class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+			<a href="/privacy" class="m-auto w-max min-w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
 				>Privacy Policy</a
 			>
 
 			<a
 				href="/export"
 				download="bookmarks.html"
-				class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+				class="m-auto w-max min-w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
 				>Export Bookmarks
 			</a>
 
