@@ -41,6 +41,8 @@ export const GET: RequestHandler = async (event) => {
 		status: res.status,
 		headers: {
 			'Content-Type': res.headers.get('Content-Type') ?? 'image/png',
+			'Content-Length': res.headers.get('Content-Length') ?? '0',
+			'Cache-Control': 'public, max-age=31536000, immutable',
 		}
 	});
 };
