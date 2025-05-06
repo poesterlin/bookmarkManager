@@ -1,7 +1,6 @@
 import { generateSessionToken } from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import { challengeTokenTable } from '$lib/server/db/schema';
-import { validateAuth } from '$lib/server/util';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { and, eq, gt, isNotNull, lt } from 'drizzle-orm';
@@ -14,7 +13,15 @@ const headers = {
 };
 
 // create an anonymous challenge token
-export const POST: RequestHandler = async () => {
+export const POST: RequestHandler = async ({ locals }) => {
+	// check if the user is already logged in, if so, do not create a new token
+	if (locals.session) {
+		return new Response(null, {
+			status: 204, // No Content
+			headers
+		});
+	}
+
 	const [challenge] = await db
 		.insert(challengeTokenTable)
 		.values({
@@ -25,8 +32,8 @@ export const POST: RequestHandler = async () => {
 
 	// delete expired tokens
 	await db.delete(challengeTokenTable).where(lt(challengeTokenTable.expiresAt, new Date()));
-
-	return json({ token: challenge.id, expiresAt: challenge.expiresAt }, { headers });
+    
+	return json({ token: challenge.id, expiresAt: challenge.expiresAt }, { headers, status: 201 });
 };
 
 export const OPTIONS: RequestHandler = async () => {
@@ -38,9 +45,6 @@ export const OPTIONS: RequestHandler = async () => {
 
 // convert a claimed challenge token into a session token
 export const GET: RequestHandler = async (event) => {
-	const locals = validateAuth(event);
-	const userId = locals.user.id;
-
 	const token = event.url.searchParams.get('token');
 	if (!token) {
 		return json({ error: 'No token provided' }, { status: 400 });
@@ -59,12 +63,12 @@ export const GET: RequestHandler = async (event) => {
 		)
 		.limit(1);
 
-	if (!challenge) {
+	if (!challenge || !challenge.userId) {
 		return json({ error: 'Invalid token' }, { status: 400 });
 	}
 
 	const sessionToken = auth.generateSessionToken();
-	const session = await auth.createSession(sessionToken, userId);
+	const session = await auth.createSession(sessionToken, challenge.userId);
 	auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
 
 	// delete token after use
