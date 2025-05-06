@@ -48,7 +48,7 @@
 	}}
 />
 
-<div class="flex flex-col h-screen">
+<div class="flex h-screen flex-col">
 	<Header {isScrolled} />
 
 	<div class="flex flex-1">
@@ -58,7 +58,7 @@
 			class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8"
 			bind:this={mainEl}
 		>
-			<div class="mx-auto max-w-6xl">
+			<div class="ignore-scroll mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
 						href="/"

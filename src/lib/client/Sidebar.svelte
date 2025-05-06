@@ -38,7 +38,7 @@
 
 		// prevent starting swipe if the target element has horizontal scroll
 		const targetElement = event.target as HTMLElement;
-		if (targetElement.scrollWidth > targetElement.clientWidth) {
+		if (isHorizontallyScrollableOrParent(targetElement)) {
 			console.log('swipe canceled: target element has horizontal scroll');
 			return;
 		}
@@ -49,6 +49,33 @@
 		startTime = Date.now();
 		deltaX = 0; // Reset deltaX at the start
 	}
+
+	// Function to check if the element or any parent has horizontal scroll
+	function isHorizontallyScrollableOrParent(element: HTMLElement | null) {
+		let currentElement = element;
+		while (currentElement) {
+			if (hasHorizontalScroll(currentElement)) {
+				console.log('element:', currentElement, 'has horizontal scroll');
+				return true;
+			}
+			currentElement = currentElement.parentElement;
+		}
+		return false;
+	}
+
+	function hasHorizontalScroll(element: HTMLElement) {
+		if (!element) {
+			return false;
+		}
+
+		// ignore elements with class "ignore-scroll"
+		if (element.classList.contains('ignore-scroll')) {
+			return false;
+		}
+
+		return element.scrollWidth > element.clientWidth;
+	}
+
 	function swipe(event: PointerEvent | TouchEvent | Touch) {
 		if (!isSwiping) {
 			return;
@@ -190,7 +217,7 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {Array.from(page.url.searchParams.entries()).length === 0
-					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200 dark:focus:outline-gray-100  dark:focus:underline'
+					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 '}"
 				href="/"
 			>
@@ -200,7 +227,7 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {page.url.searchParams.get('favorite') === ''
-					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200 dark:focus:outline-gray-100  dark:focus:underline'
+					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
 				href="/?favorite"
 			>
@@ -210,7 +237,7 @@
 			<a
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {page.url.searchParams.get('archived') === ''
-					? 'bg-primary-100 text-primary-700 font-medium dark:bg-transparent dark:outline dark:text-primary-200 dark:focus:outline-gray-100  dark:focus:underline'
+					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
 				href="/?archived"
 			>
@@ -221,7 +248,9 @@
 
 		{#if categories.length > 0}
 			<div class="mt-6 mb-3">
-				<h3 class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400">
+				<h3
+					class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+				>
 					Categories
 				</h3>
 			</div>
@@ -229,9 +258,9 @@
 				{#each categories as category}
 					<a
 						href="/?category={category.id}"
-						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10 
+						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
                 {page.url.searchParams.get('category') === category.id
-							? 'bg-secondary-100 text-secondary-700 font-medium dark:outline dark:bg-transparent dark:text-secondary-200 dark:focus:outline-gray-100  dark:focus:underline	'
+							? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
 							: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
 					>
 						<IconFolder class="mr-2 h-5 w-5" />
@@ -245,7 +274,7 @@
 
 <!-- fab -->
 <button
-	class="bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 fixed right-8 bottom-10 z-50 flex h-12 w-18 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none md:hidden dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-offset-gray-800"
+	class="bg-primary-500 hover:bg-primary-600 focus:ring-primary-500 dark:bg-primary-600 dark:hover:bg-primary-700 fixed right-8 bottom-10 z-50 flex h-12 w-18 items-center justify-center rounded-full text-white shadow-xl transition-transform duration-300 ease-in-out focus:ring-2 focus:ring-offset-2 focus:outline-none md:hidden dark:focus:ring-offset-gray-800"
 	onclick={handleAddBookmark}
 	style:transform={isMenuOpen ? 'translateX(15rem)' : 'translateX(0)'}
 >
