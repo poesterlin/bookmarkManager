@@ -47,7 +47,7 @@ export const OPTIONS: RequestHandler = async () => {
 export const GET: RequestHandler = async (event) => {
 	const token = event.url.searchParams.get('token');
 	if (!token) {
-		return json({ error: 'No token provided' }, { status: 400 });
+		return json({ error: 'No token provided' }, { status: 400, headers });
 	}
 
 	const [challenge] = await db
@@ -64,7 +64,7 @@ export const GET: RequestHandler = async (event) => {
 		.limit(1);
 
 	if (!challenge || !challenge.userId) {
-		return json({ error: 'Invalid token' }, { status: 400 });
+		return json({ error: 'Invalid token' }, { status: 400, headers });
 	}
 
 	const sessionToken = auth.generateSessionToken();
