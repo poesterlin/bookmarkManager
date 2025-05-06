@@ -48,7 +48,7 @@
 	}}
 />
 
-<div class="flex flex-col">
+<div class="flex flex-col h-screen">
 	<Header {isScrolled} />
 
 	<div class="flex flex-1">
@@ -70,13 +70,13 @@
 					</a>
 				{:else}
 					<div
-						class="-mx-4 mb-3 flex w-max min-w-max items-center gap-2 overflow-y-auto px-4 pb-1 whitespace-nowrap md:mx-0 md:max-w-full md:px-0"
+						class="-mx-4 mb-3 flex items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
 					>
 						{#each data.tags as tag}
 							{#if tag.name}
 								<a
 									href="/?tag={tag.id}"
-									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max max-w-[calc(100%+2rem)] gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium"
+									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max w-max max-w-[calc(100%+2rem)] min-w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium whitespace-nowrap"
 								>
 									{tag.name}
 
