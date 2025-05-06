@@ -39,6 +39,14 @@ export const sessionTable = pgTable(
 
 export type Session = typeof sessionTable.$inferSelect;
 
+export const challengeTokenTable = pgTable('challenge_token', {
+	id: text('token').primaryKey(),
+	userId: text('user_id').references(() => usersTable.id, fullCascade),
+	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'date' }).notNull()
+});
+
+export type ChallengeToken = typeof challengeTokenTable.$inferSelect;
+
 export const bookmarksTable = pgTable(
 	'bookmarks',
 	{
@@ -111,7 +119,7 @@ export const bookmarkTags = pgTable(
 	(table) => [
 		uniqueIndex('bookmark_tags_unique_idx').on(table.bookmarkId, table.tagId),
 		index('bookmark_tags_bookmark_id_idx').on(table.bookmarkId),
-		index('bookmark_tags_tag_id_idx').on(table.tagId),
+		index('bookmark_tags_tag_id_idx').on(table.tagId)
 	]
 );
 
@@ -127,7 +135,7 @@ export const categoriesTable = pgTable(
 	(table) => [
 		index('categories_user_id_idx').on(table.userId),
 		index('categories_name_idx').on(table.name),
-		uniqueIndex('categories_user_id_name_unique_idx').on(table.userId, table.name),
+		uniqueIndex('categories_user_id_name_unique_idx').on(table.userId, table.name)
 	]
 );
 
