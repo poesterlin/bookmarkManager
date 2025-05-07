@@ -127,7 +127,7 @@
 	{#if bookmark.category?.name}
 		<a
 			href="/?category={bookmark.category.id}"
-			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-800/60 dark:text-secondary-100 rounded-full px-2 py-1 text-xs font-medium"
+			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-800/60 dark:text-secondary-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 		>
 			{bookmark.category.name}
 		</a>
@@ -135,7 +135,7 @@
 	{#each bookmark.tags as tag}
 		{#if tag.name}
 			<a
-				class="bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 rounded-full px-2 py-1 text-xs font-medium"
+				class="bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 				href="/?tag={tag.id}"
 			>
 				{tag.name}
