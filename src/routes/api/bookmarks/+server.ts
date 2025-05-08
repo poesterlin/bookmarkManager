@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { RequestHandler } from './create/$types';
+import type { RequestHandler } from './$types';
 import { error } from '@sveltejs/kit';
 import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 import { createBookmark } from '$lib/server/bookmark';
