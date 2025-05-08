@@ -3,15 +3,17 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { categoriesTable } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { validateAuth } from '$lib/server/util';
+import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 
 export const GET: RequestHandler = async (event) => {
-	const locals = validateAuth(event);
+	const { user } = await validateAuthHeader(event);
 
 	const categories = await db
 		.select()
 		.from(categoriesTable)
-		.where(eq(categoriesTable.userId, locals.user.id));
+		.where(eq(categoriesTable.userId, user.id));
 
-	return json({ categories });
+	return json({ categories }, { headers: corsHeaders });
 };
+
+export const OPTIONS: RequestHandler = getCorsResponse;

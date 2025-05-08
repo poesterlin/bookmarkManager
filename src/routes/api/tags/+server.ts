@@ -3,10 +3,10 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/server/db';
 import { bookmarkTags, tagsTable } from '$lib/server/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { validateAuth } from '$lib/server/util';
+import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 
 export const GET: RequestHandler = async (event) => {
-	const locals = validateAuth(event);
+	const { user } = await validateAuthHeader(event);
 
 	const tags = await db
 		.select({
@@ -16,8 +16,10 @@ export const GET: RequestHandler = async (event) => {
 		.from(tagsTable)
 		.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
 		.groupBy(tagsTable.id)
-		.where(and(eq(tagsTable.userId, locals.user.id)))
+		.where(and(eq(tagsTable.userId, user.id)))
 		.orderBy(tagsTable.name);
 
-	return json({ tags });
+	return json({ tags }, { headers: corsHeaders });
 };
+
+export const OPTIONS: RequestHandler = getCorsResponse;

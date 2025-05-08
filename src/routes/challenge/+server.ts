@@ -32,16 +32,11 @@ export const POST: RequestHandler = async ({ locals }) => {
 
 	// delete expired tokens
 	await db.delete(challengeTokenTable).where(lt(challengeTokenTable.expiresAt, new Date()));
-    
+
 	return json({ token: challenge.id, expiresAt: challenge.expiresAt }, { headers, status: 201 });
 };
 
-export const OPTIONS: RequestHandler = async () => {
-	return new Response(null, {
-		status: 200,
-		headers
-	});
-};
+export const OPTIONS: RequestHandler = auth.getCorsResponse;
 
 // convert a claimed challenge token into a session token
 export const GET: RequestHandler = async (event) => {

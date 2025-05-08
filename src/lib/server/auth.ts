@@ -1,4 +1,4 @@
-import type { RequestEvent } from '@sveltejs/kit';
+import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
@@ -77,5 +77,38 @@ export function setSessionTokenCookie(event: RequestEvent, token: string, expire
 export function deleteSessionTokenCookie(event: RequestEvent) {
 	event.cookies.delete(sessionCookieName, {
 		path: '/'
+	});
+}
+
+export async function validateAuthHeader(event: RequestEvent) {
+	const token = event.request.headers.get('Authorization')?.split(' ')[1];
+	if (!token) {
+		error(401, {
+			message: 'Unauthorized'
+		});
+	}
+	// validate token
+	const result = await validateSessionToken(token);
+
+	if (!result.user) {
+		error(401, {
+			message: 'Unauthorized'
+		});
+	}
+
+	return result;
+}
+
+export const corsHeaders = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+	'Access-Control-Allow-Credentials': 'true',
+	'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
+
+export function getCorsResponse() {
+	return new Response(null, {
+		status: 200,
+		headers: corsHeaders
 	});
 }
