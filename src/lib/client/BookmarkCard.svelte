@@ -42,6 +42,13 @@
 		const worker = getWorkerInstance();
 		return worker.getProcessedImageUrl(bookmark.id);
 	}
+
+	function trackView(){
+		fetch(`/track/${bookmark.id}`, {
+			method: 'PATCH',
+			keepalive: true,
+		});
+	}
 </script>
 
 {#snippet fallbackIcon()}
@@ -147,7 +154,8 @@
 <!-- buttons -->
 <div class="flex items-center justify-between">
 	<a
-		href="/goto/{bookmark.id}"
+		href={bookmark.url}
+		onclick={trackView}
 		target="_blank"
 		rel="noopener noreferrer"
 		class="text-secondary-600 hover:text-secondary-800 dark:text-secondary-200 dark:hover:text-secondary-400 flex items-center text-sm font-medium"
