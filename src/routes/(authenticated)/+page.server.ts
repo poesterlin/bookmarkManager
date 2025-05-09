@@ -116,7 +116,7 @@ export const load: PageServerLoad = async (event) => {
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
-		.orderBy(bookmarksTable.clicks, desc(bookmarksTable.isFavorite), desc(bookmarksTable.createdAt))
+		.orderBy(desc(bookmarksTable.clicks), desc(bookmarksTable.isFavorite), desc(bookmarksTable.createdAt))
 		.where(and(...filters));
 
 	const categories = await db
