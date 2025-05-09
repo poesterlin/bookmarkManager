@@ -1,14 +1,11 @@
 <script lang="ts">
-	import { storedValue, challengeKey, tokenKey } from './state.svelte';
+	import { storedValue, challengeKey, tokenKey, type StoredValue } from './state.svelte';
 
 	let abortController: AbortController | null = null;
-	let challenge: {
-		get: () => string | undefined;
-		set: (value: string) => Promise<void>;
-	};
+	let challenge: StoredValue<string | undefined>;
 
 	onMount(() => {
-		let cleanup: () => void = () => {};
+		let cleanup = () => {};
 
 		storedValue<string | undefined>(challengeKey)
 			.then(async (value) => {
@@ -18,6 +15,11 @@
 			.then(() => {
 				console.log('Starting challenge...', challenge.get());
 				cleanup = tryAuthenticate();
+			})
+			.catch(() => {
+				if (abortController) {
+					abortController.abort();
+				}
 			});
 
 		return () => {
@@ -50,7 +52,8 @@
 	}
 
 	async function getSession() {
-		if (!challenge.get()) {
+		const storedChallenge = challenge.get();
+		if (!storedChallenge) {
 			throw new Error('No challenge token found');
 		}
 
@@ -61,14 +64,16 @@
 		abortController = new AbortController();
 
 		const response = await fetch(
-			`${import.meta.env.VITE_HOST}/challenge?token=${challenge.get()}`,
+			`${import.meta.env.VITE_HOST}/challenge?token=${storedChallenge}`,
 			{
 				signal: AbortSignal.any([abortController.signal, AbortSignal.timeout(5000)])
 			}
 		);
 
 		if (!response.ok) {
-			throw new Error('Failed to fetch session data');
+			await challenge.set(undefined);
+			const text = await response.text();
+			throw new Error('Failed to fetch session data:' + text + ' ' + storedChallenge);
 		}
 
 		const { token } = await response.json();
@@ -93,7 +98,12 @@
 			}
 		}, 3000);
 
-		return () => clearInterval(interval);
+		return () => {
+			clearInterval(interval);
+			if (abortController) {
+				abortController.abort();
+			}
+		};
 	}
 </script>
 

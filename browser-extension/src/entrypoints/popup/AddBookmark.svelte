@@ -1,9 +1,20 @@
 <script lang="ts">
 	import { stopPropagation } from 'svelte/legacy';
 	import { IconLoader, IconX } from '@tabler/icons-svelte';
+	import { inputsKey, type StoredValue, storedValue } from './state.svelte';
+
 	interface Category {
 		id: string;
 		name: string;
+	}
+
+	interface Inputs {
+		url: string;
+		description: string;
+		category: string;
+		newCategory: string;
+		showNewCategoryInput: boolean;
+		selectedTags: string[];
 	}
 
 	const { token }: { token: string } = $props();
@@ -15,6 +26,7 @@
 	let title = $state<string>();
 	let description = $state<string>();
 	let newCategory = $state<string>();
+	let category = $state<string>();
 	let showNewCategoryInput = $state(false);
 	let theme = $state<string>();
 	let favicon = $state<string>();
@@ -29,20 +41,39 @@
 	let existingTags: string[] = $state([]);
 	let categories: Category[] = $state([]);
 
+	// stored value for the inputs
+	let inputs: StoredValue<Partial<Inputs>>;
+	let inputValues = $derived({
+		url,
+		description,
+		category,
+		newCategory,
+		showNewCategoryInput,
+		selectedTags
+	});
+
+	$effect(() => {
+		// Store the input values when they change
+		const raw = $state.snapshot(inputValues);
+		inputs?.set(raw);
+	});
+
 	onMount(() => {
 		browser.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
 			if (tabs.length === 0) return;
 			const tab = tabs[0];
-			
+
 			// Grab all the tab details
 			url = tab.url ?? tab.pendingUrl;
 			title = tab.title;
 			faviconData = tab.favIconUrl;
-			
+
 			// TODO: get description from the page
 			// TODO: get favicon link from the page
+
+			// after the tab is loaded, see if the window accidentally closed and restore the inputs
 		});
-		
+
 		fetchTagsAndCategories();
 	});
 
@@ -65,6 +96,22 @@
 		} catch (error) {
 			console.error('Error fetching tags and categories:', error);
 		}
+	}
+
+	async function restoreInputs() {
+		inputs = await storedValue<Partial<Inputs>>(inputsKey, {});
+		const values = await inputs.get();
+		if (values && values.url === url) {
+			description = values.description;
+			showNewCategoryInput = values.showNewCategoryInput ?? false;
+			category = values.category;
+			newCategory = values.newCategory;
+			selectedTags = values.selectedTags ?? [];
+		}
+	}
+
+	async function clearInputs() {
+		await inputs?.set({});
 	}
 
 	async function fetchCategories() {
@@ -94,6 +141,8 @@
 		} catch (error) {
 			console.error('Error fetching tags and categories:', error);
 		}
+
+		restoreInputs();
 	}
 
 	// Reactive statement for tag suggestions
@@ -110,7 +159,7 @@
 		activeSuggestionIndex = -1; // Reset active suggestion on input change
 	});
 
-	function handleCancel() {
+	function close() {
 		window.close();
 	}
 
@@ -220,37 +269,42 @@
 		}
 	}
 
-	function submit(event: Event) {
+	async function submit(event: Event) {
 		if (!form) {
 			return;
 		}
-
 		event.preventDefault();
-		if (form.checkValidity()) {
-			loading = true;
-			const formData = new FormData(form);
-			const data = Object.fromEntries(formData.entries());
 
+		if (!form.checkValidity()) {
+			form.reportValidity();
+		}
+		loading = true;
+		const formData = new FormData(form);
+		const data = Object.fromEntries(formData.entries());
+
+		try {
 			// Send the form data to the server
-			fetch(import.meta.env.VITE_HOST + '/api/bookmarks', {
+			const res = await fetch(import.meta.env.VITE_HOST + '/api/bookmarks', {
 				method: 'POST',
 				body: JSON.stringify(data),
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				}
-			})
-				.then((data) => {
-					console.log('Bookmark added successfully:', data);
-					loading = false;
-					handleCancel(); // Close the form or redirect as needed
-				})
-				.catch((error) => {
-					console.error('Error adding bookmark:', error);
-					loading = false;
-				});
-		} else {
-			form.reportValidity();
+			});
+
+			if (!res.ok) {
+				throw new Error('Failed to add bookmark');
+			}
+
+			console.log('Bookmark added successfully:', data);
+
+			await clearInputs();
+			close();
+		} catch (error) {
+			console.error('Error adding bookmark:', error);
+		} finally {
+			loading = false;
 		}
 	}
 </script>
@@ -349,7 +403,7 @@
 					<select
 						id="category"
 						class="input w-full bg-white dark:bg-gray-800"
-						bind:value={newCategory}
+						bind:value={category}
 						name="category"
 					>
 						<option
@@ -441,7 +495,7 @@
 	</div>
 
 	<div class="mt-6 flex justify-end space-x-3">
-		<button type="button" class="button-ghost" onclick={handleCancel}> Cancel </button>
+		<button type="button" class="button-ghost" onclick={close}> Cancel </button>
 		<button type="submit" class="button-primary"> Add Bookmark </button>
 	</div>
 

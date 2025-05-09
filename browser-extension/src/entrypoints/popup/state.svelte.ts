@@ -37,3 +37,4 @@ export type StoredValue<T> = {
 
 export const challengeKey = 'challenge';
 export const tokenKey = 'token';
+export const inputsKey = 'inputs';
