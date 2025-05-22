@@ -49,7 +49,7 @@
 
 <dialog
 	in:fade={{ duration: 200 }}
-	class="relative !bg-white/60 m-auto glass relative transform overflow-hidden rounded-xl text-left shadow-xl transition-all sm:w-full sm:max-w-lg dark:bg-gray-800 dark:text-gray-200 dark:!bg-gray-900/60 dark:backdrop-blur-none {rest.class}"
+	class="relative !bg-white/60 m-auto glass relative transform overflow-auto rounded-xl text-left shadow-xl transition-all sm:w-full sm:max-w-lg dark:bg-gray-800 dark:text-gray-200 dark:!bg-gray-900/60 dark:backdrop-blur-none {rest.class}"
 	bind:this={dialog}
 	onclick={handleOutsideClick}
 	onkeydown={trapFocus}
