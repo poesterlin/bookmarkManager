@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { slide } from 'svelte/transition';
 	import { tagStore } from './tags.svelte';
 
 	function handleSuggestionClick(tag: string) {
@@ -10,6 +11,7 @@
 <!-- Suggestions Dropdown -->
 {#if tagStore.showSuggestions && tagStore.filteredTags.length > 0}
 	<ul
+		transition:slide={{ duration: 150 }}
 		class="ring-opacity-5 z-10 mt-1 max-h-24 w-full overflow-auto rounded-md border border-gray-300 bg-white py-1 text-base text-black shadow-lg ring-1 ring-black focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
 	>
 		{#each tagStore.filteredTags as tag, index (tag)}

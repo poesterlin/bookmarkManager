@@ -3,6 +3,7 @@
 	import { IconX } from '@tabler/icons-svelte';
 	import { tagStore } from '$lib/client/tags.svelte';
 	import TagSuggestions from './TagSuggestions.svelte';
+	import { fly } from 'svelte/transition';
 
 	interface Props {
 		name?: string;
@@ -42,6 +43,7 @@
 	>
 		{#each tagStore.selected as tag (tag)}
 			<span
+				transition:fly={{ x: -20 }}
 				class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
 			>
 				{tag}
