@@ -100,48 +100,45 @@ export const load: PageServerLoad = async (event) => {
 		);
 	}
 
-	const bookmarks = await db
-		.select({
-			...getTableColumns(bookmarksTable),
-			tags: sql<
-				Tag[]
-			>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}))`.as('tags'),
-			category:
-				sql<Category>`json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as(
-					'category'
-				)
-		})
-		.from(bookmarksTable)
-		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
-		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
-		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
-		.groupBy(bookmarksTable.id, categoriesTable.id)
-		.orderBy(desc(bookmarksTable.clicks), desc(bookmarksTable.isFavorite), desc(bookmarksTable.createdAt))
-		.where(and(...filters));
+	const [bookmarks, categories] = await Promise.all([
+		db
+			.select({
+				...getTableColumns(bookmarksTable),
+				tags: sql<
+					Tag[]
+				>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}))`.as('tags'),
+				category:
+					sql<Category>`json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as(
+						'category'
+					)
+			})
+			.from(bookmarksTable)
+			.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
+			.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
+			.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
+			.groupBy(bookmarksTable.id, categoriesTable.id)
+			.orderBy(
+				desc(bookmarksTable.clicks),
+				desc(bookmarksTable.isFavorite),
+				desc(bookmarksTable.createdAt)
+			)
+			.where(and(...filters)),
 
-	const categories = await db
-		.select()
-		.from(categoriesTable)
-		.where(eq(categoriesTable.userId, locals.user.id));
+		db.select().from(categoriesTable).where(eq(categoriesTable.userId, locals.user.id))
+	]);
 
+	const tagsInUse = bookmarks.map((b) => b.tags.map((t) => t.id)).flat();
 	const tags = await db
 		.select({
 			name: tagsTable.name,
 			id: tagsTable.id,
-			count: count(bookmarkTags.tagId)
+			count: count(bookmarkTags.tagId),
+			inUse: inArray(bookmarkTags.tagId, tagsInUse)
 		})
 		.from(tagsTable)
 		.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
-		.groupBy(tagsTable.id)
-		.where(
-			and(
-				eq(tagsTable.userId, locals.user.id),
-				inArray(
-					bookmarkTags.bookmarkId,
-					bookmarks.map((b) => b.id)
-				)
-			)
-		)
+		.groupBy(tagsTable.id, bookmarkTags.tagId)
+		.where(eq(tagsTable.userId, locals.user.id))
 		.orderBy(tagsTable.name);
 
 	// sometimes share target text is used for the link, not the link property
@@ -160,7 +157,7 @@ export const load: PageServerLoad = async (event) => {
 			title: options.title,
 			text: options.text,
 			url: options.link
-		},
+		}
 	};
 };
 

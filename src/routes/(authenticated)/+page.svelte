@@ -10,6 +10,7 @@
 	import { IconX } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
 	import { tick } from 'svelte';
+	import TagSuggestions from '$lib/client/TagSuggestions.svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
@@ -73,7 +74,7 @@
 						class="-mx-4 mb-3 flex items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
 					>
 						{#each data.tags as tag}
-							{#if tag.name}
+							{#if tag.name && tag.inUse}
 								<a
 									href="/?tag={tag.id}"
 									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max w-max max-w-[calc(100%+2rem)] min-w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium whitespace-nowrap"
