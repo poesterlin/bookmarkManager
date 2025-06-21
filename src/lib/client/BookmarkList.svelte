@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { flip } from 'svelte/animate';
-	import { fade, fly } from 'svelte/transition';
 	import BookmarkCard from './BookmarkCard.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import type { Bookmark } from '$lib/server/db/schema';

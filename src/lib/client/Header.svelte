@@ -108,8 +108,8 @@
 	</div>
 
 	<div class="flex items-center justify-end gap-4">
-		<a href="/profile" aria-current={page.url.pathname === '/profile'} title="Profile">
-			<IconUserCircle class="m-auto h-8 w-8 -translate-y-0.5 text-slate-500"></IconUserCircle>
+		<a href="/profile" aria-current={page.url.pathname === '/profile'} class="p-1" title="Profile">
+			<IconUserCircle class="h-7 w-7 text-slate-500"></IconUserCircle>
 		</a>
 
 		<button

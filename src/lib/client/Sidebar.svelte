@@ -186,8 +186,6 @@
 	}
 </script>
 
-<!-- onpointercancel={() => endSwipe()} -->
-
 <svelte:window
 	onpointerup={() => endSwipe()}
 	ontouchend={() => endSwipe()}
@@ -196,8 +194,24 @@
 	onpointermove={swipe}
 	ontouchmove={swipe}
 	onselectionchangecapture={cancelOnSelect}
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && isMenuOpen) {
+			isMenuOpen = false;
+		}
+	}}
 />
 
+<!-- backdrop -->
+{#if isMenuOpen}
+	<button
+		type="button"
+		aria-label="Close menu"
+		class="fixed inset-0 z-30 bg-transparent md:hidden"
+		onclick={() => (isMenuOpen = false)}
+	></button>
+{/if}
+
+<!-- sidebar -->
 <aside
 	class="glass fixed z-40 h-[calc(100vh-68px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform md:static md:!translate-0 dark:!border-0"
 	style:translate={toPercent(deltaX)}
