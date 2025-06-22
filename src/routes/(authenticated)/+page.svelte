@@ -7,10 +7,10 @@
 	import Header from '$lib/client/Header.svelte';
 	import { searchStore } from '$lib/client/search.svelte';
 	import Sidebar from '$lib/client/Sidebar.svelte';
-	import { IconX } from '@tabler/icons-svelte';
+	import { IconMinus } from '@tabler/icons-svelte';
 	import type { PageServerData } from './$types';
 	import { tick } from 'svelte';
-	import TagSuggestions from '$lib/client/TagSuggestions.svelte';
+	import { addQueryParam, removeQueryParam } from '$lib/client/util';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
@@ -62,12 +62,12 @@
 			<div class="ignore-scroll mx-auto max-w-6xl">
 				{#if data.filteredTag}
 					<a
-						href="/"
+						href={removeQueryParam(page.url, 'tag')}
 						class="mb-4 flex w-max min-w-max items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-blue-800 dark:bg-blue-900 dark:text-blue-100"
 					>
 						{data.filteredTag.name}
 
-						<IconX class="w-3"></IconX>
+						<IconMinus class="w-3"></IconMinus>
 					</a>
 				{:else}
 					<div
@@ -76,7 +76,7 @@
 						{#each data.tags as tag}
 							{#if tag.name && tag.inUse}
 								<a
-									href="/?tag={tag.id}"
+									href={addQueryParam(page.url, 'tag', tag.id)}
 									class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max w-max max-w-[calc(100%+2rem)] min-w-max gap-1 rounded-full px-2 py-1.5 pr-3 text-xs font-medium whitespace-nowrap"
 								>
 									{tag.name}

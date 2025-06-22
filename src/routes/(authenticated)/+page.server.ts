@@ -60,21 +60,6 @@ export const load: PageServerLoad = async (event) => {
 	const options = parsedOptions.data;
 
 	const filters = [eq(bookmarksTable.userId, locals.user.id)];
-
-	if (options.category) {
-		filters.push(eq(bookmarksTable.category, options.category));
-	}
-
-	if (options.favorite) {
-		filters.push(eq(bookmarksTable.isFavorite, options.favorite));
-	}
-
-	if (options.archived) {
-		filters.push(isNotNull(bookmarksTable.deletedAt));
-	} else {
-		filters.push(isNull(bookmarksTable.deletedAt));
-	}
-
 	let filteredTag: Tag | undefined = undefined;
 
 	if (options.tag) {
@@ -98,6 +83,20 @@ export const load: PageServerLoad = async (event) => {
 					)
 			)
 		);
+	}
+
+	if (options.category) {
+		filters.push(eq(bookmarksTable.category, options.category));
+	}
+
+	if (options.favorite) {
+		filters.push(eq(bookmarksTable.isFavorite, options.favorite));
+	}
+
+	if (options.archived) {
+		filters.push(isNotNull(bookmarksTable.deletedAt));
+	} else {
+		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
 	const [bookmarks, categories] = await Promise.all([
@@ -127,7 +126,11 @@ export const load: PageServerLoad = async (event) => {
 		db.select().from(categoriesTable).where(eq(categoriesTable.userId, locals.user.id))
 	]);
 
-	const tagsInUse = bookmarks.map((b) => b.tags.map((t) => t.id)).flat();
+	const tagsInUse = bookmarks
+		// .filter((b) => options.archived === !!b.deletedAt)
+		.map((b) => b.tags.map((t) => t.id))
+		.flat();
+
 	const tags = await db
 		.select({
 			name: tagsTable.name,

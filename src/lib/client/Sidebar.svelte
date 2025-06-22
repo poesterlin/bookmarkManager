@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
 	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
+	import { addQueryParam, toggleQueryParam } from './util';
 
 	interface Props {
 		handleAddBookmark: () => void;
@@ -243,7 +244,7 @@
               {page.url.searchParams.get('favorite') === ''
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href="/?favorite"
+				href={toggleQueryParam(page.url, 'favorite')}
 			>
 				<IconStar class="mr-2 h-5 w-5" />
 				Favorites
@@ -253,7 +254,7 @@
               {page.url.searchParams.get('archived') === ''
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href="/?archived"
+				href={toggleQueryParam(page.url, 'archived')}
 			>
 				<IconArchive class="mr-2 h-5 w-5" />
 				Archive
@@ -271,7 +272,7 @@
 			<nav class="space-y-1">
 				{#each categories as category}
 					<a
-						href="/?category={category.id}"
+						href={addQueryParam(page.url, 'category', category.id)}
 						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
                 {page.url.searchParams.get('category') === category.id
 							? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
