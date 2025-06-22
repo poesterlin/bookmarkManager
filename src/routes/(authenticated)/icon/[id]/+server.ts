@@ -25,24 +25,16 @@ export const GET: RequestHandler = async (event) => {
 		return new Response('No favicon found', { status: 404 });
 	}
 
-	const url = new URL(bookmark.favicon, bookmark.url);
+	const size = 32;
+	const origin = new URL(bookmark.url).origin;
+	const url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(origin)}&sz=${size}`;
 
 	const res = await fetch(url.toString(), { method: 'GET' });
-	if (!res.ok) {
-		return new Response(null, {
-			status: 302,
-			headers: {
-				location: '/favicon.png'
-			}
-		});
+	const clone = res.clone();
+	if (!clone.ok) {
+		return new Response('Failed to fetch favicon', { status: 404 });
 	}
+	clone.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
 
-	return new Response(res.body, {
-		status: res.status,
-		headers: {
-			'Content-Type': res.headers.get('Content-Type') ?? 'image/png',
-			'Content-Length': res.headers.get('Content-Length') ?? '0',
-			'Cache-Control': 'public, max-age=31536000, immutable',
-		}
-	});
+	return clone;
 };
