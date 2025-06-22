@@ -244,7 +244,7 @@
               {page.url.searchParams.has('favorite')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href={replaceQueryParam(page.url, 'archived', 'favorite')}
+				href={replaceQueryParam(page.url, ['archived', 'category'], 'favorite')}
 			>
 				<IconStar class="mr-2 h-5 w-5" />
 				Favorites
@@ -254,7 +254,7 @@
               {page.url.searchParams.has('archived')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href={replaceQueryParam(page.url, 'favorite', 'archived')}
+				href={replaceQueryParam(page.url, ['favorite', 'category'], 'archived')}
 			>
 				<IconArchive class="mr-2 h-5 w-5" />
 				Archive
@@ -272,7 +272,7 @@
 			<nav class="space-y-1">
 				{#each categories as category}
 					<a
-						href={addQueryParam(page.url, 'category', category.id)}
+						href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', category.id)}
 						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
                 {page.url.searchParams.get('category') === category.id
 							? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'

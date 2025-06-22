@@ -9,9 +9,9 @@ export function assert(condition: unknown, message: string): asserts condition {
 }
 
 export function assertInstanceOf<T>(p: any, type: new (...args: any[]) => T): asserts p is T {
-    if (!(p instanceof type)) {
-        throw new Error('Assertion failed');
-    }
+	if (!(p instanceof type)) {
+		throw new Error('Assertion failed');
+	}
 }
 
 let workerInstance: ImageWorker | null = null;
@@ -50,14 +50,25 @@ export function removeQueryParam(url: URL, param: string): string {
 }
 
 export function addQueryParam(url: URL, param: string, value: string | boolean = true): string {
-	url = new URL(url.toString());	
+	url = new URL(url.toString());
 	url.searchParams.set(param, String(value));
 	return url.toString();
 }
 
-export function replaceQueryParam(url: URL, currentParam: string, param: string, value: string | boolean = true): string {
+export function replaceQueryParam(
+	url: URL,
+	currentParam: string | string[],
+	param: string,
+	value: string | boolean = true
+): string {
 	url = new URL(url.toString());
-	if (url.searchParams.has(currentParam)) {
+	if (Array.isArray(currentParam)) {
+		currentParam.forEach((p) => {
+			if (url.searchParams.has(p)) {
+				url.searchParams.delete(p);
+			}
+		});
+	} else if (url.searchParams.has(currentParam)) {
 		url.searchParams.delete(currentParam);
 	}
 	url.searchParams.set(param, String(value));
