@@ -10,7 +10,7 @@
 	let isSearching = $state(false);
 	let abortController: AbortController | null = null;
 
-	let { isScrolled } = $props();
+	let { isScrolled, toggleSidebar } = $props();
 
 	$effect(() => {
 		if (abortController) {
@@ -58,13 +58,27 @@
 	}
 </script>
 
+{#snippet logo()}
+	<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
+	<span class="text-primary-500 mr-1 text-2xl font-bold md:hidden">B</span>
+	<span class="text-secondary-500 hidden text-2xl font-bold md:block">Manager</span>
+	<span class="text-secondary-500 text-2xl font-bold md:hidden">M</span>
+{/snippet}
+
 <header class="border-secondary-200/20 z-40 border-b-2 px-4 py-3" class:shadow={isScrolled}>
-	<a class="flex items-center justify-center" href="/">
-		<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
-		<span class="text-primary-500 mr-1 text-2xl font-bold md:hidden">B</span>
-		<span class="text-secondary-500 hidden text-2xl font-bold md:block">Manager</span>
-		<span class="text-secondary-500 text-2xl font-bold md:hidden">M</span>
-	</a>
+	{#if page.url && page.url.pathname === '/'}
+		<button
+			onclick={toggleSidebar}
+			aria-label="Toggle Sidebar"
+			class="flex items-center justify-center"
+		>
+			{@render logo()}
+		</button>
+	{:else}
+		<a class="flex items-center justify-center" href="/">
+			{@render logo()}
+		</a>
+	{/if}
 
 	<div
 		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"

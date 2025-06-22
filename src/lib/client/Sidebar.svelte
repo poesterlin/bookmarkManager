@@ -3,15 +3,16 @@
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
 	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
-	import { addQueryParam, replaceQueryParam, toggleQueryParam } from './util';
+	import { replaceQueryParam } from './util';
 
 	interface Props {
 		handleAddBookmark: () => void;
 		categories: Category[];
+		isMenuOpen?: boolean;
 	}
-	let { handleAddBookmark, categories }: Props = $props();
 
-	let isMenuOpen = $state(false);
+	let { handleAddBookmark, categories, isMenuOpen = $bindable(false) }: Props = $props();
+
 	let isSwiping = $state(false);
 	let startX = 0;
 	let startY = 0;

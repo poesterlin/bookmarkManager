@@ -15,6 +15,7 @@
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
+	let isMenuOpen = $state(false);
 
 	afterNavigate(() => {
 		searchStore.clear();
@@ -41,6 +42,10 @@
 			bookmark: null
 		});
 	}
+
+	function toggleSidebar() {
+		isMenuOpen = !isMenuOpen;
+	}
 </script>
 
 <svelte:window
@@ -50,10 +55,10 @@
 />
 
 <div class="flex h-screen flex-col">
-	<Header {isScrolled} />
+	<Header {isScrolled} {toggleSidebar} />
 
 	<div class="flex flex-1">
-		<Sidebar {handleAddBookmark} categories={data.categories} />
+		<Sidebar {handleAddBookmark} categories={data.categories} bind:isMenuOpen />
 
 		<main
 			class="max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-4 pb-30 md:p-6 lg:p-8"
