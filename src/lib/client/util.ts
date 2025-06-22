@@ -34,7 +34,7 @@ export function getWorkerInstance(): ImageWorker {
  * @returns the modified url
  */
 export function toggleQueryParam(url: URL, param: string, value: string | boolean = true): string {
-	url = new URL(url.toString()); // Ensure we are working with a fresh URL object
+	url = new URL(url.toString());
 	if (url.searchParams.has(param)) {
 		url.searchParams.delete(param);
 	} else {
@@ -44,13 +44,22 @@ export function toggleQueryParam(url: URL, param: string, value: string | boolea
 }
 
 export function removeQueryParam(url: URL, param: string): string {
-	url = new URL(url.toString()); // Ensure we are working with a fresh URL object
+	url = new URL(url.toString());
 	url.searchParams.delete(param);
 	return url.toString();
 }
 
 export function addQueryParam(url: URL, param: string, value: string | boolean = true): string {
-	url = new URL(url.toString()); // Ensure we are working with a fresh URL object
+	url = new URL(url.toString());	
+	url.searchParams.set(param, String(value));
+	return url.toString();
+}
+
+export function replaceQueryParam(url: URL, currentParam: string, param: string, value: string | boolean = true): string {
+	url = new URL(url.toString());
+	if (url.searchParams.has(currentParam)) {
+		url.searchParams.delete(currentParam);
+	}
 	url.searchParams.set(param, String(value));
 	return url.toString();
 }
