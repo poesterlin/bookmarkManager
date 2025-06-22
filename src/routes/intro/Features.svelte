@@ -13,9 +13,9 @@
         description: "Create custom categories to keep your bookmarks neatly organized."
       },
       {
-        icon: "search",
-        title: "Quick Search",
-        description: "Find any bookmark instantly with our powerful search functionality."
+        icon: "app",
+        title: "Browser Extension",
+        description: "Access your bookmarks directly from your browser with our extension."
       },
       {
         icon: "tag",
