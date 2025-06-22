@@ -19,13 +19,7 @@ export const db = drizzle({ client, logger: false });
 let isMigrated = false;
 
 if (!building && !isMigrated) {
-	try {
-		await migrate(db, { migrationsFolder: 'drizzle' });
-		console.log('Database migrated');
-	} catch (error) {
-		console.error('Error migrating database:', error);
-		throw new Error('Error migrating database');
-	} finally {
-		isMigrated = true;
-	}
+	await migrate(db, { migrationsFolder: 'drizzle' });
+	console.log('Database migrated');
+	isMigrated = true;
 }
