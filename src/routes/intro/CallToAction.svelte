@@ -11,7 +11,7 @@
         </p>
         
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button href="https://bookmarks.oesterlin.dev" primary>
+          <Button href="/register" primary>
             Try BookmarkManager
           </Button>
           <Button href="https://github.com/poesterlin/bookmarkManager">
