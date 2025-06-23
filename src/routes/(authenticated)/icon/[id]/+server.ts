@@ -21,10 +21,6 @@ export const GET: RequestHandler = async (event) => {
 		return new Response('Bookmark not found', { status: 404 });
 	}
 
-	if (!bookmark.favicon) {
-		return new Response('No favicon found', { status: 404 });
-	}
-
 	const size = 32;
 	const origin = new URL(bookmark.url).origin;
 	const url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(origin)}&sz=${size}`;

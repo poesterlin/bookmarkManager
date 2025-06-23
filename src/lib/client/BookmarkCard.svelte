@@ -21,6 +21,7 @@
 	}
 
 	let { bookmark }: Props = $props();
+	let error = $state(false);
 
 	function formatUrl(url: string): string {
 		try {
@@ -43,10 +44,10 @@
 		return worker.getProcessedImageUrl(bookmark.id);
 	}
 
-	function trackView(){
+	function trackView() {
 		fetch(`/track/${bookmark.id}`, {
 			method: 'PATCH',
-			keepalive: true,
+			keepalive: true
 		});
 	}
 </script>
@@ -62,7 +63,7 @@
 {/snippet}
 
 {#snippet img(src: string)}
-	<img {src} alt="" class="h-6 w-6 rounded-sm" />
+	<img {src} alt="" class="h-6 w-6 rounded-sm" onerror={() => (error = true)} />
 {/snippet}
 
 <!-- header -->
@@ -71,20 +72,18 @@
 	<div
 		class="icon mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm dark:bg-gray-800/70"
 	>
-		{#if bookmark.favicon}
-			{#if app.isDarkMode}
-				{#await getImageUrl()}
-					<IconLoader class="h-6 w-6 animate-spin text-gray-400" />
-				{:then imageUrl}
-					{@render img(imageUrl)}
-				{:catch error}
-					{@render fallbackIcon()}
-				{/await}
-			{:else}
-				{@render img(`/icon/${bookmark.id}`)}
-			{/if}
-		{:else}
+		{#if error}
 			{@render fallbackIcon()}
+		{:else if app.isDarkMode}
+			{#await getImageUrl()}
+				<IconLoader class="h-6 w-6 animate-spin text-gray-400" />
+			{:then imageUrl}
+				{@render img(imageUrl)}
+			{:catch error}
+				{@render fallbackIcon()}
+			{/await}
+		{:else}
+			{@render img(`/icon/${bookmark.id}`)}
 		{/if}
 	</div>
 
