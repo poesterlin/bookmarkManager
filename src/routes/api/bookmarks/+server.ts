@@ -5,7 +5,7 @@ import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/au
 import { createBookmark } from '$lib/server/bookmark';
 
 const schema = z.object({
-	title: z.string().min(1).max(100),
+	title: z.string().min(1).max(500),
 	url: z.string().url(),
 	category: z.string().optional(),
 	newCategory: z.string().optional(),

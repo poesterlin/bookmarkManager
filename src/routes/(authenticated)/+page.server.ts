@@ -167,7 +167,7 @@ export const load: PageServerLoad = async (event) => {
 export const actions: Actions = {
 	add: validateForm(
 		z.object({
-			title: z.string().min(1).max(100),
+			title: z.string().min(1).max(500),
 			url: z.string().url(),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
