@@ -99,7 +99,7 @@ export const load: PageServerLoad = async (event) => {
 		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
-	const [bookmarks, categories] = await Promise.all([
+	const [bookmarks, categories, tags] = await Promise.all([
 		db
 			.select({
 				...getTableColumns(bookmarksTable),
@@ -123,26 +123,25 @@ export const load: PageServerLoad = async (event) => {
 			)
 			.where(and(...filters)),
 
-		db.select().from(categoriesTable).where(eq(categoriesTable.userId, locals.user.id))
+		db.select().from(categoriesTable).where(eq(categoriesTable.userId, locals.user.id)),
+		db
+			.select({
+				name: tagsTable.name,
+				id: tagsTable.id,
+				count: count(bookmarkTags.tagId),
+			})
+			.from(tagsTable)
+			.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
+			.innerJoin(bookmarksTable, eq(bookmarkTags.bookmarkId, bookmarksTable.id))
+			.groupBy(tagsTable.id, bookmarkTags.tagId)
+			.where(
+				and(
+					eq(tagsTable.userId, locals.user.id),
+					...filters
+				)
+			)
+			.orderBy(tagsTable.name),
 	]);
-
-	const tagsInUse = bookmarks
-		// .filter((b) => options.archived === !!b.deletedAt)
-		.map((b) => b.tags.map((t) => t.id))
-		.flat();
-
-	const tags = await db
-		.select({
-			name: tagsTable.name,
-			id: tagsTable.id,
-			count: count(bookmarkTags.tagId),
-			inUse: inArray(bookmarkTags.tagId, tagsInUse)
-		})
-		.from(tagsTable)
-		.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
-		.groupBy(tagsTable.id, bookmarkTags.tagId)
-		.where(eq(tagsTable.userId, locals.user.id))
-		.orderBy(tagsTable.name);
 
 	// sometimes share target text is used for the link, not the link property
 	if (options.text && !options.link && URL.canParse(options.text)) {
