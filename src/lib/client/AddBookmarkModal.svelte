@@ -48,7 +48,7 @@
 
 	function handleCancel() {
 		if (shareData?.url) {
-			return goto('/');
+			return goto('/', { replaceState: true });
 		}
 
 		onClose();
