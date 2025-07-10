@@ -137,7 +137,7 @@
 		<form
 			use:enhance={() => {
 				return ({ update }) => {
-					toastStore.show('Successfully edited new Bookmark');
+					toastStore.show('Successfully edited Bookmark');
 					handleCancel();
 					update();
 				};

@@ -122,7 +122,7 @@
 		<div class="fixed right-4 bottom-4 z-50 flex flex-col gap-2">
 			{#each toastStore.toasts as toast (toast.id)}
 				<div
-					class="animate-fade-in rounded-md bg-gray-800 px-4 py-2 text-white shadow-lg"
+					class="animate-fade-in rounded-md bg-gray-800 px-4 py-2 text-white shadow-lg border-l-4 border-primary-500"
 					role="alert"
 				>
 					<p>{toast.message}</p>
