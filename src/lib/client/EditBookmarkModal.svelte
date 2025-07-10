@@ -4,6 +4,7 @@
 	import type { Bookmark, Category, Tag } from '$lib/server/db/schema';
 	import { fade } from 'svelte/transition';
 	import Modal from './Modal.svelte';
+	import { toastStore } from './toast.svelte';
 
 	interface Props {
 		bookmark: Bookmark;
@@ -136,7 +137,8 @@
 		<form
 			use:enhance={() => {
 				return ({ update }) => {
-					handleCancel(); 
+					toastStore.show('Successfully edited new Bookmark');
+					handleCancel();
 					update();
 				};
 			}}

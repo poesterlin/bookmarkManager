@@ -11,6 +11,7 @@
 	import type { PageServerData } from './$types';
 	import { tick } from 'svelte';
 	import { addQueryParam, removeQueryParam } from '$lib/client/util';
+	import { toastStore } from '$lib/client/toast.svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
@@ -78,7 +79,7 @@
 					<div
 						class="-mx-4 mb-3 flex items-center gap-2 overflow-y-auto px-4 pb-1 md:mx-0 md:max-w-full md:px-0"
 					>
-						{#each data.tags as tag}
+						{#each data.tags as tag (tag.id)}
 							{#if tag.name}
 								<a
 									href={addQueryParam(page.url, 'tag', tag.id)}
@@ -115,5 +116,18 @@
 			categories={data.categories}
 			existingTags={data.tags.map((tag) => tag.name)}
 		/>
+	{/if}
+
+	{#if toastStore.toasts.length > 0}
+		<div class="fixed right-4 bottom-4 z-50 flex flex-col gap-2">
+			{#each toastStore.toasts as toast (toast.id)}
+				<div
+					class="animate-fade-in rounded-md bg-gray-800 px-4 py-2 text-white shadow-lg"
+					role="alert"
+				>
+					<p>{toast.message}</p>
+				</div>
+			{/each}
+		</div>
 	{/if}
 </div>

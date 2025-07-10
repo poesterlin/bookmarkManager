@@ -7,6 +7,7 @@
 	import Modal from './Modal.svelte';
 	import TagInput from './TagInput.svelte';
 	import { tagStore } from './tags.svelte';
+	import { toastStore } from './toast.svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -108,6 +109,7 @@
 			bind:this={form}
 			use:enhance={() => {
 				return ({ update }) => {
+					toastStore.show('Successfully added new Bookmark');
 					handleCancel();
 					update();
 				};
