@@ -42,20 +42,22 @@
 		onclick={focusInput}
 	>
 		{#each tagStore.selected as tag (tag)}
-			<span
-				transition:fly={{ x: -20 }}
-				class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-			>
-				{tag}
-				<button
-					type="button"
-					class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
-					onclick={stopPropagation(() => tagStore.removeTag(tag))}
-					aria-label={`Remove ${tag} tag`}
+			{#if tag}
+				<span
+					transition:fly={{ x: -20 }}
+					class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
 				>
-					<IconX class="h-3 w-3" />
-				</button>
-			</span>
+					{tag}
+					<button
+						type="button"
+						class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
+						onclick={stopPropagation(() => tagStore.removeTag(tag))}
+						aria-label={`Remove ${tag} tag`}
+					>
+						<IconX class="h-3 w-3" />
+					</button>
+				</span>
+			{/if}
 		{/each}
 		<input
 			type="text"
@@ -70,7 +72,7 @@
 
 	<TagSuggestions></TagSuggestions>
 
-	<!-- Hidden input to store the final comma-separated value -->
+	<!-- Hidden input to tagStore the final comma-separated value -->
 	<input type="hidden" {name} value={tagStore.selected.join(',')} />
 </div>
 
