@@ -164,7 +164,7 @@
 						name="url"
 						value={bookmark.url}
 						readonly
-						class="input mt-1 w-full bg-gray-100 focus:bg-white focus:ring-0 focus:outline-none !focus:box-shadow-none cursor-not-allowed opacity-50"
+						class="input !focus:box-shadow-none mt-1 w-full cursor-not-allowed bg-gray-100 opacity-50 focus:bg-white focus:ring-0 focus:outline-none"
 						placeholder="https://example.com"
 					/>
 				</div>

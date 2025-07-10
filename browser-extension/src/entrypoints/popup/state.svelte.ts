@@ -2,8 +2,9 @@ export async function storedValue<T>(key: string, defaultValue?: T) {
 	let state = $state(defaultValue);
 
 	await browser.storage.local.get<{ [key]: T | undefined }>(key).then((current) => {
-		console.log('initial value', current);
+		console.log(current);
 		const value = current?.[key] ?? defaultValue;
+		console.log('initial value', value, key);
 		state = value;
 	});
 

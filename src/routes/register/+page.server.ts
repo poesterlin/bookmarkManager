@@ -58,7 +58,10 @@ export const actions: Actions = {
 				const userCount = await numberOfUsers();
 
 				if (userCount >= maxUserCount) {
-					return fail(400, { message: 'Oopsie! It looks like we have reached the maximum number of registered users. Please try again later! 😊' });
+					return fail(400, {
+						message:
+							'Oopsie! It looks like we have reached the maximum number of registered users. Please try again later! 😊'
+					});
 				}
 			}
 

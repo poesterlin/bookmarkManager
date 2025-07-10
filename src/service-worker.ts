@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
 	if (!enabled) {
 		return;
 	}
-	
+
 	const { request } = event;
 	if (request.method !== 'GET') {
 		return;

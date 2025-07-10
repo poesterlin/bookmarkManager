@@ -39,26 +39,30 @@
 		</p>
 
 		<div class="flex flex-col gap-8">
-			<a href="/privacy" class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+			<a
+				href="/privacy"
+				class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 hover:underline focus:ring-2 focus:ring-slate-200 focus:outline-none"
 				>Privacy Policy</a
 			>
 
 			<a
 				href="/export"
 				download="bookmarks.html"
-				class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+				class="m-auto w-max rounded-full px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 hover:underline focus:ring-2 focus:ring-slate-200 focus:outline-none"
 				>Export Bookmarks
 			</a>
 
 			<form method="POST" action="/logout">
 				<button
-					class="rounded-full bg-white px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 focus:ring-2 focus:ring-slate-200 focus:outline-none hover:underline"
+					class="rounded-full bg-white px-6 font-semibold tracking-wider text-slate-600 transition-all duration-300 hover:underline focus:ring-2 focus:ring-slate-200 focus:outline-none"
 					type="submit">Logout</button
 				>
 			</form>
 
 			<form action="?/delete" method="POST">
-				<ConfirmSubmit class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-slate-200 focus:outline-none">
+				<ConfirmSubmit
+					class="rounded-full bg-red-400 px-4 py-3 font-semibold tracking-wider text-white shadow-md transition-all duration-300 hover:scale-105 hover:shadow-xl focus:ring-2 focus:ring-slate-200 focus:outline-none"
+				>
 					Delete Account
 				</ConfirmSubmit>
 			</form>

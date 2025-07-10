@@ -7,9 +7,9 @@
 </script>
 
 <div class="background flex h-screen items-center justify-center">
-	<div class="card w-md w-full overflow-hidden rounded-lg bg-white shadow-xl">
+	<div class="card w-full w-md overflow-hidden rounded-lg bg-white shadow-xl">
 		<div class="px-6 py-8">
-			<h2 class="mb-6 text-center text-3xl font-semibold text-primary-500">Welcome Back!</h2>
+			<h2 class="text-primary-500 mb-6 text-center text-3xl font-semibold">Welcome Back!</h2>
 
 			<form method="POST" action="?/login" use:enhance class="space-y-4">
 				<div>
@@ -43,7 +43,7 @@
 				</div>
 
 				{#if form?.message}
-					<p class="text-balance text-center text-sm text-fuchsia-500" transition:fade>
+					<p class="text-center text-sm text-balance text-fuchsia-500" transition:fade>
 						{form.message}
 					</p>
 				{/if}

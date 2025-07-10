@@ -42,7 +42,6 @@ export const POST: RequestHandler = async (event) => {
 function sanitizeUrl(url: string) {
 	// Check if the URL is valid
 	if (!URL.canParse(url)) {
-
 		// Check if adding 'https://' makes it valid
 		const withProtocol = 'https://' + url;
 		if (URL.canParse(withProtocol)) {

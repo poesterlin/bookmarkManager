@@ -23,7 +23,6 @@
 	scroll-behavior: smooth;
 }
 
-
 .dark body {
 	background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3b 100%);
 	color-scheme: dark;
@@ -183,7 +182,6 @@ button {
 	outline: none;
 	box-shadow: 0 0 0 2px theme(--color-primary-400);
 }
-
 
 .input:focus-within {
 	outline: none;

@@ -46,7 +46,7 @@ export const GET: RequestHandler = async (event) => {
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(
-			sql`similarity(${bookmarksTable.title}, ${searchTerm}) + similarity(${bookmarksTable.description}, ${searchTerm}) DESC`,
+			sql`similarity(${bookmarksTable.title}, ${searchTerm}) + similarity(${bookmarksTable.description}, ${searchTerm}) DESC`
 		)
 		.limit(20);
 

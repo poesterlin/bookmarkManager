@@ -4,7 +4,7 @@ export default {
 	theme: {
 		extend: {
 			gridTemplateColumns: {
-				'cards': 'repeat(auto-fill, minmax(16rem, 1fr))',
+				cards: 'repeat(auto-fill, minmax(16rem, 1fr))'
 			},
 			colors: {
 				primary: {
@@ -52,12 +52,17 @@ export default {
 			},
 			animation: {
 				float: 'float 6s ease-in-out infinite',
-				'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+				'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+				'fade-in': 'fade-in 0.3s ease-out'
 			},
 			keyframes: {
 				float: {
 					'0%, 100%': { transform: 'translateY(0)' },
 					'50%': { transform: 'translateY(-10px)' }
+				},
+				'fade-in': {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
 				}
 			}
 		}

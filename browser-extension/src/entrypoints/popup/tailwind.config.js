@@ -4,7 +4,7 @@ export default {
 	theme: {
 		extend: {
 			gridTemplateColumns: {
-				'cards': 'repeat(auto-fill, minmax(16rem, 1fr))',
+				cards: 'repeat(auto-fill, minmax(16rem, 1fr))'
 			},
 			colors: {
 				primary: {

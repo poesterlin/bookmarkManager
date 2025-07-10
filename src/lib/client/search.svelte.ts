@@ -11,9 +11,9 @@ class SearchResults {
 		this.results.length = 0;
 	}
 
-    isSet() {
-        return this.results.length > 0;
-    }
+	isSet() {
+		return this.results.length > 0;
+	}
 }
 
 export const searchStore = new SearchResults();

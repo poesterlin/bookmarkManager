@@ -15,14 +15,14 @@
 		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
-	
+
 		// Best practices
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": false,
-	
+
 		// Some stricter flags (disabled by default)
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"noPropertyAccessFromIndexSignature": false,
+		"noPropertyAccessFromIndexSignature": false
 	}
 }

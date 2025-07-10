@@ -3,9 +3,12 @@
 
 	let abortController: AbortController | null = null;
 	let challenge: StoredValue<string | undefined>;
+	let fallback: string;
 
 	onMount(() => {
 		let cleanup = () => {};
+
+		console.log('mounted');
 
 		storedValue<string | undefined>(challengeKey)
 			.then(async (value) => {
@@ -43,6 +46,7 @@
 		await challenge.set(token);
 
 		console.log('Challenge token received:', token);
+		fallback = token;
 
 		// open tab to authenticate
 		await browser.tabs.create({
@@ -107,7 +111,18 @@
 	}
 </script>
 
-<div>
+<div class="w-max p-4">
 	<h1>Wait for authentication</h1>
 	<p>We are waiting for you to authenticate with the server.</p>
+	{#if fallback}
+		<a
+			href="{import.meta.env.VITE_HOST}/challenge/{fallback}"
+			target="_blank"
+			class="text-underline mt-2">Open Tab manually</a
+		>
+	{:else}
+		<button on:click={startChallenge} class="mt-2 bg-white p-4 text-black">
+			Start authentication
+		</button>
+	{/if}
 </div>

@@ -36,10 +36,19 @@
 		<p class="mt-2">This action cannot be undone.</p>
 
 		<div class="mt-4 flex justify-between">
-			<button autofocus type="button" class="mr-2 rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800" onclick={() => (openDialog = false)}>
+			<button
+				autofocus
+				type="button"
+				class="mr-2 rounded bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+				onclick={() => (openDialog = false)}
+			>
 				Cancel
 			</button>
-			<button type="submit" class="rounded items-center bg-red-400 px-4 py-2 text-white hover:bg-red-700 flex gap-2" onclick={fireSubmit}>
+			<button
+				type="submit"
+				class="flex items-center gap-2 rounded bg-red-400 px-4 py-2 text-white hover:bg-red-700"
+				onclick={fireSubmit}
+			>
 				{@render children()}
 			</button>
 		</div>

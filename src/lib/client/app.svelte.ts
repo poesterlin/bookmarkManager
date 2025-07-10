@@ -4,6 +4,6 @@ class AppState {
 	setDarkMode(dark: boolean) {
 		this.isDarkMode = dark;
 	}
-};
+}
 
 export const app = new AppState();

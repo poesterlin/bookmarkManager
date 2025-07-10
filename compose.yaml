@@ -3,7 +3,7 @@ services:
     build: .
     env_file: .env
     restart: unless-stopped
-    dns: 
+    dns:
       - 1.1.1.1
       - 1.0.0.1
     labels:

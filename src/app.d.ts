@@ -15,7 +15,6 @@ declare global {
 			isAddModalOpen?: boolean;
 			isEditModalOpen?: boolean;
 			bookmark?: Bookmark;
-
 		}
 		// interface Platform {}
 	}

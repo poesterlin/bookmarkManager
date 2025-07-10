@@ -22,11 +22,11 @@
 	],
 	"share_target": {
 		"action": "/?sharetarget=true",
-        "method": "GET",
+		"method": "GET",
 		"enctype": "application/x-www-form-urlencoded",
-        "params": {
-            "title": "title",
-            "text": "text",
+		"params": {
+			"title": "title",
+			"text": "text",
 			"url": "link"
 		}
 	},
@@ -43,7 +43,7 @@
 			"sizes": "390x844",
 			"type": "image/webp",
 			"platform": "ios",
-            "form_factor": "narrow",
+			"form_factor": "narrow",
 			"label": "Home screen showing main navigation and featured content"
 		}
 	]

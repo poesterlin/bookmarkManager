@@ -27,9 +27,7 @@
 	let filteredTags = $derived.by(() => {
 		if (tagInput && tagInput.trim()) {
 			return existingTags.filter(
-				(tag) =>
-					tag.toLowerCase().includes(tagInput.toLowerCase()) &&
-					!selectedTags.includes(tag)
+				(tag) => tag.toLowerCase().includes(tagInput.toLowerCase()) && !selectedTags.includes(tag)
 			);
 		}
 		return [];
@@ -84,10 +82,7 @@
 			case 'ArrowDown':
 				event.preventDefault(); // Prevent cursor move
 				if (showSuggestions) {
-					activeSuggestionIndex = Math.min(
-						activeSuggestionIndex + 1,
-						filteredTags.length - 1
-					);
+					activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, filteredTags.length - 1);
 				}
 				break;
 			case 'ArrowUp':
@@ -118,11 +113,9 @@
 		}
 	}
 </script>
+
 <div class="tag-input-wrapper relative">
-	<label
-		for="tag-input"
-		class="block text-sm font-medium text-gray-700 dark:text-gray-200"
-	>
+	<label for="tag-input" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
 		{label}
 	</label>
 	<!-- svelte-ignore a11y_no_abstract_role -->

@@ -128,19 +128,14 @@ export const load: PageServerLoad = async (event) => {
 			.select({
 				name: tagsTable.name,
 				id: tagsTable.id,
-				count: count(bookmarkTags.tagId),
+				count: count(bookmarkTags.tagId)
 			})
 			.from(tagsTable)
 			.innerJoin(bookmarkTags, eq(tagsTable.id, bookmarkTags.tagId))
 			.innerJoin(bookmarksTable, eq(bookmarkTags.bookmarkId, bookmarksTable.id))
 			.groupBy(tagsTable.id, bookmarkTags.tagId)
-			.where(
-				and(
-					eq(tagsTable.userId, locals.user.id),
-					...filters
-				)
-			)
-			.orderBy(tagsTable.name),
+			.where(and(eq(tagsTable.userId, locals.user.id), ...filters))
+			.orderBy(tagsTable.name)
 	]);
 
 	// sometimes share target text is used for the link, not the link property

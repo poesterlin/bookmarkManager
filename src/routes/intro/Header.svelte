@@ -1,4 +1,6 @@
-<header class="fixed top-0 right-0 left-0 z-50 transition-all duration-300 bg-gray-900/90 backdrop-blur-md shadow-md">
+<header
+	class="fixed top-0 right-0 left-0 z-50 bg-gray-900/90 shadow-md backdrop-blur-md transition-all duration-300"
+>
 	<div class="container mx-auto flex items-center justify-between px-4 py-4">
 		<a href="/" class="flex items-center">
 			<span class="text-primary-500 text-2xl font-bold">Bookmark</span>

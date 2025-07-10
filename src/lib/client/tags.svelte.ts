@@ -2,8 +2,7 @@ class TagStore {
 	public selected = $state<string[]>([]);
 	public existingTags = $state<string[]>([]);
 	public tagInput = $state<string>('');
-    public activeSuggestionIndex = $state(-1);
-
+	public activeSuggestionIndex = $state(-1);
 
 	public filteredTags = $derived.by(() => {
 		if (!this.tagInput?.trim()) {
@@ -18,8 +17,7 @@ class TagStore {
 
 	public showSuggestions = $derived(this.filteredTags.length > 0 && this.tagInput.trim() !== '');
 
-
-    public handleTagInputKeydown(event: KeyboardEvent) {
+	public handleTagInputKeydown(event: KeyboardEvent) {
 		if (!this.tagInput || this.tagInput.trim() === '') {
 			return;
 		}
@@ -62,13 +60,11 @@ class TagStore {
 		}
 	}
 
-    
-
 	public removeTag(tagToRemove: string) {
 		this.selected = this.selected.filter((tag) => tag !== tagToRemove);
 	}
 
-    public addTag(tag: string) {
+	public addTag(tag: string) {
 		const trimmedTag = tag.trim();
 		if (trimmedTag && !this.selected.includes(trimmedTag)) {
 			this.selected = [...this.selected, trimmedTag];
@@ -76,6 +72,5 @@ class TagStore {
 		this.tagInput = ''; // Clear input after adding
 	}
 }
-
 
 export const tagStore = new TagStore();
