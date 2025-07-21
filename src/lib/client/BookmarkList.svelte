@@ -5,11 +5,18 @@
 	import type { Bookmark } from '$lib/server/db/schema';
 	import { searchStore } from './search.svelte';
 	import { page } from '$app/state';
+	import { dragStore } from './drag-store.svelte';
 
 	let { bookmarks, addBookmark }: { bookmarks: Bookmark[]; addBookmark: () => void } = $props();
 
 	let list = $derived(searchStore.isSet() ? searchStore.results : bookmarks);
 </script>
+
+<svelte:window
+	onpointercancel={() => dragStore.end()}
+	onpointerup={() => dragStore.end()}
+	onpointermove={(e) => dragStore.move(e.clientX, e.clientY)}
+/>
 
 <div class="fade-in space-y-4">
 	{#if bookmarks.length === 0}
@@ -25,6 +32,16 @@
 					<BookmarkCard {bookmark} />
 				</div>
 			{/each}
+		</div>
+	{/if}
+
+	{#if dragStore.card && dragStore.isDragging && dragStore.pos}
+		<div
+			class="glass fixed hidden rounded-xl p-4 shadow-xl md:block z-90 w-sm"
+			style:left="{dragStore.pos.x}px"
+			style:top="{dragStore.pos.y}px"
+		>
+			<BookmarkCard bookmark={dragStore.card} />
 		</div>
 	{/if}
 </div>

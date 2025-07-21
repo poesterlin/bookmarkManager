@@ -4,6 +4,7 @@
 	import type { Category } from '$lib/server/db/schema';
 	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
 	import { replaceQueryParam } from './util';
+	import { dragStore } from './drag-store.svelte';
 
 	interface Props {
 		handleAddBookmark: () => void;
@@ -278,6 +279,7 @@
                 {page.url.searchParams.get('category') === category.id
 							? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
 							: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
+						onpointerup={() => dragStore.addToCategory(category)}
 					>
 						<IconFolder class="mr-2 h-5 w-5" />
 						{category.name}

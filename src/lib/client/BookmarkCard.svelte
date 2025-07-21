@@ -15,6 +15,7 @@
 	} from '@tabler/icons-svelte';
 	import { app } from './app.svelte';
 	import { getWorkerInstance } from './util';
+	import { dragStore } from './drag-store.svelte';
 
 	interface Props {
 		bookmark: Bookmark;
@@ -67,7 +68,10 @@
 {/snippet}
 
 <!-- header -->
-<div class="card-grid">
+<div
+	class="card-grid"
+	onpointerdown={() => dragStore.start(bookmark)}
+>
 	<!-- icon -->
 	<div
 		class="icon mr-3 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/70 shadow-sm dark:bg-gray-800/70"

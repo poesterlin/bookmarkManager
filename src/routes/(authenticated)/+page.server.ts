@@ -392,5 +392,44 @@ export const actions: Actions = {
 				.set({ isFavorite: form.favorite })
 				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)));
 		}
+	),
+	"update-category": validateForm(
+		z.object({
+			category: z.string(),
+			bookmark: z.string(),
+		}),
+		async (event, form) => {
+			const locals = validateAuth(event);
+
+			const [bookmark] = await db
+				.select()
+				.from(bookmarksTable)
+				.where(and(
+					eq(bookmarksTable.userId, locals.user.id),
+					eq(bookmarksTable.id, form.bookmark)
+				)).limit(1);
+
+			if (!bookmark) {
+				error(404, { message: "Bookmark not found" });
+			}
+
+			const [category] = await db
+				.select()
+				.from(categoriesTable)
+				.where(and(
+					eq(categoriesTable.userId, locals.user.id),
+					eq(categoriesTable.id, form.category)
+				)).limit(1);
+
+			if (!category) {
+				error(404, { message: "Category not found" });
+			}
+
+			await db.update(bookmarksTable).set({
+				category: category.id,
+				updatedAt: new Date(),
+			}).where(eq(bookmarksTable.id, form.bookmark));
+		}
 	)
 };
+
