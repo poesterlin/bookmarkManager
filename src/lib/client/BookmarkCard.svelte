@@ -71,6 +71,7 @@
 <div
 	class="card-grid"
 	onpointerdown={() => dragStore.start(bookmark)}
+	onpointerout={()=> dragStore.activate()}
 >
 	<!-- icon -->
 	<div
