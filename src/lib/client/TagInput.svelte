@@ -63,7 +63,8 @@
 			type="text"
 			id="tag-input"
 			bind:value={tagStore.tagInput}
-			onkeydown={tagStore.handleTagInputKeydown}
+			oninput={(e) => tagStore.handleTagInputChange(e)}
+			onkeydown={(e) => tagStore.handleTagInputKeydown(e)}
 			class="min-w-[60px] flex-grow border-none bg-transparent p-1 text-sm focus:ring-0 focus:outline-none"
 			placeholder={tagStore.selected.length === 0 ? placeholder : ''}
 			autocomplete="off"

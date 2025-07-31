@@ -3,34 +3,31 @@ class TagStore {
 	public existingTags = $state<string[]>([]);
 	public tagInput = $state<string>('');
 	public activeSuggestionIndex = $state(-1);
+	public trimmedTagInput = $derived.by(() => this.tagInput.trim());
 
 	public filteredTags = $derived.by(() => {
-		if (!this.tagInput?.trim()) {
+		if (!this.trimmedTagInput) {
 			return [];
 		}
 
 		return this.existingTags.filter(
 			(tag) =>
-				tag.toLowerCase().includes(this.tagInput.toLowerCase()) && !this.selected.includes(tag)
+				tag.toLowerCase().includes(this.trimmedTagInput.toLowerCase()) && !this.selected.includes(tag)
 		);
 	});
+	public showSuggestions = $derived(this.filteredTags.length > 0 && this.trimmedTagInput !== '');
 
-	public showSuggestions = $derived(this.filteredTags.length > 0 && this.tagInput.trim() !== '');
 
 	public handleTagInputKeydown(event: KeyboardEvent) {
-		if (!this.tagInput || this.tagInput.trim() === '') {
-			return;
-		}
-
 		switch (event.key) {
 			case 'Enter':
 			case ' ':
-			case ',': // Add tag on comma as well
-				event.preventDefault(); // Prevent form submission or typing comma
+			case ',':
+				event.preventDefault();
 				if (this.showSuggestions && this.activeSuggestionIndex > -1) {
 					this.addTag(this.filteredTags[this.activeSuggestionIndex]);
-				} else if (this.tagInput.trim()) {
-					this.addTag(this.tagInput);
+				} else if (this.trimmedTagInput) {
+					this.addTag(this.trimmedTagInput);
 				}
 				break;
 			case 'Backspace':
@@ -65,11 +62,23 @@ class TagStore {
 	}
 
 	public addTag(tag: string) {
-		const trimmedTag = tag.trim();
-		if (trimmedTag && !this.selected.includes(trimmedTag)) {
-			this.selected = [...this.selected, trimmedTag];
+		if (tag && !this.selected.includes(tag)) {
+			this.selected.push(tag);
 		}
 		this.tagInput = ''; // Clear input after adding
+	}
+
+	public handleTagInputChange(event: Event) {
+		const input = event.target as HTMLInputElement;
+		this.tagInput = input.value;
+
+		// Reset active suggestion index when typing
+		this.activeSuggestionIndex = -1;
+
+		// If the input is empty, hide suggestions
+		if (this.tagInput.trim() === '') {
+			this.activeSuggestionIndex = -1;
+		}
 	}
 }
 
