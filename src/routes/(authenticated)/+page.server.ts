@@ -3,11 +3,12 @@ import {
 	bookmarksTable,
 	bookmarkTags,
 	categoriesTable,
+	sharedCategoriesTable,
 	tagsTable,
 	type Category,
 	type Tag
 } from '$lib/server/db/schema';
-import { generateId, validateAuth, validateForm } from '$lib/server/util';
+import { generateId, validateAuth, validateForm, validateOptions } from '$lib/server/util';
 import { error, redirect } from '@sveltejs/kit';
 import {
 	and,
@@ -20,11 +21,13 @@ import {
 	isNull,
 	not,
 	sql,
-	desc
+	desc,
+	SQL
 } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 import { createBookmark } from '$lib/server/bookmark';
+import { generateSessionToken } from '$lib/server/auth';
 
 const optionsSchema = z.object({
 	category: z.string().optional(),
@@ -46,18 +49,7 @@ const optionsSchema = z.object({
 
 export const load: PageServerLoad = async (event) => {
 	const locals = validateAuth(event);
-
-	const params = event.url.searchParams.entries();
-	const search = Object.fromEntries(params);
-
-	const parsedOptions = optionsSchema.safeParse(search);
-
-	if (!parsedOptions.success) {
-		console.error('Invalid options:', parsedOptions.error);
-		error(400, 'Invalid options');
-	}
-
-	const options = parsedOptions.data;
+	const options = validateOptions(event, optionsSchema);
 
 	const filters = [eq(bookmarksTable.userId, locals.user.id)];
 	let filteredTag: Tag | undefined = undefined;
@@ -85,8 +77,24 @@ export const load: PageServerLoad = async (event) => {
 		);
 	}
 
+	let sharedCategory = undefined;
 	if (options.category) {
-		filters.push(eq(bookmarksTable.category, options.category));
+		const [shared] = await db
+			.select()
+			.from(sharedCategoriesTable)
+			.where(
+				and(
+					eq(sharedCategoriesTable.id, options.category),
+					eq(sharedCategoriesTable.userId, locals.user.id)
+				)
+			)
+			.limit(1);
+		sharedCategory = shared;
+
+		if (!sharedCategory) {
+			// shared categories are returned seperatly
+			filters.push(eq(bookmarksTable.category, options.category));
+		}
 	}
 
 	if (options.favorite) {
@@ -99,31 +107,38 @@ export const load: PageServerLoad = async (event) => {
 		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
-	const [bookmarks, categories, tags] = await Promise.all([
-		db
-			.select({
-				...getTableColumns(bookmarksTable),
-				tags: sql<
-					Tag[]
-				>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}))`.as('tags'),
-				category:
-					sql<Category>`json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as(
-						'category'
-					)
-			})
-			.from(bookmarksTable)
-			.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
-			.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
-			.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
-			.groupBy(bookmarksTable.id, categoriesTable.id)
-			.orderBy(
-				desc(bookmarksTable.clicks),
-				desc(bookmarksTable.isFavorite),
-				desc(bookmarksTable.createdAt)
-			)
-			.where(and(...filters)),
+	const [bookmarks, categories, sharedCategories, tags] = await Promise.all([
+		sharedCategory ?
+			getSharedBookmarks(sharedCategory.categoryId) :
+			getBookmarks(filters),
 
-		db.select().from(categoriesTable).where(eq(categoriesTable.userId, locals.user.id)),
+		// categories
+		db.select({
+			...getTableColumns(categoriesTable),
+			isShared: exists(
+				db
+					.select()
+					.from(sharedCategoriesTable)
+					.where(
+						and(
+							eq(sharedCategoriesTable.categoryId, categoriesTable.id),
+							eq(sharedCategoriesTable.userId, locals.user.id)
+						)
+					)
+			) as SQL<boolean>
+		})
+			.from(categoriesTable)
+			.where(eq(categoriesTable.userId, locals.user.id))
+			.orderBy(categoriesTable.name),
+
+		// shared categories
+		db
+			.select({ name: categoriesTable.name, id: sharedCategoriesTable.id })
+			.from(sharedCategoriesTable)
+			.where(eq(sharedCategoriesTable.userId, locals.user.id))
+			.leftJoin(categoriesTable, eq(categoriesTable.id, sharedCategoriesTable.categoryId)),
+
+		// tags
 		db
 			.select({
 				name: tagsTable.name,
@@ -148,6 +163,7 @@ export const load: PageServerLoad = async (event) => {
 		user: locals.user,
 		bookmarks,
 		categories,
+		sharedCategories,
 		tags,
 		filteredTag,
 		shareTarget: {
@@ -430,6 +446,48 @@ export const actions: Actions = {
 				updatedAt: new Date(),
 			}).where(eq(bookmarksTable.id, form.bookmark));
 		}
-	)
+	),
 };
+
+function getSharedBookmarks(categoryId: string) {
+	return db.select({
+		...getTableColumns(bookmarksTable),
+		tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`
+			.as('tags'),
+		category: sql<Category> `json_build_object('name', ${categoriesTable.name})`
+			.as('category'),
+	})
+		.from(bookmarksTable)
+		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
+		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
+		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
+		.groupBy(bookmarksTable.id, categoriesTable.id)
+		.where(and(
+			eq(categoriesTable.id, categoryId),
+			isNull(bookmarksTable.deletedAt)
+		));
+}
+
+function getBookmarks(filters: SQL<unknown>[]) {
+	return db.select({
+		...getTableColumns(bookmarksTable),
+		tags: sql<
+			Tag[]
+		> `json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}))`.as('tags'),
+		category: sql<Category> `json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as(
+			'category'
+		)
+	})
+		.from(bookmarksTable)
+		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
+		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
+		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
+		.groupBy(bookmarksTable.id, categoriesTable.id)
+		.orderBy(
+			desc(bookmarksTable.isFavorite),
+			desc(bookmarksTable.createdAt),
+			desc(bookmarksTable.clicks),
+		)
+		.where(and(...filters));
+}
 

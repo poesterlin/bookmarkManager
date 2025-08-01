@@ -79,3 +79,17 @@ export function validateAuth(events: any): RequiredProperty<App.Locals> | never 
 
 	return locals;
 }
+
+export function validateOptions<T extends ZodObject<any>, Options extends z.infer<T>>(event: any, validator: T)  {
+	const params = event.url.searchParams.entries();
+	const search = Object.fromEntries(params);
+	const parsedOptions = validator.safeParse(search);
+
+	if (!parsedOptions.success) {
+		console.error('Invalid options:', parsedOptions.error);
+		error(400, 'Invalid or missing options');
+	}
+
+	const options = parsedOptions.data;
+	return options as Options;
+}

@@ -1,11 +1,11 @@
 import {
 	boolean,
+	index,
+	integer,
 	pgTable,
 	text,
 	timestamp,
-	integer,
-	index,
-	uniqueIndex
+	uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 const fullCascade = { onDelete: 'cascade', onUpdate: 'cascade' } as const;
@@ -104,7 +104,9 @@ export const tagsTable = pgTable(
 	]
 );
 
-export type Tag = typeof tagsTable.$inferSelect;
+export type Tag = typeof tagsTable.$inferSelect & {
+	shared?: true
+};
 
 export const bookmarkTags = pgTable(
 	'bookmark_tags',
@@ -139,4 +141,25 @@ export const categoriesTable = pgTable(
 	]
 );
 
-export type Category = typeof categoriesTable.$inferSelect;
+export type Category = typeof categoriesTable.$inferSelect & {
+	isShared?: boolean | null;
+};
+
+export const sharedCategoriesTable = pgTable(
+	"shared",
+	{
+		id: text("id").primaryKey(),
+		categoryId: text("category_id").notNull().references(() => categoriesTable.id),
+		owner: text('owner_id')
+			.notNull()
+			.references(() => usersTable.id, fullCascade),
+		userId: text('user_id')
+			.references(() => usersTable.id, fullCascade),
+		token: text("token"),
+		allowWriteAccess: boolean("allow_writes"),
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("no_douple_categories").on(table.categoryId, table.userId)
+	]
+);

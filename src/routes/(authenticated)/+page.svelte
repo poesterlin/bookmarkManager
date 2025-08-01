@@ -14,11 +14,19 @@
 	import { tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import type { PageServerData } from './$types';
+	import { fly } from 'svelte/transition';
+	import ShareModal from '$lib/client/ShareModal.svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
 	let mainEl: HTMLElement;
 	let isMenuOpen = $state(false);
+	let isShareMenuOpen = $state(false);
+
+	const shareModalHandler = {
+		open: () => (isShareMenuOpen = true),
+		close: () => (isShareMenuOpen = false)
+	};
 
 	afterNavigate(() => {
 		searchStore.clear();
@@ -63,7 +71,13 @@
 	<Header {isScrolled} {toggleSidebar} />
 
 	<div class="flex flex-1">
-		<Sidebar {handleAddBookmark} categories={data.categories} bind:isMenuOpen />
+		<Sidebar
+			{handleAddBookmark}
+			categories={data.categories}
+			shared={data.sharedCategories}
+			bind:isMenuOpen
+			{shareModalHandler}
+		/>
 
 		<main
 			class="relative max-h-[calc(100dvh-68px)] flex-1 overflow-auto p-2"
@@ -87,7 +101,9 @@
 								{tag.name}
 
 								{#if data.filteredTag?.id === tag.id}
-									<IconMinus class="h-3"></IconMinus>
+									<div in:fly={{ x: 40, delay: 100 }}>
+										<IconMinus class="h-3"></IconMinus>
+									</div>
 								{:else if tag.count > 1}
 									<span class="pr-1 font-normal text-slate-400">{tag.count}</span>
 								{/if}
@@ -118,6 +134,10 @@
 			categories={data.categories}
 			existingTags={data.tags.map((tag) => tag.name)}
 		/>
+	{/if}
+
+	{#if isShareMenuOpen}
+		<ShareModal onClose={handleCloseModal} categories={data.categories} />
 	{/if}
 
 	{#if toastStore.toasts.length > 0}

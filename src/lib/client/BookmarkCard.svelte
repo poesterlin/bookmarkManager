@@ -19,9 +19,10 @@
 
 	interface Props {
 		bookmark: Bookmark;
+		disabled?: boolean;
 	}
 
-	let { bookmark }: Props = $props();
+	let { bookmark, disabled }: Props = $props();
 	let error = $state(false);
 
 	function formatUrl(url: string): string {
@@ -71,7 +72,7 @@
 <div
 	class="card-grid"
 	onpointerdown={() => dragStore.start(bookmark)}
-	onpointerout={()=> dragStore.activate()}
+	onpointerout={() => dragStore.activate()}
 >
 	<!-- icon -->
 	<div
@@ -115,6 +116,7 @@
 		<input type="hidden" name="id" value={bookmark.id} />
 		<input type="hidden" name="favorite" value={!bookmark.isFavorite} />
 		<button
+			{disabled}
 			class="hover:text-primary-500 ml-1 rounded-sm text-gray-400 transition-colors duration-200 hover:bg-white/50 dark:text-gray-500 dark:hover:bg-transparent"
 			aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 		>
@@ -137,7 +139,7 @@
 <div class="flex flex-wrap gap-1">
 	{#if bookmark.category?.name}
 		<a
-			href="/?category={bookmark.category.id}"
+			href={bookmark.category.id ? `/?category=${bookmark.category.id}` : ''}
 			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-800/60 dark:text-secondary-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 		>
 			{bookmark.category.name}
@@ -147,7 +149,7 @@
 		{#if tag.name}
 			<a
 				class="bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium"
-				href="/?tag={tag.id}"
+				href={tag.id ? `/?tag=${tag.id}` : ''}
 			>
 				{tag.name}
 			</a>
@@ -173,6 +175,7 @@
 			<form action="/?/restore" use:enhance method="POST" title="Restore">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
+					{disabled}
 					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-green-500 hover:outline dark:hover:text-green-400"
 					aria-label="Restore"
 				>
@@ -183,6 +186,7 @@
 			<form action="/?/delete" use:enhance method="POST" title="Delete">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
+					{disabled}
 					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
 					aria-label="Delete"
 				>
@@ -191,6 +195,7 @@
 			</form>
 		{:else}
 			<button
+				{disabled}
 				onclick={() => navigator.clipboard.writeText(bookmark.url)}
 				title="Copy URL"
 				class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
@@ -198,6 +203,7 @@
 				<IconCopy class="h-4 w-4"></IconCopy>
 			</button>
 			<button
+				{disabled}
 				onclick={openEditModal}
 				title="Edit"
 				class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
@@ -207,6 +213,7 @@
 			<form action="/?/archive" use:enhance method="POST" title="Archive">
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
+					{disabled}
 					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
 					aria-label="Delete"
 				>

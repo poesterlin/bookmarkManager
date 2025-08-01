@@ -2,17 +2,35 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Category } from '$lib/server/db/schema';
-	import { IconArchive, IconFolder, IconPlus, IconStar, IconWorld } from '@tabler/icons-svelte';
+	import {
+		IconArchive,
+		IconEdit,
+		IconEyeEdit,
+		IconFolder,
+		IconFriends,
+		IconPlus,
+		IconShare,
+		IconStar,
+		IconWorld
+	} from '@tabler/icons-svelte';
 	import { replaceQueryParam } from './util';
 	import { dragStore } from './drag-store.svelte';
 
 	interface Props {
 		handleAddBookmark: () => void;
 		categories: Category[];
+		shared: { name: string | null; id: string }[];
 		isMenuOpen?: boolean;
+		shareModalHandler: { open: () => void; close: () => void };
 	}
 
-	let { handleAddBookmark, categories, isMenuOpen = $bindable(false) }: Props = $props();
+	let {
+		handleAddBookmark,
+		categories,
+		shared,
+		isMenuOpen = $bindable(false),
+		shareModalHandler
+	}: Props = $props();
 
 	let isSwiping = $state(false);
 	let startX = 0;
@@ -142,7 +160,7 @@
 
 	// Added optional parameter to know if swipe action was completed
 	function endSwipe(swipeCompleted = false) {
-		if (!isSwiping) return; // Avoid running if not currently swiping
+		if (!isSwiping) return;
 
 		isSwiping = false;
 		// Don't reset deltaX immediately if swipe wasn't completed,
@@ -214,6 +232,23 @@
 	></button>
 {/if}
 
+{#snippet categoryLink(id: string, name: string, shared: boolean)}
+	<a
+		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
+		class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
+			{page.url.searchParams.get('category') === id
+			? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
+			: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
+	>
+		{#if shared}
+			<IconShare class="mr-2 h-5 w-5" />
+		{:else}
+			<IconFolder class="mr-2 h-5 w-5" />
+		{/if}
+		<span>{name}</span>
+	</a>
+{/snippet}
+
 <!-- sidebar -->
 <aside
 	class="glass fixed z-40 h-[calc(100vh-68px)] w-64 overflow-y-auto transition-transform duration-300 ease-in-out will-change-transform md:static md:!translate-0 dark:!border-0"
@@ -263,27 +298,38 @@
 			</a>
 		</nav>
 
-		{#if categories.length > 0}
-			<div class="mt-6 mb-3">
-				<h3
-					class="px-3 text-xs font-semibold tracking-wider text-gray-500 uppercase dark:text-gray-400"
+		{#if categories.length > 0 || shared.length > 0}
+			<div class="mt-6 mb-3 flex items-center justify-between text-gray-500 dark:text-gray-400">
+				<h3 class="!mb-0 px-3 text-xs font-semibold tracking-wider uppercase">Categories</h3>
+
+				<button
+					onclick={shareModalHandler.open}
+					class="flex items-center justify-center rounded-full p-2 outline-gray-300 hover:outline dark:hover:outline-gray-600"
 				>
-					Categories
-				</h3>
+					<IconEdit class="h-5 w-5">
+						<span class="sr-only">Manage a Category</span>
+					</IconEdit>
+				</button>
 			</div>
 			<nav class="space-y-1">
 				{#each categories as category}
-					<a
-						href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', category.id)}
-						class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
-                {page.url.searchParams.get('category') === category.id
-							? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
-							: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-						onpointerup={() => dragStore.addToCategory(category)}
-					>
-						<IconFolder class="mr-2 h-5 w-5" />
-						{category.name}
-					</a>
+					<div onpointerup={() => dragStore.addToCategory(category)} class="flex items-center gap-2">
+						{@render categoryLink(category.id, category.name, false)}
+
+						{#if category.isShared}
+							<a href="/share/{category.id}" class="flex">
+								<IconFriends class="h-3.5 w-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+									<span class="sr-only">Manage Category</span>
+								</IconFriends>
+							</a>
+						{/if}
+					</div>
+				{/each}
+
+				{#each shared as category}
+					{#if category.name}
+						{@render categoryLink(category.id, category.name, true)}
+					{/if}
 				{/each}
 			</nav>
 		{/if}

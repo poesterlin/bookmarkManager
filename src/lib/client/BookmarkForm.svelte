@@ -36,13 +36,13 @@
 				update();
 			};
 		}}
-		class="p-6"
+		class="glass rounded-xl p-8 shadow-lg"
 		method="POST"
 		action={formAction}
 	>
 		<div class="mb-4">
-			<h3 class="text-primary-900 text-xl font-semibold">{header}</h3>
-			<p class="text-sm text-gray-600">{subHeader}</p>
+			<h3 class="text-primary-700 dark:text-primary-300 text-2xl font-bold">{header}</h3>
+			<p class="text-sm text-gray-600 dark:text-gray-300">{subHeader}</p>
 		</div>
 
 		<div class="space-y-4">

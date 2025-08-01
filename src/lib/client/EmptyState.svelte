@@ -7,7 +7,7 @@
 	const isMain = $derived(Array.from(page.url.searchParams.entries()).length === 0);
 </script>
 
-<div class="glass flex flex-col items-center rounded-xl p-8 text-center">
+<div class="glass flex flex-col items-center rounded-xl p-8 text-center mt-12">
 	<div class="animate-float mx-auto mb-6 h-32 w-32">
 		<IconBookmark
 			class="animate-float text-primary-200 dark:text-primary-600/50 h-32 w-32"

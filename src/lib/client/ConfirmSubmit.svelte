@@ -17,11 +17,18 @@
 		openDialog = true;
 	}
 
-	function fireSubmit(event: MouseEvent) {
+	async function sendAction(event: MouseEvent) {
 		const target = event.target;
 		assert(target, 'Target is missing');
 		assertInstanceOf(target, HTMLElement);
-		target.closest('form')?.dispatchEvent(new Event('submit', { bubbles: true }));
+		const form = target.closest('form');
+		assert(form, 'form not found');
+
+		const action = form.action;
+		const body = new FormData(form);
+
+		await fetch(action, { method: 'POST', body });
+
 		openDialog = false;
 	}
 </script>
@@ -47,7 +54,7 @@
 			<button
 				type="submit"
 				class="flex items-center gap-2 rounded bg-red-400 px-4 py-2 text-white hover:bg-red-700"
-				onclick={fireSubmit}
+				onclick={sendAction}
 			>
 				{@render children()}
 			</button>
