@@ -14,7 +14,7 @@ export const load: PageServerLoad = async (event) => {
 		return redirect(302, '/');
 	}
 
-	if (env.MAX_USER_COUNT) {
+	if (env.MAX_USER_COUNT && env.MAX_USER_COUNT !== "0") {
 		const maxUserCount = parseInt(env.MAX_USER_COUNT, 10);
 		const userCount = await numberOfUsers();
 
@@ -53,7 +53,7 @@ export const actions: Actions = {
 			redirect: z.string().optional()
 		}),
 		async (event, form) => {
-			if (env.MAX_USER_COUNT) {
+			if (env.MAX_USER_COUNT && env.MAX_USER_COUNT !== "0") {
 				const maxUserCount = parseInt(env.MAX_USER_COUNT, 10);
 				const userCount = await numberOfUsers();
 
