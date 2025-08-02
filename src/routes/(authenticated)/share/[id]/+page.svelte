@@ -2,7 +2,7 @@
 	import BookmarkCard from '$lib/client/BookmarkCard.svelte';
 	import ConfirmSubmit from '$lib/client/ConfirmSubmit.svelte';
 	import { toastStore } from '$lib/client/toast.svelte.js';
-	import { IconFolder, IconShare } from '@tabler/icons-svelte';
+	import { IconFolder, IconShare, IconTrash } from '@tabler/icons-svelte';
 
 	let { data } = $props();
 
@@ -73,7 +73,7 @@
 							onclick={() => shareLink(share)}
 							class="flex items-center space-x-2 rounded-md bg-blue-500 px-4 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none"
 						>
-							<span>Share Invite Link</span>
+							<span>Share</span>
 							<IconShare class="h-5 w-5"></IconShare>
 						</button>
 					{/if}
@@ -83,9 +83,10 @@
 					<form action="?/revoke" method="POST">
 						<input type="hidden" name="id" value={share.id} />
 						<ConfirmSubmit
-							class="rounded-md bg-red-600 px-4 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
+							class="rounded-md flex gap-2 border-1 border-red-400 px-4 py-2 font-semibold text-red-400 shadow-md transition-all duration-300 hover:bg-red-400 hover:text-white focus:ring-2 focus:outline-none"
 						>
 							{share.username ? 'Revoke Access' : 'Delete'}
+							<IconTrash></IconTrash>
 						</ConfirmSubmit>
 					</form>
 				</div>

@@ -304,9 +304,9 @@
 
 				<button
 					onclick={shareModalHandler.open}
-					class="flex items-center justify-center rounded-full p-2 outline-gray-300 hover:outline dark:hover:outline-gray-600"
+					class="flex items-center justify-center rounded-full p-1.5 outline-gray-300 hover:outline dark:hover:outline-gray-600"
 				>
-					<IconEdit class="h-5 w-5">
+					<IconEdit class="h-4 w-4">
 						<span class="sr-only">Manage a Category</span>
 					</IconEdit>
 				</button>

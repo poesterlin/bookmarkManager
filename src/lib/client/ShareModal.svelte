@@ -28,19 +28,23 @@
 
 		<form onsubmit={preventDefault(() => goto(`/share/${shareId}`))} class="flex flex-col gap-12">
 			<select
-				class="input w-full bg-white mt-6 dark:bg-gray-800"
+				class="input mt-6 w-full bg-white dark:bg-gray-800"
 				name="category"
 				id="category-select"
 				required
 				bind:value={shareId}
 			>
-				<option disabled selected value=""> Select a category </option>
+				<option disabled selected value="" class="bg-white dark:bg-gray-900 dark:text-gray-200/60">
+					Select a category
+				</option>
 				{#each categories as category}
-					<option value={category.id}>{category.name}</option>
+					<option value={category.id} class="bg-white dark:bg-gray-900 dark:text-gray-200/60"
+						>{category.name}</option
+					>
 				{/each}
 			</select>
 
-			<button type="submit" class="button-ghost">Share</button>
+			<button type="submit" class="button-ghost">Open</button>
 		</form>
 	</div>
 </Modal>
