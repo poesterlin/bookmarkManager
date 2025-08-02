@@ -29,8 +29,8 @@
 		},
 		{
 			icon: 'share',
-			title: 'PWA & Share Target',
-			description: 'Install as an app and share links directly from other applications.'
+			title: 'Share Collections',
+			description: 'Easily share your bookmark collections with others.'
 		}
 	] as const;
 </script>

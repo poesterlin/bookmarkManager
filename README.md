@@ -8,6 +8,7 @@ A simple bookmark manager that allows you to save, organize and track your bookm
 
 - Add and edit bookmarks
 - Organize bookmarks into categories
+- Share Collections with others
 - Search bookmarks
 - Tag bookmarks
 - Browser extension to save bookmarks directly from the browser
