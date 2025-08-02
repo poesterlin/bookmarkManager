@@ -55,6 +55,13 @@ export function addQueryParam(url: URL, param: string, value: string | boolean =
 	return url.toString();
 }
 
+export function iterateQueryParams(url: URL, param: string, values: string[]) {
+	const value = url.searchParams.get(param);
+	const idx = value ? values.indexOf(value) : 0;
+	const nextIdx = (idx + 1) % values.length;
+	return addQueryParam(url, param, values[nextIdx]);
+}
+
 export function replaceQueryParam(
 	url: URL,
 	currentParam: string | string[],

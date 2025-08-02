@@ -1,3 +1,4 @@
+import { createBookmark } from '$lib/server/bookmark';
 import { db } from '$lib/server/db';
 import {
 	bookmarksTable,
@@ -12,7 +13,9 @@ import { generateId, validateAuth, validateForm, validateOptions } from '$lib/se
 import { error, redirect } from '@sveltejs/kit';
 import {
 	and,
+	asc,
 	count,
+	desc,
 	eq,
 	exists,
 	getTableColumns,
@@ -21,13 +24,10 @@ import {
 	isNull,
 	not,
 	sql,
-	desc,
 	SQL
 } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
-import { createBookmark } from '$lib/server/bookmark';
-import { generateSessionToken } from '$lib/server/auth';
 
 const optionsSchema = z.object({
 	category: z.string().optional(),
@@ -44,7 +44,8 @@ const optionsSchema = z.object({
 	// share target params
 	title: z.string().optional(),
 	text: z.string().optional(),
-	link: z.string().optional()
+	link: z.string().optional(),
+	order: z.string().optional().default('date-desc')
 });
 
 export const load: PageServerLoad = async (event) => {
@@ -107,10 +108,21 @@ export const load: PageServerLoad = async (event) => {
 		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
+	let order: any = bookmarksTable.createdAt;
+	if (options.order === 'date-asc') {
+		order = asc(bookmarksTable.createdAt);
+	} else if (options.order === 'date-desc') {
+		order = desc(bookmarksTable.createdAt);
+	} else if (options.order === 'clicks-asc') {
+		order = asc(bookmarksTable.clicks);
+	} else if (options.order === 'clicks-desc') {
+		order = desc(bookmarksTable.clicks);
+	}
+
 	const [bookmarks, categories, sharedCategories, tags] = await Promise.all([
 		sharedCategory ?
-			getSharedBookmarks(sharedCategory.categoryId) :
-			getBookmarks(filters),
+			getSharedBookmarks(sharedCategory.categoryId, order) :
+			getBookmarks(filters, order),
 
 		// categories
 		db.select({
@@ -449,7 +461,7 @@ export const actions: Actions = {
 	),
 };
 
-function getSharedBookmarks(categoryId: string) {
+function getSharedBookmarks(categoryId: string, order: SQL<unknown>) {
 	return db.select({
 		...getTableColumns(bookmarksTable),
 		tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`
@@ -462,13 +474,14 @@ function getSharedBookmarks(categoryId: string) {
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
+		.orderBy(order)
 		.where(and(
 			eq(categoriesTable.id, categoryId),
 			isNull(bookmarksTable.deletedAt)
 		));
 }
 
-function getBookmarks(filters: SQL<unknown>[]) {
+function getBookmarks(filters: SQL<unknown>[], order: SQL<unknown>) {
 	return db.select({
 		...getTableColumns(bookmarksTable),
 		tags: sql<
@@ -483,11 +496,7 @@ function getBookmarks(filters: SQL<unknown>[]) {
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
-		.orderBy(
-			desc(bookmarksTable.isFavorite),
-			desc(bookmarksTable.createdAt),
-			desc(bookmarksTable.clicks),
-		)
+		.orderBy(order)
 		.where(and(...filters));
 }
 

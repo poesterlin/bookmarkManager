@@ -1,10 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { IconLoader, IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
-	import { searchStore } from '../stores/search.svelte';
-	import { app } from '../stores/app.svelte';
+	import {
+		IconLoader,
+		IconMoon,
+		IconSearch,
+		IconSortAscending,
+		IconSortDescending,
+		IconUserCircle,
+		IconX
+	} from '@tabler/icons-svelte';
 	import { fade } from 'svelte/transition';
+	import { app } from '../stores/app.svelte';
+	import { searchStore } from '../stores/search.svelte';
+	import { iterateQueryParams } from '../util';
 
 	let searchQuery = $state('');
 	let isSearching = $state(false);
@@ -110,7 +119,7 @@
 		{#if searchQuery}
 			<button
 				type="button"
-				class="absolute right-2 text-gray-500 hover:text-gray-700"
+				class="absolute right-2 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				onclick={() => {
 					searchQuery = '';
 					searchStore.clear();
@@ -118,6 +127,31 @@
 			>
 				<IconX size={20} stroke-width={1.5} />
 			</button>
+		{:else}
+			<a
+				href={iterateQueryParams(page.url, 'order', [
+					'date-desc',
+					'date-asc',
+					'clicks-desc',
+					'clicks-asc'
+				])}
+				class="hide-label absolute right-2 flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+			>
+				{#if page.url.searchParams.get('order') === 'date-asc'}
+					<span>Date</span>
+					<IconSortAscending size={20} stroke-width={1.5} />
+				{:else if page.url.searchParams.get('order') === 'clicks-asc'}
+					<span>Clicks</span>
+					<IconSortAscending size={20} stroke-width={1.5} />
+				{:else if page.url.searchParams.get('order') === 'clicks-desc'}
+					<span>Clicks</span>
+					<IconSortDescending size={20} stroke-width={1.5} />
+				{:else}
+					<!-- default -->
+					<span>Date</span>
+					<IconSortDescending size={20} stroke-width={1.5} />
+				{/if}
+			</a>
 		{/if}
 	</div>
 
@@ -146,5 +180,22 @@
 
 	.shadow {
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.hide-label {
+		span {
+			width: 0;
+			overflow: hidden;
+			white-space: nowrap;
+			transition: width 0.3s ease;
+			transition-behavior: allow-discrete;
+		}
+
+		&:hover {
+			gap: 0.125rem;
+			span {
+				width: calc-size(auto, size);
+			}
+		}
 	}
 </style>
