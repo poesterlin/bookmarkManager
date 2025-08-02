@@ -135,7 +135,7 @@
 					'clicks-desc',
 					'clicks-asc'
 				])}
-				class="hide-label absolute right-2 flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				class="hide-label bg-white dark:bg-[#1f1f2e] shadow p-2 absolute right-0.5 rounded flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 			>
 				{#if page.url.searchParams.get('order') === 'date-asc'}
 					<span>Date</span>
@@ -196,6 +196,10 @@
 			span {
 				width: calc-size(auto, size);
 			}
+		}
+
+		:global(svg){
+			padding-left: 0.125rem;
 		}
 	}
 </style>

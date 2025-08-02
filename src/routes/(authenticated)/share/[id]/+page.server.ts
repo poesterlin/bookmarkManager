@@ -1,11 +1,11 @@
+import { generateSessionToken } from "$lib/server/auth";
 import { db } from "$lib/server/db";
 import { categoriesTable, sharedCategoriesTable, usersTable } from "$lib/server/db/schema";
 import { generateId, validateAuth, validateForm } from "$lib/server/util";
-import { error, redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Actions, PageServerLoad } from "./$types";
-import { generateSessionToken } from "$lib/server/auth";
 
 export const load: PageServerLoad = async (event) => {
     const locals = validateAuth(event);
