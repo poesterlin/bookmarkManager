@@ -4,7 +4,7 @@ import { SQL } from 'bun';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { building } from '$app/environment';
 
-if (!env.DATABASE_URL) {
+if (!env.DATABASE_URL && !building) {
 	throw new Error('DATABASE_URL is not set');
 }
 
