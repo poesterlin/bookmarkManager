@@ -13,9 +13,9 @@
 		IconStarFilled,
 		IconTrash
 	} from '@tabler/icons-svelte';
-	import { app } from './app.svelte';
-	import { getWorkerInstance } from './util';
-	import { dragStore } from './drag-store.svelte';
+	import { app } from '../stores/app.svelte';
+	import { getWorkerInstance } from '../util';
+	import { dragStore } from '../stores/drag-store.svelte';
 
 	interface Props {
 		bookmark: Bookmark;
@@ -94,7 +94,9 @@
 	</div>
 
 	<!-- title -->
-	<h3 class="title !mb-0 line-clamp-3 text-lg font-semibold text-gray-800 dark:text-gray-200">
+	<h3
+		class="title !mb-0 line-clamp-3 flex items-center text-lg font-semibold text-gray-800 dark:text-gray-200"
+	>
 		{bookmark.title}
 	</h3>
 	<p class="url truncate text-xs text-gray-500 dark:text-gray-400">

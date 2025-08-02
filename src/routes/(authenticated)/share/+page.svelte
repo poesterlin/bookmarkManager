@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import BookmarkCard from '$lib/client/BookmarkCard.svelte';
+	import BookmarkCard from '$lib/client/components/BookmarkCard.svelte';
 
 	let { data } = $props();
 </script>

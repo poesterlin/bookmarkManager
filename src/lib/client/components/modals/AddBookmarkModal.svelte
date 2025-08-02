@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import type { Category } from '$lib/server/db/schema';
-	import { tagStore } from './tags.svelte';
-	import { toastStore } from './toast.svelte';
+	import { tagStore } from '../../stores/tags.svelte';
+	import { toastStore } from '../../stores/toast.svelte';
 	import Modal from './Modal.svelte';
-	import BookmarkForm from './BookmarkForm.svelte';
-	import URLInput from './URLInput.svelte';
-	import BookmarkFormFields from './BookmarkFormFields.svelte';
-	import CategoryInput from './CategoryInput.svelte';
-	import TagInput from './TagInput.svelte';
+	import BookmarkForm from '../input/BookmarkForm.svelte';
+	import URLInput from '../input/URLInput.svelte';
+	import BookmarkFormFields from '../input/BookmarkFormFields.svelte';
+	import CategoryInput from '../input/CategoryInput.svelte';
+	import TagInput from '../input/TagInput.svelte';
 
 	interface Props {
 		onClose: () => void;

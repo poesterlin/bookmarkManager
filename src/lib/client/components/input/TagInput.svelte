@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { stopPropagation } from 'svelte/legacy';
 	import { IconX } from '@tabler/icons-svelte';
-	import { tagStore } from '$lib/client/tags.svelte';
+	import { tagStore } from '$lib/client/stores/tags.svelte';
 	import TagSuggestions from './TagSuggestions.svelte';
 	import { fly } from 'svelte/transition';
+	import { stopPropagation } from '$lib/client/util.ts';
 
 	interface Props {
 		name?: string;

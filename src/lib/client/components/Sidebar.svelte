@@ -13,8 +13,8 @@
 		IconStar,
 		IconWorld
 	} from '@tabler/icons-svelte';
-	import { replaceQueryParam } from './util';
-	import { dragStore } from './drag-store.svelte';
+	import { replaceQueryParam } from '../util';
+	import { dragStore } from '../stores/drag-store.svelte';
 
 	interface Props {
 		handleAddBookmark: () => void;

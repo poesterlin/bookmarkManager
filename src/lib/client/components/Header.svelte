@@ -2,8 +2,8 @@
 	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
 	import { IconLoader, IconMoon, IconSearch, IconUserCircle, IconX } from '@tabler/icons-svelte';
-	import { searchStore } from './search.svelte';
-	import { app } from './app.svelte';
+	import { searchStore } from '../stores/search.svelte';
+	import { app } from '../stores/app.svelte';
 	import { fade } from 'svelte/transition';
 
 	let searchQuery = $state('');

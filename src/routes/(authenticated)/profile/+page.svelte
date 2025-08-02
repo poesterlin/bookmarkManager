@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ConfirmSubmit from '$lib/client/ConfirmSubmit.svelte';
+	import ConfirmSubmit from '$lib/client/components/input/ConfirmSubmit.svelte';
 	import { IconUserCircle } from '@tabler/icons-svelte';
 
 	let { data } = $props();

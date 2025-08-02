@@ -1,7 +1,6 @@
 <script lang="ts">
-	import BookmarkCard from '$lib/client/BookmarkCard.svelte';
-	import ConfirmSubmit from '$lib/client/ConfirmSubmit.svelte';
-	import { toastStore } from '$lib/client/toast.svelte.js';
+	import ConfirmSubmit from '$lib/client/components/input/ConfirmSubmit.svelte';
+	import { toastStore } from '$lib/client/stores/toast.svelte';
 	import { IconFolder, IconShare, IconTrash } from '@tabler/icons-svelte';
 
 	let { data } = $props();

@@ -16,4 +16,4 @@ There are no specific test commands.
 - **Error Handling**: Use try/catch blocks for asynchronous operations and throw errors where appropriate.
 - **Framework**: This is a SvelteKit project. Follow Svelte and SvelteKit best practices.
 - **Database**: The project uses Drizzle ORM. See `src/lib/server/db/schema.ts` for the schema.
-- **Authentication**: Authentication is handled via cookies and the `lucia-auth` library. See `src/lib/server/auth.ts`.
+- **Authentication**: Authentication is handled via cookies and custom middleware. See `src/lib/server/auth.ts`.

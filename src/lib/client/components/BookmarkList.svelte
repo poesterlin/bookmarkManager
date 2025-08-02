@@ -3,9 +3,9 @@
 	import BookmarkCard from './BookmarkCard.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import type { Bookmark } from '$lib/server/db/schema';
-	import { searchStore } from './search.svelte';
+	import { searchStore } from '../stores/search.svelte';
 	import { page } from '$app/state';
-	import { dragStore } from './drag-store.svelte';
+	import { dragStore } from '../stores/drag-store.svelte';
 
 	let { bookmarks, addBookmark }: { bookmarks: Bookmark[]; addBookmark: () => void } = $props();
 

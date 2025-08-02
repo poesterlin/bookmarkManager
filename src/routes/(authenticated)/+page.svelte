@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { afterNavigate, pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
-	import AddBookmarkModal from '$lib/client/AddBookmarkModal.svelte';
-	import { app } from '$lib/client/app.svelte';
-	import BookmarkList from '$lib/client/BookmarkList.svelte';
-	import EditBookmarkModal from '$lib/client/EditBookmarkModal.svelte';
-	import Header from '$lib/client/Header.svelte';
-	import { searchStore } from '$lib/client/search.svelte';
-	import Sidebar from '$lib/client/Sidebar.svelte';
-	import { toastStore } from '$lib/client/toast.svelte';
+	import AddBookmarkModal from '$lib/client/components/modals/AddBookmarkModal.svelte';
+	import { app } from '$lib/client/stores/app.svelte';
+	import BookmarkList from '$lib/client/components/BookmarkList.svelte';
+	import EditBookmarkModal from '$lib/client/components/modals/EditBookmarkModal.svelte';
+	import Header from '$lib/client/components/Header.svelte';
+	import { searchStore } from '$lib/client/stores/search.svelte';
+	import Sidebar from '$lib/client/components/Sidebar.svelte';
+	import { toastStore } from '$lib/client/stores/toast.svelte';
 	import { toggleQueryParam } from '$lib/client/util';
 	import { IconMinus } from '@tabler/icons-svelte';
 	import { tick } from 'svelte';
 	import { flip } from 'svelte/animate';
 	import type { PageServerData } from './$types';
 	import { fly } from 'svelte/transition';
-	import ShareModal from '$lib/client/ShareModal.svelte';
+	import ShareModal from '$lib/client/components/modals/ShareModal.svelte';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);

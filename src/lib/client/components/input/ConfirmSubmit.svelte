@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import Modal from './Modal.svelte';
-	import { assert, assertInstanceOf } from './util';
+	import Modal from '../modals/Modal.svelte';
+	import { assert, assertInstanceOf } from '../../util';
 
 	type Props = {
 		children: Snippet;

@@ -2,7 +2,7 @@
 	import { goto, preloadData } from '$app/navigation';
 	import type { Category } from '$lib/server/db/schema';
 	import Modal from './Modal.svelte';
-	import { preventDefault } from './util';
+	import { preventDefault } from '../../util';
 
 	interface Props {
 		onClose: () => void;
