@@ -6,9 +6,10 @@
 	type Props = {
 		children: Snippet;
 		class: string;
+		formSlot?: Snippet;
 	};
 
-	let { children, ...rest }: Props = $props();
+	let { children, formSlot, ...rest }: Props = $props();
 
 	let openDialog = $state(false);
 
@@ -42,7 +43,14 @@
 		<h2 class="text-xl font-bold">Are you sure?</h2>
 		<p class="mt-2">This action cannot be undone.</p>
 
+		{#if formSlot}
+			<div class="flex-1">
+				{@render formSlot()}
+			</div>
+		{/if}
+		
 		<div class="mt-4 flex justify-between">
+
 			<button
 				autofocus
 				type="button"

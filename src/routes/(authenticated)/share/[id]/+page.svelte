@@ -1,9 +1,13 @@
 <script lang="ts">
 	import ConfirmSubmit from '$lib/client/components/input/ConfirmSubmit.svelte';
 	import { toastStore } from '$lib/client/stores/toast.svelte';
-	import { IconFolder, IconShare, IconTrash } from '@tabler/icons-svelte';
+	import { IconEdit, IconFolder, IconShare, IconTrash } from '@tabler/icons-svelte';
+	import SharePermissionsModal from './SharePermissionsModal.svelte';
 
 	let { data } = $props();
+
+	let editingData = $state<{ id: string; hasWriteAccess: boolean }>();
+	let archiveOnDelete = $state(false);
 
 	async function shareLink(share: (typeof data.shared)[number]) {
 		const url = new URL('/share', window.location.origin);
@@ -43,7 +47,7 @@
 	}
 </script>
 
-<div class="container mx-auto px-4 py-8 h-screen">
+<div class="container mx-auto h-screen px-4 py-8">
 	<p class="text-gray-700 dark:text-gray-300">Sharing Collection:</p>
 	<h1 class="mb-6 text-3xl font-bold text-gray-800 dark:text-gray-200">
 		<IconFolder class="text-primary-600 inline h-8 w-8" />
@@ -77,12 +81,36 @@
 						</button>
 					{/if}
 
+					<button
+						title="Edit Permissions"
+						onclick={() => (editingData = { id: share.id, hasWriteAccess: !!share.allowWrites })}
+					>
+						<IconEdit></IconEdit>
+					</button>
+
 					<span>{formatDate(share.createdAt)}</span>
 
 					<form action="?/revoke" method="POST">
 						<input type="hidden" name="id" value={share.id} />
+
+						{#snippet formSlot()}
+							<div class="flex items-center gap-4 justify-between mt-6">
+								<label for="archive">Archive all bookmarks added by this user</label>
+								<input
+									type="checkbox"
+									name="archive"
+									id="archive"
+									class="mr-4"
+									bind:checked={archiveOnDelete}
+								/>
+							</div>
+						{/snippet}
+
+						<input type="hidden" name="archive" class="mr-4" value={archiveOnDelete} />
+
 						<ConfirmSubmit
-							class="rounded-md flex gap-2 border-1 border-red-400 px-4 py-2 font-semibold text-red-400 shadow-md transition-all duration-300 hover:bg-red-400 hover:text-white focus:ring-2 focus:outline-none"
+							{formSlot}
+							class="flex gap-2 rounded-md border-1 border-red-400 px-4 py-2 font-semibold text-red-400 shadow-md transition-all duration-300 hover:bg-red-400 hover:text-white focus:ring-2 focus:outline-none"
 						>
 							{share.username ? 'Revoke Access' : 'Delete'}
 							<IconTrash></IconTrash>
@@ -97,3 +125,21 @@
 		</p>
 	{/if}
 </div>
+
+{#if editingData}
+	{@const editingShareId = editingData.id}
+	{@const hasWriteAccess = editingData.hasWriteAccess}
+
+	<SharePermissionsModal
+		{hasWriteAccess}
+		{editingShareId}
+		onClose={() => (editingData = undefined)}
+	/>
+{/if}
+
+<style>
+	input[type='checkbox'] {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+</style>

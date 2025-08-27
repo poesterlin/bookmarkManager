@@ -65,7 +65,8 @@ export const bookmarksTable = pgTable(
 			.references(() => usersTable.id, fullCascade),
 		clicks: integer('clicks').notNull().default(0),
 		lastClicked: timestamp('last_clicked', { withTimezone: true, mode: 'date' }),
-		deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' })
+		deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
+		fromShareId: text('from_share_id').references(() => sharedCategoriesTable.id, { onDelete: 'set null', onUpdate: 'cascade' })
 	},
 	(table) => [
 		index('bookmarks_composite').on(
@@ -146,7 +147,7 @@ export type Category = typeof categoriesTable.$inferSelect & {
 };
 
 export const sharedCategoriesTable = pgTable(
-	"shared",
+	"shared_categories",
 	{
 		id: text("id").primaryKey(),
 		categoryId: text("category_id").notNull().references(() => categoriesTable.id),
