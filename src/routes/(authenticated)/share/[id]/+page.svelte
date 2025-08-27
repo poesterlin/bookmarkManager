@@ -9,7 +9,7 @@
 		const url = new URL('/share', window.location.origin);
 		url.searchParams.set('token', share.token!);
 
-		if (navigator.canShare()) {
+		if ('canShare' in navigator && navigator.canShare()) {
 			try {
 				await navigator.share({
 					url: url.toString(),
