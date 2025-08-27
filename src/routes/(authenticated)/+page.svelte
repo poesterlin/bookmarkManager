@@ -8,7 +8,6 @@
 	import Header from '$lib/client/components/Header.svelte';
 	import { searchStore } from '$lib/client/stores/search.svelte';
 	import Sidebar from '$lib/client/components/Sidebar.svelte';
-	import { toastStore } from '$lib/client/stores/toast.svelte';
 	import { toggleQueryParam } from '$lib/client/util';
 	import { IconMinus } from '@tabler/icons-svelte';
 	import { tick } from 'svelte';
@@ -140,18 +139,6 @@
 		<ShareModal onClose={handleCloseModal} categories={data.categories} />
 	{/if}
 
-	{#if toastStore.toasts.length > 0}
-		<div class="fixed right-4 bottom-4 z-50 flex flex-col gap-2">
-			{#each toastStore.toasts as toast (toast.id)}
-				<div
-					class="animate-fade-in border-primary-500 rounded-md border-l-4 bg-gray-800 px-4 py-2 text-white shadow-lg"
-					role="alert"
-				>
-					<p>{toast.message}</p>
-				</div>
-			{/each}
-		</div>
-	{/if}
 </div>
 
 <style>
