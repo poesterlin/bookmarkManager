@@ -23,6 +23,7 @@ import {
 	isNotNull,
 	isNull,
 	not,
+	or,
 	sql,
 	SQL
 } from 'drizzle-orm';
@@ -52,7 +53,29 @@ export const load: PageServerLoad = async (event) => {
 	const locals = validateAuth(event);
 	const options = validateOptions(event, optionsSchema);
 
-	const filters = [eq(bookmarksTable.userId, locals.user.id)];
+	const sharedCategoriesResult = await db
+		.select({ categoryId: sharedCategoriesTable.categoryId })
+		.from(sharedCategoriesTable)
+		.where(eq(sharedCategoriesTable.userId, locals.user.id));
+
+		const sharedCategoryIds = sharedCategoriesResult.map((c) => c.categoryId);
+
+	const ownedCategoriesResult = await db
+		.select({ id: categoriesTable.id })
+		.from(categoriesTable)
+		.where(eq(categoriesTable.userId, locals.user.id));
+	const ownedCategoryIds = ownedCategoriesResult.map((c) => c.id);
+	const allCategoryIds = [...new Set([...sharedCategoryIds, ...ownedCategoryIds])];
+
+	const baseBookmarksFilter =
+		allCategoryIds.length > 0
+			? or(
+					eq(bookmarksTable.userId, locals.user.id),
+					inArray(bookmarksTable.category, allCategoryIds)
+				)
+			: eq(bookmarksTable.userId, locals.user.id);
+
+	const filters = [baseBookmarksFilter] as SQL<unknown>[];
 	let filteredTag: Tag | undefined = undefined;
 
 	if (options.tag) {
@@ -170,6 +193,8 @@ export const load: PageServerLoad = async (event) => {
 		options.link = options.text;
 		options.text = undefined;
 	}
+
+	console.log(tags);
 
 	return {
 		user: locals.user,
