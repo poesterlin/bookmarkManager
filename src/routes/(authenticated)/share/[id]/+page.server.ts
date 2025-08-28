@@ -140,7 +140,6 @@ export const actions: Actions = {
     "deny-write": validateForm(
         z.object({
             id: z.string(),
-            archive: z.string().transform(val => val === 'on')
         }),
         async (event, form) => {
             const locals = validateAuth(event);

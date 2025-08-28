@@ -25,7 +25,7 @@
 					</div>
 				{/each}
 			</div>
-			<form method="POST" action="?/confirm&token={data.sharingCategory.token}" use:enhance class="-mt-24">
+			<form method="POST" action="?/confirm&token={data.sharingCategory.token}" use:enhance class="-mt-8">
 				<button
 					type="submit"
 					class="relative z-10 w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"
@@ -58,6 +58,6 @@
 	}
 
 	.mask {
-		mask-image: linear-gradient(to bottom, black 25%, transparent 90%);
+		mask-image: linear-gradient(to bottom, black 65%, transparent 90%);
 	}
 </style>
