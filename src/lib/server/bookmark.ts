@@ -1,9 +1,16 @@
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from './db';
-import { type User, categoriesTable, bookmarksTable, tagsTable, bookmarkTags } from './db/schema';
+import {
+	type User,
+	categoriesTable,
+	bookmarksTable,
+	tagsTable,
+	bookmarkTags,
+	sharedCategoriesTable
+} from './db/schema';
 import { generateId } from './util';
 
-export interface BoomarksDTO {
+export interface BookmarksDTO {
 	title: string;
 	url: string;
 	tags: string[];
@@ -14,21 +21,38 @@ export interface BoomarksDTO {
 	newCategory?: string;
 }
 
-export async function createBookmark(user: Pick<User, 'id'>, form: BoomarksDTO) {
+export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO) {
 	let categoryId: string | undefined = undefined;
+	let fromShareId: string | undefined = undefined;
 
 	if (form.category) {
-		const [category] = await db
+		const [sharedCategory] = await db
 			.select()
-			.from(categoriesTable)
-			.where(and(eq(categoriesTable.userId, user.id), eq(categoriesTable.id, form.category)))
+			.from(sharedCategoriesTable)
+			.where(
+				and(
+					eq(sharedCategoriesTable.id, form.category),
+					eq(sharedCategoriesTable.userId, user.id)
+				)
+			)
 			.limit(1);
 
-		if (!category) {
-			throw new Error('Category not found');
-		}
+		if (sharedCategory?.allowWriteAccess) {
+			categoryId = sharedCategory.categoryId;
+			fromShareId = sharedCategory.id;
+		} else {
+			const [category] = await db
+				.select()
+				.from(categoriesTable)
+				.where(and(eq(categoriesTable.userId, user.id), eq(categoriesTable.id, form.category)))
+				.limit(1);
 
-		categoryId = category.id;
+			if (!category) {
+				throw new Error('Category not found');
+			}
+
+			categoryId = category.id;
+		}
 	}
 
 	await db.transaction(async (tx) => {
@@ -64,7 +88,8 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BoomarksDTO) 
 			description: form.description,
 			isFavorite: false,
 			theme: form.theme,
-			favicon: form.favicon
+			favicon: form.favicon,
+			fromShareId
 		} satisfies typeof bookmarksTable.$inferInsert);
 
 		if (form.tags) {

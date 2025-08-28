@@ -121,6 +121,7 @@
 		<AddBookmarkModal
 			onClose={handleCloseModal}
 			categories={data.categories}
+			sharedCategories={data.sharedCategories}
 			existingTags={data.tags.map((tag) => tag.name)}
 			shareData={data.shareTarget}
 		/>
@@ -131,6 +132,7 @@
 			bookmark={page.state.bookmark}
 			onClose={handleCloseModal}
 			categories={data.categories}
+			sharedCategories={data.sharedCategories}
 			existingTags={data.tags.map((tag) => tag.name)}
 		/>
 	{/if}
@@ -138,7 +140,6 @@
 	{#if isShareMenuOpen}
 		<ShareModal onClose={handleCloseModal} categories={data.categories} />
 	{/if}
-
 </div>
 
 <style>

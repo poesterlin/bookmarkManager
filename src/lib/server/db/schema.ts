@@ -157,10 +157,16 @@ export const sharedCategoriesTable = pgTable(
 		userId: text('user_id')
 			.references(() => usersTable.id, fullCascade),
 		token: text("token"),
-		allowWriteAccess: boolean("allow_writes"),
+		allowWriteAccess: boolean("allow_writes").notNull().default(false),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 	},
 	(table) => [
 		uniqueIndex("no_douple_categories").on(table.categoryId, table.userId)
 	]
 );
+
+export type SharedCategory = {
+	id: string;
+	name: string;
+	allowWriteAccess: boolean;
+}

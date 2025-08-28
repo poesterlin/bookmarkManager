@@ -1,12 +1,13 @@
 <script lang="ts">
-	import type { Category } from '$lib/server/db/schema';
+	import type { Category, SharedCategory } from '$lib/server/db/schema';
 
 	interface Props {
 		categories: Category[];
+		sharedCategories: SharedCategory[];
 		selectedCategoryId: string;
 	}
 
-	let { categories, selectedCategoryId = $bindable() }: Props = $props();
+	let { categories, sharedCategories, selectedCategoryId = $bindable() }: Props = $props();
 
 	let newCategory = $state('');
 	let showNewCategoryInput = $state(false);
@@ -51,6 +52,15 @@
 				{#each categories as cat}
 					<option value={cat.id} class="bg-white dark:bg-gray-800 dark:text-gray-200">
 						{cat.name}</option
+					>
+				{/each}
+				{#each sharedCategories as cat}
+					<option
+						value={cat.id}
+						class="bg-white dark:bg-gray-800 dark:text-gray-200"
+						disabled={!cat.allowWriteAccess}
+					>
+						👥 {cat.name}</option
 					>
 				{/each}
 			</select>

@@ -145,10 +145,10 @@ export const load: PageServerLoad = async (event) => {
 
 		// shared categories
 		db
-			.select({ name: categoriesTable.name, id: sharedCategoriesTable.id })
+			.select({ name: categoriesTable.name, id: sharedCategoriesTable.id, allowWriteAccess: sharedCategoriesTable.allowWriteAccess })
 			.from(sharedCategoriesTable)
 			.where(eq(sharedCategoriesTable.userId, locals.user.id))
-			.leftJoin(categoriesTable, eq(categoriesTable.id, sharedCategoriesTable.categoryId)),
+			.innerJoin(categoriesTable, eq(categoriesTable.id, sharedCategoriesTable.categoryId)),
 
 		// tags
 		db

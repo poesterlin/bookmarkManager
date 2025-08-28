@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import type { Category } from '$lib/server/db/schema';
+	import type { Category, SharedCategory } from '$lib/server/db/schema';
 	import { tagStore } from '../../stores/tags.svelte';
 	import { toastStore } from '../../stores/toast.svelte';
 	import Modal from './Modal.svelte';
@@ -13,6 +13,7 @@
 	interface Props {
 		onClose: () => void;
 		categories: Category[];
+		sharedCategories: SharedCategory[];
 		existingTags?: string[];
 		shareData?: {
 			title?: string;
@@ -21,7 +22,7 @@
 		};
 	}
 
-	let { onClose, categories, existingTags = [], shareData }: Props = $props();
+	let { onClose, categories, sharedCategories, existingTags = [], shareData }: Props = $props();
 
 	tagStore.existingTags = existingTags;
 
@@ -64,7 +65,7 @@
 	>
 		<URLInput bind:url onUrlChange={handleUrlChange} />
 		<BookmarkFormFields bind:title bind:description />
-		<CategoryInput {categories} bind:selectedCategoryId />
+		<CategoryInput {categories} {sharedCategories} bind:selectedCategoryId />
 		<TagInput name="tags" placeholder="Add tags..." label="Tags" />
 	</BookmarkForm>
 </Modal>

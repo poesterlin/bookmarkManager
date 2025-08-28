@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Bookmark, Category } from '$lib/server/db/schema';
+	import type { Bookmark, Category, SharedCategory } from '$lib/server/db/schema';
 	import { tagStore } from '../../stores/tags.svelte';
 	import { toastStore } from '../../stores/toast.svelte';
 	import Modal from './Modal.svelte';
@@ -12,11 +12,12 @@
 	interface Props {
 		bookmark: Bookmark;
 		categories: Category[];
+		sharedCategories: SharedCategory[];
 		existingTags?: string[];
 		onClose: () => void;
 	}
 
-	let { bookmark, categories, existingTags = [], onClose }: Props = $props();
+	let { bookmark, categories, sharedCategories, existingTags = [], onClose }: Props = $props();
 
 	tagStore.existingTags = existingTags;
 	tagStore.selected = bookmark.tags.map((t) => t.name);
@@ -42,7 +43,7 @@
 		<input type="hidden" name="id" value={bookmark.id} />
 		<URLInput url={bookmark.url} readonly />
 		<BookmarkFormFields bind:title bind:description />
-		<CategoryInput {categories} bind:selectedCategoryId />
+		<CategoryInput {categories} bind:selectedCategoryId {sharedCategories} />
 		<TagInput name="tags" placeholder="Add tags..." label="Tags" />
 	</BookmarkForm>
 </Modal>
