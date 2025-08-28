@@ -234,6 +234,7 @@
 
 {#snippet categoryLink(id: string, name: string, shared: boolean)}
 	<a
+		data-sveltekit-replacestate
 		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
 		class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
 			{page.url.searchParams.get('category') === id
@@ -267,6 +268,7 @@
 
 		<nav class="space-y-1">
 			<a
+				data-sveltekit-replacestate
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {Array.from(page.url.searchParams.entries()).length === 0
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
@@ -277,6 +279,7 @@
 				All Bookmarks
 			</a>
 			<a
+				data-sveltekit-replacestate
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {page.url.searchParams.has('favorite')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
@@ -287,6 +290,7 @@
 				Favorites
 			</a>
 			<a
+				data-sveltekit-replacestate
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {page.url.searchParams.has('archived')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
@@ -313,16 +317,11 @@
 			</div>
 			<nav class="space-y-1">
 				{#each categories as category}
-					<div onpointerup={() => dragStore.addToCategory(category)} class="flex items-center gap-2">
+					<div
+						onpointerup={() => dragStore.addToCategory(category)}
+						class="flex items-center gap-2"
+					>
 						{@render categoryLink(category.id, category.name, false)}
-
-						{#if category.isShared}
-							<a href="/share/{category.id}" class="flex">
-								<IconFriends class="h-3.5 w-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-									<span class="sr-only">Manage Category</span>
-								</IconFriends>
-							</a>
-						{/if}
 					</div>
 				{/each}
 

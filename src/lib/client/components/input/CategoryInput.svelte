@@ -57,8 +57,10 @@
 				{#each sharedCategories as cat}
 					<option
 						value={cat.id}
-						class="bg-white dark:bg-gray-800 dark:text-gray-200 disabled:opacity-50"
+						class="bg-white dark:bg-gray-800 dark:text-gray-200"
 						disabled={!cat.allowWriteAccess}
+						class:opacity-50={!cat.allowWriteAccess}
+						class:cursor-not-allowed={!cat.allowWriteAccess}
 					>
 						👥 {cat.name}</option
 					>

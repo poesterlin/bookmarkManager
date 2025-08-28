@@ -141,6 +141,7 @@
 <div class="flex flex-wrap gap-1">
 	{#if bookmark.category?.name}
 		<a
+			data-sveltekit-replacestate
 			href={bookmark.category.id ? `/?category=${bookmark.category.id}` : ''}
 			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-800/60 dark:text-secondary-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 		>
@@ -150,6 +151,7 @@
 	{#each bookmark.tags as tag}
 		{#if tag.name}
 			<a
+				data-sveltekit-replacestate
 				class="bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 				href={tag.id ? `/?tag=${tag.id}` : ''}
 			>

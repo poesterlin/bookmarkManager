@@ -137,28 +137,24 @@ export const actions: Actions = {
             .set({ allowWriteAccess: true })
             .where(eq(sharedCategoriesTable.id, form.id));
     }),
-    "deny-write": validateForm(
-        z.object({
-            id: z.string(),
-        }),
-        async (event, form) => {
-            const locals = validateAuth(event);
+    "deny-write": validateForm(z.object({ id: z.string() }), async (event, form) => {
+        const locals = validateAuth(event);
 
-            const [sharingCategory] = await db
-                .select()
-                .from(sharedCategoriesTable)
-                .where(and(
-                    eq(sharedCategoriesTable.owner, locals.user.id),
-                    eq(sharedCategoriesTable.id, form.id),
-                )).limit(1);
+        const [sharingCategory] = await db
+            .select()
+            .from(sharedCategoriesTable)
+            .where(and(
+                eq(sharedCategoriesTable.owner, locals.user.id),
+                eq(sharedCategoriesTable.id, form.id),
+            )).limit(1);
 
-            if (!sharingCategory) {
-                error(404, "Not Found");
-            }
+        if (!sharingCategory) {
+            error(404, "Not Found");
+        }
 
-            await db
-                .update(sharedCategoriesTable)
-                .set({ allowWriteAccess: false })
-                .where(eq(sharedCategoriesTable.id, form.id));
-        })
+        await db
+            .update(sharedCategoriesTable)
+            .set({ allowWriteAccess: false })
+            .where(eq(sharedCategoriesTable.id, form.id));
+    })
 };

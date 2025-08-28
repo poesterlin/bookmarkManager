@@ -84,7 +84,7 @@
 			{@render logo()}
 		</button>
 	{:else}
-		<a class="flex items-center justify-center" href="/">
+		<a data-sveltekit-replacestate class="flex items-center justify-center" href="/">
 			{@render logo()}
 		</a>
 	{/if}
@@ -129,13 +129,14 @@
 			</button>
 		{:else}
 			<a
+				data-sveltekit-replacestate
 				href={iterateQueryParams(page.url, 'order', [
 					'date-desc',
 					'date-asc',
 					'clicks-desc',
 					'clicks-asc'
 				])}
-				class="hide-label bg-white dark:bg-[#1f1f2e] shadow p-2 absolute right-0.5 rounded flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				class="hide-label absolute right-0.5 flex rounded bg-white p-2 text-gray-500 shadow hover:text-gray-700 dark:bg-[#1f1f2e] dark:text-gray-400 dark:hover:text-gray-300"
 			>
 				{#if page.url.searchParams.get('order') === 'date-asc'}
 					<span>Date</span>
@@ -198,7 +199,7 @@
 			}
 		}
 
-		:global(svg){
+		:global(svg) {
 			padding-left: 0.125rem;
 		}
 	}
