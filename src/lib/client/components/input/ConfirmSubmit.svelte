@@ -28,7 +28,7 @@
 		const action = form.action;
 		const body = new FormData(form);
 
-		await fetch(action, { method: 'POST', body });
+		await fetch(action, { method: form.method, body });
 
 		openDialog = false;
 	}
