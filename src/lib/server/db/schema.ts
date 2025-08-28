@@ -150,7 +150,7 @@ export const sharedCategoriesTable = pgTable(
 	"shared_categories",
 	{
 		id: text("id").primaryKey(),
-		categoryId: text("category_id").notNull().references(() => categoriesTable.id),
+		categoryId: text("category_id").notNull().references(() => categoriesTable.id, fullCascade),
 		owner: text('owner_id')
 			.notNull()
 			.references(() => usersTable.id, fullCascade),
