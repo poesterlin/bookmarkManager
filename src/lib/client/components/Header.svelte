@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import type { Bookmark } from '$lib/server/db/schema';
 	import {
+		IconCheck,
+		IconChevronDown,
 		IconLoader,
 		IconMoon,
 		IconSearch,
@@ -13,13 +15,31 @@
 	import { fade } from 'svelte/transition';
 	import { app } from '../stores/app.svelte';
 	import { searchStore } from '../stores/search.svelte';
-	import { iterateQueryParams } from '../util';
+	import { addQueryParam } from '../util';
 
 	let searchQuery = $state('');
 	let isSearching = $state(false);
 	let abortController: AbortController | null = null;
 
 	let { isScrolled, toggleSidebar } = $props();
+
+	let sortOpen = $state(false);
+
+	const sortOptions = [
+		{ value: 'date-desc', label: 'Newest', dir: 'desc' as const },
+		{ value: 'date-asc', label: 'Oldest', dir: 'asc' as const },
+		{ value: 'clicks-desc', label: 'Most clicked', dir: 'desc' as const },
+		{ value: 'clicks-asc', label: 'Least clicked', dir: 'asc' as const }
+	];
+
+	const currentSort = $derived(page.url.searchParams.get('order') ?? 'date-desc');
+	const currentSortOption = $derived(
+		sortOptions.find((o) => o.value === currentSort) ?? sortOptions[0]
+	);
+
+	$effect(() => {
+		if (searchQuery) sortOpen = false;
+	});
 
 	$effect(() => {
 		if (abortController) {
@@ -66,6 +86,12 @@
 		app.setDarkMode(!darkModeEnabled);
 	}
 </script>
+
+<svelte:window
+	onkeydown={(e) => {
+		if (sortOpen && e.key === 'Escape') sortOpen = false;
+	}}
+/>
 
 {#snippet logo()}
 	<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
@@ -128,31 +154,63 @@
 				<IconX size={20} stroke-width={1.5} />
 			</button>
 		{:else}
-			<a
-				data-sveltekit-replacestate
-				href={iterateQueryParams(page.url, 'order', [
-					'date-desc',
-					'date-asc',
-					'clicks-desc',
-					'clicks-asc'
-				])}
-				class="hide-label absolute right-0.5 flex rounded bg-white p-2 text-gray-500 shadow hover:text-gray-700 dark:bg-[#1f1f2e] dark:text-gray-400 dark:hover:text-gray-300"
-			>
-				{#if page.url.searchParams.get('order') === 'date-asc'}
-					<span>Date</span>
-					<IconSortAscending size={20} stroke-width={1.5} />
-				{:else if page.url.searchParams.get('order') === 'clicks-asc'}
-					<span>Clicks</span>
-					<IconSortAscending size={20} stroke-width={1.5} />
-				{:else if page.url.searchParams.get('order') === 'clicks-desc'}
-					<span>Clicks</span>
-					<IconSortDescending size={20} stroke-width={1.5} />
-				{:else}
-					<!-- default -->
-					<span>Date</span>
-					<IconSortDescending size={20} stroke-width={1.5} />
+			<div class="absolute right-0.5">
+				<button
+					type="button"
+					class="flex items-center gap-1 rounded bg-white px-2 py-1.5 text-xs font-medium text-gray-600 shadow hover:text-gray-800 dark:bg-[#1f1f2e] dark:text-gray-400 dark:hover:text-gray-300"
+					onclick={() => (sortOpen = !sortOpen)}
+				>
+					{currentSortOption.label}
+					<IconChevronDown
+						size={14}
+						stroke-width={2}
+						class="transition-transform duration-200 {sortOpen ? 'rotate-180' : ''}"
+					/>
+				</button>
+				{#if sortOpen}
+					<div
+						class="fixed inset-0 z-40"
+						role="none"
+						onclick={() => (sortOpen = false)}
+					></div>
+					<div
+						class="absolute right-0 z-50 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-[#1f1f2e]"
+						transition:fade={{ duration: 120 }}
+					>
+						{#each sortOptions as option}
+							<a
+								data-sveltekit-replacestate
+								href={addQueryParam(page.url, 'order', option.value)}
+								class="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-white/5
+									{currentSort === option.value
+									? 'text-primary-500 font-medium'
+									: 'text-gray-600 dark:text-gray-400'}"
+								onclick={() => (sortOpen = false)}
+							>
+								{#if currentSort === option.value}
+									<IconCheck size={15} stroke-width={2} />
+								{:else}
+									<span class="inline-block w-[15px]"></span>
+								{/if}
+								<span class="flex-1">{option.label}</span>
+								{#if option.dir === 'asc'}
+									<IconSortAscending
+										size={16}
+										stroke-width={1.5}
+										class="opacity-40"
+									/>
+								{:else}
+									<IconSortDescending
+										size={16}
+										stroke-width={1.5}
+										class="opacity-40"
+									/>
+								{/if}
+							</a>
+						{/each}
+					</div>
 				{/if}
-			</a>
+			</div>
 		{/if}
 	</div>
 
@@ -183,24 +241,4 @@
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 
-	.hide-label {
-		span {
-			width: 0;
-			overflow: hidden;
-			white-space: nowrap;
-			transition: width 0.3s ease;
-			transition-behavior: allow-discrete;
-		}
-
-		&:hover {
-			gap: 0.125rem;
-			span {
-				width: calc-size(auto, size);
-			}
-		}
-
-		:global(svg) {
-			padding-left: 0.125rem;
-		}
-	}
 </style>
