@@ -39,10 +39,134 @@ export const load: PageServerLoad = async (event) => {
             eq(sharedCategoriesTable.categoryId, event.params.id),
         ));
 
-    return { shared, catergory };
+    const shares = await db
+        .select()
+        .from(sharedCategoriesTable)
+        .where(eq(sharedCategoriesTable.categoryId, event.params.id));
+
+    return { shared, catergory, shares };
 };
 
 export const actions: Actions = {
+    "update-name": validateForm(
+        z.object({ name: z.string().min(1, "Collection name is required").max(255) }),
+        async (event, form) => {
+            const locals = validateAuth(event);
+
+            const [category] = await db
+                .select()
+                .from(categoriesTable)
+                .where(and(
+                    eq(categoriesTable.userId, locals.user.id),
+                    eq(categoriesTable.id, event.params.id)
+                ))
+                .limit(1);
+
+            if (!category) {
+                error(404, "Collection not found");
+            }
+
+            // Check for duplicate name
+            const [duplicate] = await db
+                .select()
+                .from(categoriesTable)
+                .where(and(
+                    eq(categoriesTable.userId, locals.user.id),
+                    eq(categoriesTable.name, form.name),
+                    // Exclude current category from check
+                ))
+                .limit(1);
+
+            if (duplicate && duplicate.id !== event.params.id) {
+                error(400, "A collection with this name already exists");
+            }
+
+            await db
+                .update(categoriesTable)
+                .set({ name: form.name })
+                .where(eq(categoriesTable.id, event.params.id));
+        }
+    ),
+
+    "delete-collection": validateForm(
+        z.object({
+            deleteMode: z.enum(['collection-only', 'with-bookmarks']),
+            bookmarkAction: z.enum(['uncategorize', 'archive', 'delete']).optional()
+        }),
+        async (event, form) => {
+            const locals = validateAuth(event);
+
+            const [category] = await db
+                .select()
+                .from(categoriesTable)
+                .where(and(
+                    eq(categoriesTable.userId, locals.user.id),
+                    eq(categoriesTable.id, event.params.id)
+                ))
+                .limit(1);
+
+            if (!category) {
+                error(404, "Collection not found");
+            }
+
+            // Check for active shares
+            const shares = await db
+                .select()
+                .from(sharedCategoriesTable)
+                .where(eq(sharedCategoriesTable.categoryId, event.params.id))
+                .limit(1);
+
+            if (shares.length > 0) {
+                error(400, "Cannot delete collection with active shares. Please revoke all shares first.");
+            }
+
+            await db.transaction(async (tx) => {
+                if (form.deleteMode === 'collection-only') {
+                    // Handle bookmarks based on user choice
+                    if (form.bookmarkAction === 'uncategorize') {
+                        // Set category to null for all bookmarks
+                        await tx
+                            .update(bookmarksTable)
+                            .set({ category: null, updatedAt: new Date() })
+                            .where(and(
+                                eq(bookmarksTable.userId, locals.user.id),
+                                eq(bookmarksTable.category, event.params.id)
+                            ));
+                    } else if (form.bookmarkAction === 'archive') {
+                        // Soft delete by setting deletedAt
+                        await tx
+                            .update(bookmarksTable)
+                            .set({ deletedAt: new Date(), updatedAt: new Date() })
+                            .where(and(
+                                eq(bookmarksTable.userId, locals.user.id),
+                                eq(bookmarksTable.category, event.params.id)
+                            ));
+                    } else if (form.bookmarkAction === 'delete') {
+                        // Hard delete bookmarks
+                        await tx
+                            .delete(bookmarksTable)
+                            .where(and(
+                                eq(bookmarksTable.userId, locals.user.id),
+                                eq(bookmarksTable.category, event.params.id)
+                            ));
+                    }
+                } else {
+                    // with-bookmarks: delete all bookmarks
+                    await tx
+                        .delete(bookmarksTable)
+                        .where(and(
+                            eq(bookmarksTable.userId, locals.user.id),
+                            eq(bookmarksTable.category, event.params.id)
+                        ));
+                }
+
+                // Delete the category
+                await tx
+                    .delete(categoriesTable)
+                    .where(eq(categoriesTable.id, event.params.id));
+            });
+        }
+    ),
     "revoke": validateForm(z.object({ id: z.string(), archive: z.string().transform((val) => val === "true") }), async (event, form) => {
         const locals = validateAuth(event);
 
