@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { stopPropagation } from 'svelte/legacy';
 	import { IconX } from '@tabler/icons-svelte';
 
 	interface Props {
@@ -115,28 +114,25 @@
 </script>
 
 <div class="tag-input-wrapper relative">
-	<label for="tag-input" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-		{label}
-	</label>
 	<!-- svelte-ignore a11y_no_abstract_role -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		role="input"
-		class="input mt-1 flex w-full flex-wrap items-center gap-1 p-1"
+		class="input mt-1.5 flex w-full flex-wrap items-center gap-1.5 p-2"
 		onclick={focusInput}
 	>
 		{#each selectedTags as tag (tag)}
 			<span
-				class="flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+				class="flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
 			>
 				{tag}
 				<button
 					type="button"
-					class="ml-1 flex-shrink-0 rounded-full p-0.5 text-blue-600 hover:bg-blue-200 hover:text-blue-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
-					onclick={stopPropagation(() => removeTag(tag))}
+					class="ml-1.5 flex-shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 focus:outline-none"
+					onclick={() => removeTag(tag)}
 					aria-label={`Remove ${tag} tag`}
 				>
-					<IconX class="h-3 w-3" />
+					<IconX class="h-3.5 w-3.5" />
 				</button>
 			</span>
 		{/each}
@@ -146,7 +142,7 @@
 			bind:value={tagInput}
 			onkeydown={handleTagInputKeydown}
 			onfocus={handleInputFocus}
-			class="min-w-[60px] flex-grow border-none bg-transparent p-1 text-sm focus:ring-0 focus:outline-none"
+			class="min-w-[80px] flex-grow border-none bg-transparent py-1 text-sm focus:ring-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
 			placeholder={selectedTags.length === 0 ? placeholder : ''}
 			autocomplete="off"
 		/>
@@ -154,15 +150,15 @@
 	<!-- Suggestions Dropdown -->
 	{#if showSuggestions && filteredTags.length > 0}
 		<ul
-			class="ring-opacity-5 absolute z-10 mt-1 max-h-40 w-full overflow-auto rounded-md border border-gray-300 bg-white py-1 text-base text-black shadow-lg ring-1 ring-black focus:outline-none sm:text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+			class="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg focus:outline-none"
 		>
 			{#each filteredTags as tag, index (tag)}
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 				<li
-					class="relative cursor-pointer px-3 py-2 select-none hover:bg-gray-300 hover:dark:bg-gray-900 {activeSuggestionIndex ===
+					class="relative cursor-pointer px-3 py-2 select-none text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeSuggestionIndex ===
 					index
-						? 'bg-gray-300 dark:bg-gray-700 dark:text-gray-200'
+						? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
 						: ''}"
 					onclick={() => handleSuggestionClick(tag)}
 					onmouseenter={() => (activeSuggestionIndex = index)}

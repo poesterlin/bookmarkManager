@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { stopPropagation } from 'svelte/legacy';
-	import { IconLoader, IconX } from '@tabler/icons-svelte';
+	import { IconLoader, IconCheck } from '@tabler/icons-svelte';
 	import { inputsKey, type StoredValue, storedValue } from './state.svelte';
 	import TagInput from './TagInput.svelte';
 
@@ -22,6 +21,7 @@
 
 	let form = $state<HTMLFormElement>();
 	let loading = $state(false);
+	let success = $state(false);
 
 	let url = $state<string>();
 	let title = $state<string>();
@@ -222,7 +222,12 @@
 			console.log('Bookmark added successfully:', data);
 
 			await clearInputs();
-			close();
+			success = true;
+
+			// Auto-close after 2 seconds
+			setTimeout(() => {
+				close();
+			}, 2000);
 		} catch (error) {
 			console.error('Error adding bookmark:', error);
 		} finally {
@@ -232,136 +237,148 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<form
-	onkeyup={handleCtrlEnterSubmit}
-	bind:this={form}
-	class="p-6"
-	method="POST"
-	action="/?/add"
-	onsubmit={submit}
->
-	<div class="mb-4">
-		<h3 class="text-primary-900 text-xl font-semibold">Add New Bookmark</h3>
-		<p class="text-sm text-gray-600">Save a link to your collection</p>
+{#if success}
+	<div class="flex h-full flex-col items-center justify-center p-6">
+		<div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/20">
+			<IconCheck class="h-10 w-10 text-green-600 dark:text-green-400" />
+		</div>
+		<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Bookmark Saved!</h3>
+		<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Closing in a moment...</p>
 	</div>
+{:else}
+	<form
+		onkeyup={handleCtrlEnterSubmit}
+		bind:this={form}
+		class="p-5 pb-0 overflow-y-auto h-full flex flex-col"
+		method="POST"
+		action="/?/add"
+		onsubmit={submit}
+	>
+		<div class="mb-5">
+			<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save Bookmark</h3>
+			<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Add to your collection</p>
+		</div>
 
-	<div class="space-y-4">
-		<!-- URL, Title, Description, Category inputs remain the same -->
+		<div class="space-y-3 flex-1">
+		<!-- URL -->
 		<div>
-			<label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
+			<label for="url" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
 				URL
 			</label>
-			<div class="input mt-1 flex overflow-hidden !p-0">
+			<div class="input mt-1.5 flex overflow-hidden !p-0">
 				<input
 					type="text"
 					id="url"
 					name="url"
 					bind:value={url}
 					required
-					class="w-full py-2 pl-2 focus:outline-0"
+					class="w-full py-2 pl-3 focus:outline-0 bg-transparent text-sm"
 					placeholder="https://example.com"
 					onblur={autofill}
 				/>
 
 				{#if loading && !faviconData}
-					<IconLoader class="mx-2 h-10 animate-spin"></IconLoader>
+					<IconLoader class="mx-2 h-8 w-8 animate-spin text-gray-400"></IconLoader>
 				{/if}
 
 				{#if faviconData}
-					<img src={faviconData} alt="favicon" class="h-10 rounded-sm p-2" />
+					<img src={faviconData} alt="favicon" class="h-8 w-8 rounded p-1 flex-shrink-0" />
 				{/if}
 			</div>
 		</div>
 
+		<!-- Title -->
 		<div>
-			<label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-				Title</label
-			>
+			<label for="title" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+				Title
+			</label>
 			<input
 				type="text"
 				id="title"
 				name="title"
 				required
 				bind:value={title}
-				class="input mt-1 w-full"
+				class="input mt-1.5 w-full text-sm"
 				placeholder="My Awesome Website"
 			/>
 		</div>
 
+		<!-- Description -->
 		<div>
-			<label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-200">
-				Description (optional)</label
-			>
+			<label for="description" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+				Description (optional)
+			</label>
 			<textarea
 				id="description"
 				name="description"
-				class="input mt-1 w-full"
+				class="input mt-1.5 w-full text-sm"
 				rows="2"
 				bind:value={description}
-				placeholder="A brief description of the website"
+				placeholder="Add a description..."
 			></textarea>
 		</div>
 
+		<!-- Category -->
 		<div>
-			<label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-200"
-				>Category</label
-			>
+			<label for="category" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+				Category
+			</label>
 			{#if showNewCategoryInput}
-				<div class="mt-1 flex">
+				<div class="mt-1.5 flex gap-2">
 					<input
 						type="text"
 						id="newCategory"
 						name="newCategory"
 						bind:value={newCategory}
-						class="input w-full"
-						placeholder="New category name"
+						class="input flex-1 text-sm"
+						placeholder="New category"
 					/>
-					<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
+					<button type="button" class="button-ghost px-3 py-2 text-xs" onclick={toggleNewCategoryInput}>
 						Cancel
 					</button>
 				</div>
 			{:else}
-				<div class="mt-1 flex">
+				<div class="mt-1.5 flex gap-2">
 					<select
 						id="category"
-						class="input w-full bg-white dark:bg-gray-800"
+						class="input flex-1 bg-white dark:bg-gray-800 text-sm"
 						bind:value={category}
 						name="category"
 					>
-						<option
-							value=""
-							selected
-							class="bg-white text-black dark:bg-gray-900 dark:text-gray-200/60"
-						>
-							Select a category</option
-						>
+						<option value="" selected>Select a category</option>
 						{#each categories as cat}
-							<option
-								value={cat.id}
-								class="bg-white text-black dark:bg-gray-800 dark:text-gray-200"
-							>
-								{cat.name}</option
-							>
+							<option value={cat.id}>{cat.name}</option>
 						{/each}
 					</select>
-					<button type="button" class="button-ghost ml-2" onclick={toggleNewCategoryInput}>
+					<button type="button" class="button-ghost px-3 py-2 text-xs whitespace-nowrap" onclick={toggleNewCategoryInput}>
 						New
 					</button>
 				</div>
 			{/if}
 		</div>
-		<TagInput bind:selectedTags {existingTags} name="tags" placeholder="Add tags..." label="Tags" />
+
+		<!-- Tags -->
+		<div>
+			<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-1.5">
+				Tags
+			</label>
+			<TagInput bind:selectedTags {existingTags} name="tags" placeholder="Add tags..." />
+		</div>
 	</div>
 
-	<div class="mt-6 flex justify-end space-x-3">
-		<button type="button" class="button-ghost" onclick={close}> Cancel </button>
-		<button type="submit" class="button-primary"> Add Bookmark </button>
+	<!-- Sticky Footer -->
+	<div class="mt-4 px-5 pb-5 border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-end gap-2">
+		<button type="button" class="button-ghost px-4 py-2 text-sm" onclick={close}> Cancel </button>
+		<button type="submit" class="button-primary px-4 py-2 text-sm" disabled={loading}>
+			{loading ? 'Saving...' : 'Add Bookmark'}
+		</button>
 	</div>
 
-	{#if theme}
-		<input type="hidden" name="theme" bind:value={theme} />
-	{/if}
-	{#if favicon}
-		<input type="hidden" name="favicon" bind:value={favicon} />
-	{/if}
-</form>
+		{#if theme}
+			<input type="hidden" name="theme" bind:value={theme} />
+		{/if}
+		{#if favicon}
+			<input type="hidden" name="favicon" bind:value={favicon} />
+		{/if}
+	</form>
+{/if}
