@@ -116,7 +116,7 @@
 	{/if}
 
 	<div
-		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-min flex-1 items-center gap-1 !p-0 focus-within:!ring-0"
+		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-0 flex-1 items-center !p-0 focus-within:!ring-0"
 	>
 		{#if isSearching}
 			<div
@@ -139,32 +139,37 @@
 		<input
 			type="text"
 			placeholder="Search bookmarks..."
-			class="ml-12 w-full border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
+			class="ml-10 min-w-0 flex-1 border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
 			bind:value={searchQuery}
 		/>
 		{#if searchQuery}
 			<button
 				type="button"
-				class="absolute right-2 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				class="shrink-0 px-2 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				onclick={() => {
 					searchQuery = '';
 					searchStore.clear();
 				}}
 			>
-				<IconX size={20} stroke-width={1.5} />
+				<IconX size={18} stroke-width={1.5} />
 			</button>
 		{:else}
-			<div class="absolute right-0.5">
+			<div class="relative shrink-0">
 				<button
 					type="button"
-					class="flex items-center gap-1 rounded bg-white px-2 py-1.5 text-xs font-medium text-gray-600 shadow hover:text-gray-800 dark:bg-[#1f1f2e] dark:text-gray-400 dark:hover:text-gray-300"
+					class="flex items-center gap-1 border-l border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 					onclick={() => (sortOpen = !sortOpen)}
 				>
-					{currentSortOption.label}
+					{#if currentSortOption.dir === 'asc'}
+						<IconSortAscending size={18} stroke-width={1.5} class="md:hidden" />
+					{:else}
+						<IconSortDescending size={18} stroke-width={1.5} class="md:hidden" />
+					{/if}
+					<span class="hidden md:inline">{currentSortOption.label}</span>
 					<IconChevronDown
 						size={14}
 						stroke-width={2}
-						class="transition-transform duration-200 {sortOpen ? 'rotate-180' : ''}"
+						class="hidden transition-transform duration-200 md:inline {sortOpen ? 'rotate-180' : ''}"
 					/>
 				</button>
 				{#if sortOpen}
