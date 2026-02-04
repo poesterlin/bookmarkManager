@@ -232,7 +232,7 @@
 	></button>
 {/if}
 
-{#snippet categoryLink(id: string, name: string, shared: boolean)}
+{#snippet categoryLink(id: string, name: string, shared: boolean, sharing: boolean)}
 	<a
 		data-sveltekit-replacestate
 		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
@@ -247,6 +247,9 @@
 			<IconFolder class="mr-2 h-5 w-5" />
 		{/if}
 		<span>{name}</span>
+		{#if sharing}
+			<IconFriends class="ml-auto h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+		{/if}
 	</a>
 {/snippet}
 
@@ -321,13 +324,18 @@
 						onpointerup={() => dragStore.addToCategory(category)}
 						class="flex items-center gap-2"
 					>
-						{@render categoryLink(category.id, category.name, false)}
+						{@render categoryLink(category.id, category.name, false, category.isShared || false)}
 					</div>
 				{/each}
 
 				{#each shared as category}
 					{#if category.name}
-						{@render categoryLink(category.id, category.name, true)}
+						<div
+							onpointerup={() => dragStore.addToCategory(category)}
+							class="flex items-center gap-2"
+						>
+							{@render categoryLink(category.id, category.name, true, false)}
+						</div>
 					{/if}
 				{/each}
 			</nav>

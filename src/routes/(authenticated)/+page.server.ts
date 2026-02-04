@@ -54,7 +54,6 @@ export const load: PageServerLoad = async (event) => {
 	const locals = validateAuth(event);
 	const options = validateOptions(event, optionsSchema);
 
-	let limitToUser = true;
 	let filters = [] as SQL<any>[];
 
 	let sharedCategory = undefined;
@@ -85,7 +84,7 @@ export const load: PageServerLoad = async (event) => {
 		} else {
 			filters.push(eq(bookmarksTable.category, options.category));
 		}
-	} else {
+	} else if (!options.archived) {
 		filters.push(isNull(bookmarksTable.fromShareId));
 	}
 
@@ -118,26 +117,12 @@ export const load: PageServerLoad = async (event) => {
 	}
 
 	if (options.archived) {
-		limitToUser = false;
 		filters.push(isNotNull(bookmarksTable.deletedAt));
 	} else {
 		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
-	if (limitToUser) {
-		filters.push(eq(bookmarksTable.userId, locals.user.id));
-	} else if (!sharedCategory) {
-		// If there is no shared category selected, find the ones that are shared with the user
-		const sharedCategories = await db
-			.select({ categoryId: sharedCategoriesTable.categoryId })
-			.from(sharedCategoriesTable)
-			.where(eq(sharedCategoriesTable.userId, locals.user.id));
-
-		filters.push(or(
-			inArray(bookmarksTable.category, sharedCategories.map(c => c.categoryId)),
-			eq(bookmarksTable.userId, locals.user.id)
-		) as SQL<boolean>);
-	}
+	filters.push(eq(bookmarksTable.userId, locals.user.id));
 
 	let order: any = bookmarksTable.createdAt;
 	if (options.order === 'date-asc') {
@@ -152,7 +137,7 @@ export const load: PageServerLoad = async (event) => {
 
 	const [bookmarks, categories, sharedCategories, tags] = await Promise.all([
 		sharedCategory ?
-			getSharedBookmarks(sharedCategory.categoryId, order, locals.user.id) :
+			getSharedBookmarks(sharedCategory.categoryId, order, locals.user.id, options.archived) :
 			getBookmarks(filters, order, locals.user.id),
 
 		// categories
@@ -165,7 +150,7 @@ export const load: PageServerLoad = async (event) => {
 					.where(
 						and(
 							eq(sharedCategoriesTable.categoryId, categoriesTable.id),
-							eq(sharedCategoriesTable.userId, locals.user.id)
+							eq(sharedCategoriesTable.owner, locals.user.id)
 						)
 					)
 			) as SQL<boolean>
@@ -433,21 +418,44 @@ export const actions: Actions = {
 		async (event, form) => {
 			const locals = validateAuth(event);
 
-			const sharedCategoriesResult = await db
-				.select({ categoryId: sharedCategoriesTable.categoryId })
-				.from(sharedCategoriesTable)
-				.where(eq(sharedCategoriesTable.owner, locals.user.id));
+			const [bookmark] = await db
+				.select({ id: bookmarksTable.id, userId: bookmarksTable.userId, category: bookmarksTable.category })
+				.from(bookmarksTable)
+				.where(eq(bookmarksTable.id, form.id))
+				.limit(1);
 
-			await db
-				.update(bookmarksTable)
-				.set({ deletedAt: new Date() })
-				.where(and(
-					or(
-						eq(bookmarksTable.userId, locals.user.id),
-						inArray(bookmarksTable.category, sharedCategoriesResult.map(cat => cat.categoryId))
-					),
-					eq(bookmarksTable.id, form.id)
-				));
+			if (!bookmark) {
+				error(404, 'Bookmark not found');
+			}
+
+			const isOwner = bookmark.userId === locals.user.id;
+
+			if (!isOwner) {
+				// Check if the user is the admin of the shared category containing this bookmark
+				const [sharedCategory] = bookmark.category ? await db
+					.select()
+					.from(sharedCategoriesTable)
+					.where(and(
+						eq(sharedCategoriesTable.owner, locals.user.id),
+						eq(sharedCategoriesTable.categoryId, bookmark.category)
+					))
+					.limit(1) : [];
+
+				if (!sharedCategory) {
+					error(403, 'Not allowed');
+				}
+
+				// Foreign user's bookmark: archive and disconnect from the collection
+				await db
+					.update(bookmarksTable)
+					.set({ deletedAt: new Date(), category: null, fromShareId: null })
+					.where(eq(bookmarksTable.id, form.id));
+			} else {
+				await db
+					.update(bookmarksTable)
+					.set({ deletedAt: new Date() })
+					.where(eq(bookmarksTable.id, form.id));
+			}
 		}
 	),
 	restore: validateForm(
@@ -506,16 +514,19 @@ export const actions: Actions = {
 				)).limit(1);
 
 			if (!category) {
-				let sharedCategoryResults = await db
-					.select({ id: sharedCategoriesTable.categoryId })
+				let [sharedCategory] = await db
+					.select({ categoryId: sharedCategoriesTable.categoryId, allowWriteAccess: sharedCategoriesTable.allowWriteAccess })
 					.from(sharedCategoriesTable)
 					.where(
-						and(eq(sharedCategoriesTable.userId, locals.user.id), eq(sharedCategoriesTable.categoryId, form.category))
+						and(eq(sharedCategoriesTable.userId, locals.user.id), eq(sharedCategoriesTable.id, form.category))
 					)
 					.limit(1);
 
-				if (sharedCategoryResults[0]) {
-					category = sharedCategoryResults[0];
+				if (sharedCategory) {
+					if (!sharedCategory.allowWriteAccess) {
+						error(403, 'You do not have write access to this collection');
+					}
+					category = { id: sharedCategory.categoryId };
 				}
 
 				if (!category) {
@@ -534,7 +545,7 @@ export const actions: Actions = {
 /**
  * Get shared bookmarks for a specific category. This will be shown to the user the category is shared with as well as the owner of the category.
  */
-function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: string) {
+function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: string, showArchived?: boolean) {
 	return db.select({
 		...getTableColumns(bookmarksTable),
 		tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`
@@ -557,7 +568,7 @@ function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: str
 		.orderBy(order)
 		.where(and(
 			eq(categoriesTable.id, categoryId),
-			isNull(bookmarksTable.deletedAt)
+			showArchived ? isNotNull(bookmarksTable.deletedAt) : isNull(bookmarksTable.deletedAt)
 		));
 }
 
@@ -577,9 +588,9 @@ function getBookmarks(filters: SQL<unknown>[], order: SQL<unknown>, userId: stri
 		canArchive: sql<boolean>`true`
 	})
 		.from(bookmarksTable)
-		.innerJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
-		.innerJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
-		.innerJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
+		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
+		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
+		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(order)
 		.where(and(...filters));
