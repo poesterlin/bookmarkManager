@@ -1,6 +1,39 @@
 import type { Handle } from '@sveltejs/kit';
 import * as auth from '$lib/server/auth.js';
 
+const handleAuth: Handle = async ({ event, resolve }) => {
+	const sessionToken = event.cookies.get(auth.sessionCookieName);
+	if (!sessionToken) {
+		event.locals.user = null;
+		event.locals.session = null;
+
+		const isHomePage = event.url.pathname === '/';
+		if (isHomePage) {
+			return Response.redirect(new URL('/intro', event.url), 302);
+		}
+
+		return resolve(event);
+	}
+
+	try {
+		const { session, user } = await auth.validateSessionToken(sessionToken);
+		if (session) {
+			auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
+		} else {
+			auth.deleteSessionTokenCookie(event);
+		}
+
+		event.locals.user = user;
+		event.locals.session = session;
+	} catch {
+		// If session validation fails, clear session data
+		event.locals.user = null;
+		event.locals.session = null;
+	}
+
+	return resolve(event);
+};
+
 const handleCors: Handle = async ({ event, resolve }) => {
 	// Handle CORS preflight requests
 	if (event.request.method === 'OPTIONS') {
@@ -27,45 +60,9 @@ const handleCors: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-const handleAuth: Handle = async ({ event, resolve }) => {
-	const sessionToken = event.cookies.get(auth.sessionCookieName);
-	if (!sessionToken) {
-		event.locals.user = null;
-		event.locals.session = null;
-
-		const isHomePage = event.url.pathname === '/';
-		if (isHomePage) {
-			return Response.redirect(new URL('/intro', event.url), 302);
-		}
-
-		return resolve(event);
-	}
-
-	try {
-		const { session, user } = await auth.validateSessionToken(sessionToken);
-		if (session) {
-			auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
-		} else {
-			auth.deleteSessionTokenCookie(event);
-		}
-
-		event.locals.user = user;
-		event.locals.session = session;
-	} catch {
-		// If session validation fails, clear session data but don't throw
-		// This allows the request to proceed to error pages
-		event.locals.user = null;
-		event.locals.session = null;
-		auth.deleteSessionTokenCookie(event);
-	}
-
-	return resolve(event);
-};
-
 export const handle: Handle = async (input) => {
-	const corsResponse = await handleCors(input);
-	if (corsResponse.status === 204) {
-		return corsResponse;
-	}
-	return handleAuth(input);
+	return handleCors({
+		...input,
+		resolve: (event) => handleAuth({ event, resolve: input.resolve })
+	});
 };
