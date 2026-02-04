@@ -85,6 +85,8 @@ export const bookmarksTable = pgTable(
 export type Bookmark = Omit<typeof bookmarksTable.$inferSelect, 'category'> & {
 	tags: Tag[];
 	category: Category;
+	canEdit?: boolean;
+	canArchive?: boolean;
 };
 
 export const tagsTable = pgTable(

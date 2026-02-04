@@ -118,8 +118,11 @@
 		<input type="hidden" name="id" value={bookmark.id} />
 		<input type="hidden" name="favorite" value={!bookmark.isFavorite} />
 		<button
-			{disabled}
-			class="hover:text-primary-500 ml-1 rounded-sm text-gray-400 transition-colors duration-200 hover:bg-white/50 dark:text-gray-500 dark:hover:bg-transparent"
+			disabled={disabled || !bookmark.canEdit}
+			class="ml-1 rounded-sm text-gray-400 transition-colors duration-200 dark:text-gray-500 {disabled ||
+			!bookmark.canEdit
+				? '!cursor-not-allowed'
+				: 'hover:text-primary-500 hover:bg-white/50 dark:hover:bg-transparent'} "
 			aria-label={bookmark.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
 		>
 			{#if bookmark.isFavorite}
@@ -149,12 +152,9 @@
 		</a>
 	{/if}
 	{#each bookmark.tags as tag}
+		{@const style = 'bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium'}
 		{#if tag.name}
-			<a
-				data-sveltekit-replacestate
-				class="bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium"
-				href={tag.id ? `/?tag=${tag.id}` : ''}
-			>
+			<a data-sveltekit-replacestate class={style} href={tag.id ? `/?tag=${tag.id}` : ''}>
 				{tag.name}
 			</a>
 		{/if}
@@ -206,24 +206,29 @@
 			>
 				<IconCopy class="h-4 w-4"></IconCopy>
 			</button>
-			<button
-				{disabled}
-				onclick={openEditModal}
-				title="Edit"
-				class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
-			>
-				<IconPencil class="h-4 w-4"></IconPencil>
-			</button>
-			<form action="/?/archive" use:enhance method="POST" title="Archive">
-				<input type="hidden" name="id" value={bookmark.id} />
+			{#if bookmark.canEdit}
 				<button
 					{disabled}
-					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
-					aria-label="Delete"
+					onclick={openEditModal}
+					title="Edit"
+					class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-gray-800 hover:outline dark:hover:text-gray-400"
 				>
-					<IconArchive class="h-4 w-4"></IconArchive>
+					<IconPencil class="h-4 w-4"></IconPencil>
 				</button>
-			</form>
+			{/if}
+
+			{#if bookmark.canArchive}
+				<form action="/?/archive" use:enhance method="POST" title="Archive">
+					<input type="hidden" name="id" value={bookmark.id} />
+					<button
+						{disabled}
+						class="rounded-full p-1.5 text-gray-500 transition-colors hover:text-red-500 hover:outline dark:hover:text-red-400"
+						aria-label="Delete"
+					>
+						<IconArchive class="h-4 w-4"></IconArchive>
+					</button>
+				</form>
+			{/if}
 		{/if}
 	</div>
 </div>

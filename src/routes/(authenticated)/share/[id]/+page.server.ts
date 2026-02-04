@@ -49,6 +49,7 @@ export const actions: Actions = {
         const [sharingCategory] = await db
             .select()
             .from(sharedCategoriesTable)
+            .innerJoin(categoriesTable, eq(categoriesTable.id, sharedCategoriesTable.categoryId))
             .where(and(
                 eq(sharedCategoriesTable.owner, locals.user.id),
                 eq(sharedCategoriesTable.id, form.id),
@@ -59,13 +60,14 @@ export const actions: Actions = {
         }
 
         await db.transaction(async (tx) => {
+            // get bookmarks that were created from this share
             const bookmarks = await tx
                 .select()
                 .from(bookmarksTable)
                 .where(eq(bookmarksTable.fromShareId, form.id));
 
             if (bookmarks.length > 0) {
-                // add a copy to the creators bookmarks
+                // add a copy to the creators bookmarks. This will remove the foreign Tags.
                 await tx
                     .insert(bookmarksTable)
                     .values(bookmarks.map(bookmark => ({
@@ -75,15 +77,25 @@ export const actions: Actions = {
                         title: bookmark.title,
                         createdAt: bookmark.createdAt,
                         updatedAt: bookmark.updatedAt,
+                        deletedAt: form.archive ? new Date() : null,
                     })));
+
+                // create a category for the participant so they don't loose their contributed bookmarks
+                const newCategoryId = generateId();
+                await tx
+                    .insert(categoriesTable)
+                    .values({
+                        id: newCategoryId,
+                        userId: sharingCategory.userId,
+                        name: sharingCategory.categories.name,
+                    });
 
                 await tx
                     .update(bookmarksTable)
                     .set({
-                        deletedAt: form.archive ? new Date() : null,
                         fromShareId: null,
-                        userId: locals.user.id,
-                        updatedAt: new Date()
+                        updatedAt: new Date(),
+                        category: newCategoryId
                     })
                     .where(eq(bookmarksTable.fromShareId, form.id));
             }

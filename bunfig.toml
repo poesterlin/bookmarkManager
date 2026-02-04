@@ -1,0 +1,22 @@
+# Bun Configuration
+
+[test]
+# Test files to include
+root = "src"
+suffix = [".test.ts"]
+# Exclude E2E tests (use Playwright instead)
+# Exclude database integration tests (need special setup)
+exclude = [
+  "src/lib/test/e2e/**",
+  "src/lib/test/__tests__/database-integration.test.ts"
+]
+
+# Test timeout in milliseconds
+timeout = 5000
+
+# Coverage options
+coverage = true
+
+[define]
+# Environment variables for tests
+"process.env.NODE_ENV" = '"test"'

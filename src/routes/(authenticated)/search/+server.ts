@@ -8,9 +8,9 @@ import {
 	type Tag
 } from '$lib/server/db/schema';
 import { validateAuth } from '$lib/server/util';
-import { sql, and, eq, or, getTableColumns, desc } from 'drizzle-orm';
-import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
+import { and, eq, getTableColumns, or, sql } from 'drizzle-orm';
+import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async (event) => {
 	const locals = validateAuth(event);
