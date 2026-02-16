@@ -41,7 +41,7 @@
 		onSubmit={handleSubmit}
 	>
 		<input type="hidden" name="id" value={bookmark.id} />
-		<URLInput url={bookmark.url} readonly />
+		<URLInput url={bookmark.url} />
 		<BookmarkFormFields bind:title bind:description />
 		<CategoryInput {categories} bind:selectedCategoryId {sharedCategories} />
 		<TagInput name="tags" placeholder="Add tags..." label="Tags" />

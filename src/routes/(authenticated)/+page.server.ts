@@ -244,6 +244,7 @@ export const actions: Actions = {
 	update: validateForm(
 		z.object({
 			id: z.string().min(1),
+			url: z.string().url(),
 			title: z.string().min(1).max(100),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
@@ -356,11 +357,11 @@ export const actions: Actions = {
 				await tx
 					.update(bookmarksTable)
 					.set({
+						url: form.url,
 						title: form.title,
 						description: form.description,
 						category: categoryId, // Set determined categoryId or null
 						updatedAt: new Date()
-						// Do NOT update URL here unless intended
 					})
 					.where(and(eq(bookmarksTable.id, form.id), eq(bookmarksTable.userId, locals.user.id))); // Redundant user check, but safe
 
