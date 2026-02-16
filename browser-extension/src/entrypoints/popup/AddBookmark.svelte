@@ -408,7 +408,7 @@
 						</button>
 					</div>
 
-					{#if hasChildren}
+					{#if category}
 						<select
 							class="input w-full bg-white dark:bg-gray-800 text-sm"
 							bind:value={subcategory}

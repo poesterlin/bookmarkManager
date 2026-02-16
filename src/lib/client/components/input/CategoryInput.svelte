@@ -25,6 +25,18 @@
 		}, {})
 	);
 
+	// If initialized with a subcategory ID, split into parent + subcategory
+	let initialized = false;
+	$effect(() => {
+		if (initialized || categories.length === 0) return;
+		initialized = true;
+		const cat = categories.find((c) => c.id === selectedCategoryId);
+		if (cat?.parentId) {
+			subcategory = selectedCategoryId;
+			selectedCategoryId = cat.parentId;
+		}
+	});
+
 	let selectedChildren = $derived(
 		selectedCategoryId ? (childrenByParent[selectedCategoryId] ?? []) : []
 	);
@@ -108,7 +120,7 @@
 				</button>
 			</div>
 
-			{#if hasChildren}
+			{#if selectedCategoryId}
 				<div class="flex flex-col gap-2">
 					<select
 						class="input w-full bg-white dark:bg-gray-800 dark:text-gray-200"
