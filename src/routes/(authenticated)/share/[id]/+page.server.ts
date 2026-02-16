@@ -243,6 +243,10 @@ export const actions: Actions = {
             error(404, "Not Found");
         }
 
+        if (category.parentId) {
+            error(400, "Sub-categories cannot be shared");
+        }
+
         await db
             .insert(sharedCategoriesTable)
             .values({

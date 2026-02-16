@@ -29,7 +29,7 @@ import {
 } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
-import type Sql from '@tabler/icons-svelte/icons/sql';
+import { alias } from 'drizzle-orm/pg-core';
 
 const optionsSchema = z.object({
 	category: z.string().optional(),
@@ -80,9 +80,26 @@ export const load: PageServerLoad = async (event) => {
 
 		if (sharedCategory) {
 			// reset user filter - shared categories show results from all users
-			filters.push(eq(bookmarksTable.category, sharedCategory.categoryId));
+			// Include bookmarks from the shared category and its children
+			const childCategories = await db
+				.select({ id: categoriesTable.id })
+				.from(categoriesTable)
+				.where(eq(categoriesTable.parentId, sharedCategory.categoryId));
+
+			const categoryIds = [sharedCategory.categoryId, ...childCategories.map(c => c.id)];
+			filters.push(inArray(bookmarksTable.category, categoryIds));
 		} else {
-			filters.push(eq(bookmarksTable.category, options.category));
+			// Include bookmarks from the selected category and its children
+			const childCategories = await db
+				.select({ id: categoriesTable.id })
+				.from(categoriesTable)
+				.where(and(
+					eq(categoriesTable.parentId, options.category),
+					eq(categoriesTable.userId, locals.user.id)
+				));
+
+			const categoryIds = [options.category, ...childCategories.map(c => c.id)];
+			filters.push(inArray(bookmarksTable.category, categoryIds));
 		}
 	} else if (!options.archived) {
 		filters.push(isNull(bookmarksTable.fromShareId));
@@ -157,7 +174,7 @@ export const load: PageServerLoad = async (event) => {
 		})
 			.from(categoriesTable)
 			.where(eq(categoriesTable.userId, locals.user.id))
-			.orderBy(categoriesTable.name),
+			.orderBy(categoriesTable.parentId, categoriesTable.name),
 
 		// shared categories
 		db
@@ -209,6 +226,7 @@ export const actions: Actions = {
 			url: z.string().url(),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
+			parentCategoryId: z.string().optional(),
 			tags: z
 				.string()
 				.optional()
@@ -229,6 +247,7 @@ export const actions: Actions = {
 			title: z.string().min(1).max(100),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
+			parentCategoryId: z.string().optional(),
 			tags: z
 				.string()
 				.optional()
@@ -283,13 +302,18 @@ export const actions: Actions = {
 
 				if (form.newCategory) {
 					// User wants to create/assign a new category
+					const parentFilter = form.parentCategoryId
+						? eq(categoriesTable.parentId, form.parentCategoryId)
+						: isNull(categoriesTable.parentId);
+
 					const [existingCategory] = await tx
 						.select({ id: categoriesTable.id })
 						.from(categoriesTable)
 						.where(
 							and(
 								eq(categoriesTable.userId, locals.user.id),
-								eq(categoriesTable.name, form.newCategory)
+								eq(categoriesTable.name, form.newCategory),
+								parentFilter
 							)
 						)
 						.limit(1);
@@ -301,7 +325,8 @@ export const actions: Actions = {
 						await tx.insert(categoriesTable).values({
 							id: categoryId,
 							name: form.newCategory,
-							userId: locals.user.id
+							userId: locals.user.id,
+							parentId: form.parentCategoryId || null
 						});
 					}
 				} else if (form.category) {
@@ -393,7 +418,7 @@ export const actions: Actions = {
 				.delete(bookmarksTable)
 				.where(and(eq(bookmarksTable.userId, locals.user.id), eq(bookmarksTable.id, form.id)));
 
-			// Remove empty categories
+			// Remove empty categories (no bookmarks and no children with bookmarks)
 			await db
 				.delete(categoriesTable)
 				.where(
@@ -405,6 +430,18 @@ export const actions: Actions = {
 									.select()
 									.from(bookmarksTable)
 									.where(eq(bookmarksTable.category, categoriesTable.id))
+							)
+						),
+						not(
+							exists(
+								(() => {
+									const childCategories = alias(categoriesTable, 'child_categories');
+									return db
+										.select()
+										.from(childCategories)
+										.innerJoin(bookmarksTable, eq(bookmarksTable.category, childCategories.id))
+										.where(eq(childCategories.parentId, categoriesTable.id));
+								})()
 							)
 						)
 					)
@@ -545,7 +582,14 @@ export const actions: Actions = {
 /**
  * Get shared bookmarks for a specific category. This will be shown to the user the category is shared with as well as the owner of the category.
  */
-function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: string, showArchived?: boolean) {
+async function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: string, showArchived?: boolean) {
+	const childCategories = await db
+		.select({ id: categoriesTable.id })
+		.from(categoriesTable)
+		.where(eq(categoriesTable.parentId, categoryId));
+
+	const categoryIds = [categoryId, ...childCategories.map(c => c.id)];
+
 	return db.select({
 		...getTableColumns(bookmarksTable),
 		tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`
@@ -567,7 +611,7 @@ function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: str
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(order)
 		.where(and(
-			eq(categoriesTable.id, categoryId),
+			inArray(categoriesTable.id, categoryIds),
 			showArchived ? isNotNull(bookmarksTable.deletedAt) : isNull(bookmarksTable.deletedAt)
 		));
 }

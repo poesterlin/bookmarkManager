@@ -5,8 +5,8 @@
 	import {
 		IconArchive,
 		IconEdit,
-		IconEyeEdit,
 		IconFolder,
+		IconFolderOpen,
 		IconFriends,
 		IconPlus,
 		IconShare,
@@ -31,6 +31,18 @@
 		isMenuOpen = $bindable(false),
 		shareModalHandler
 	}: Props = $props();
+
+	let selectedCategory = $derived(page.url.searchParams.get('category'));
+
+	let parentCategories = $derived(categories.filter((c) => !c.parentId));
+	let childrenByParent = $derived(
+		categories.reduce<Record<string, Category[]>>((acc, c) => {
+			if (c.parentId) {
+				(acc[c.parentId] ??= []).push(c);
+			}
+			return acc;
+		}, {})
+	);
 
 	let isSwiping = $state(false);
 	let startX = 0;
@@ -232,21 +244,26 @@
 	></button>
 {/if}
 
-{#snippet categoryLink(id: string, name: string, shared: boolean, sharing: boolean)}
+{#snippet categoryLink(id: string, name: string, shared: boolean, sharing: boolean, sub: boolean, expanded: boolean)}
 	<a
 		data-sveltekit-replacestate
 		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
-		class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
-			{page.url.searchParams.get('category') === id
+		class="flex w-full items-center rounded-lg px-3 text-left transition-all dark:hover:bg-white/10
+			{sub ? 'py-1.5 text-sm' : 'py-2'}
+			{selectedCategory === id
 			? 'bg-secondary-100 text-secondary-700 dark:text-secondary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100	'
 			: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
 	>
 		{#if shared}
-			<IconShare class="mr-2 h-5 w-5" />
+			<IconShare class="mr-2 h-5 w-5 shrink-0" />
+		{:else if sub}
+			<span class="mr-2 h-4 w-4 shrink-0 text-center text-gray-400 dark:text-gray-500">&#8226;</span>
+		{:else if expanded}
+			<IconFolderOpen class="mr-2 h-5 w-5 shrink-0" />
 		{:else}
-			<IconFolder class="mr-2 h-5 w-5" />
+			<IconFolder class="mr-2 h-5 w-5 shrink-0" />
 		{/if}
-		<span>{name}</span>
+		<span class="truncate">{name}</span>
 		{#if sharing}
 			<IconFriends class="ml-auto h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
 		{/if}
@@ -318,13 +335,37 @@
 					</IconEdit>
 				</button>
 			</div>
-			<nav class="space-y-1">
-				{#each categories as category}
-					<div
-						onpointerup={() => dragStore.addToCategory(category)}
-						class="flex items-center gap-2"
-					>
-						{@render categoryLink(category.id, category.name, false, category.isShared || false)}
+			<nav class="space-y-0.5">
+				{#each parentCategories as category}
+					{@const children = childrenByParent[category.id]}
+					{@const hasChildren = children && children.length > 0}
+					{@const isExpanded = hasChildren && (selectedCategory === category.id || children.some((c: {id: string}) => selectedCategory === c.id))}
+					<div>
+						<div
+							onpointerup={() => dragStore.addToCategory(category)}
+							class="flex items-center"
+						>
+							{@render categoryLink(category.id, category.name, false, category.isShared || false, false, isExpanded)}
+						</div>
+						{#if hasChildren}
+							<div
+								class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1"
+								class:expanded={isExpanded}
+							>
+								<div class="sub-categories-inner">
+									<div class="min-h-0">
+										{#each children as child}
+											<div
+												onpointerup={() => dragStore.addToCategory(child)}
+												class="flex items-center"
+											>
+												{@render categoryLink(child.id, child.name, false, false, true, false)}
+											</div>
+										{/each}
+									</div>
+								</div>
+							</div>
+						{/if}
 					</div>
 				{/each}
 
@@ -332,9 +373,9 @@
 					{#if category.name}
 						<div
 							onpointerup={() => dragStore.addToCategory(category)}
-							class="flex items-center gap-2"
+							class="flex items-center"
 						>
-							{@render categoryLink(category.id, category.name, true, false)}
+							{@render categoryLink(category.id, category.name, true, false, false, false)}
 						</div>
 					{/if}
 				{/each}
@@ -359,5 +400,21 @@
 
 	.hide {
 		translate: -100%;
+	}
+
+	.sub-categories-inner {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows 200ms ease;
+	}
+
+	.sub-categories-inner > :global(*) {
+		overflow: hidden;
+		padding: 2px;
+		margin: -2px;
+	}
+
+	.expanded .sub-categories-inner {
+		grid-template-rows: 1fr;
 	}
 </style>

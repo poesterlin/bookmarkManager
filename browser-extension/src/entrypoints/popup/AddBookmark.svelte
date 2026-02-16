@@ -6,6 +6,7 @@
 	interface Category {
 		id: string;
 		name: string;
+		parentId: string | null;
 	}
 
 	interface Inputs {
@@ -13,7 +14,10 @@
 		description: string;
 		category: string;
 		newCategory: string;
+		newCategoryParent: string;
 		showNewCategoryInput: boolean;
+		subcategory: string;
+		newSubcategoryName: string;
 		selectedTags: string[];
 	}
 
@@ -22,6 +26,7 @@
 	let form = $state<HTMLFormElement>();
 	let loading = $state(false);
 	let success = $state(false);
+	let error = $state('');
 
 	let url = $state<string>();
 	let title = $state<string>();
@@ -29,6 +34,9 @@
 	let newCategory = $state<string>();
 	let category = $state<string>();
 	let showNewCategoryInput = $state(false);
+	let subcategory = $state<string>('');
+	let showNewSubcategory = $state(false);
+	let newSubcategoryName = $state<string>('');
 	let theme = $state<string>();
 	let favicon = $state<string>();
 	let faviconData = $state<string>();
@@ -37,6 +45,22 @@
 	let selectedTags: string[] = $state([]);
 	let existingTags: string[] = $state([]);
 	let categories: Category[] = $state([]);
+	let newCategoryParent = $state<string>('');
+
+	let parentCategories = $derived(categories.filter((c) => !c.parentId));
+	let childrenByParent = $derived(
+		categories.reduce<Record<string, Category[]>>((acc, c) => {
+			if (c.parentId) {
+				(acc[c.parentId] ??= []).push(c);
+			}
+			return acc;
+		}, {})
+	);
+
+	let selectedChildren = $derived(
+		category ? (childrenByParent[category] ?? []) : []
+	);
+	let hasChildren = $derived(selectedChildren.length > 0);
 
 	// stored value for the inputs
 	let inputs: StoredValue<Partial<Inputs>>;
@@ -45,7 +69,10 @@
 		description,
 		category,
 		newCategory,
+		newCategoryParent,
 		showNewCategoryInput,
+		subcategory,
+		newSubcategoryName,
 		selectedTags
 	});
 
@@ -103,6 +130,9 @@
 			showNewCategoryInput = values.showNewCategoryInput ?? false;
 			category = values.category;
 			newCategory = values.newCategory;
+			newCategoryParent = values.newCategoryParent ?? '';
+			subcategory = values.subcategory ?? '';
+			newSubcategoryName = values.newSubcategoryName ?? '';
 			selectedTags = values.selectedTags ?? [];
 		}
 	}
@@ -150,6 +180,23 @@
 		showNewCategoryInput = !showNewCategoryInput;
 		if (!showNewCategoryInput) {
 			newCategory = '';
+			newCategoryParent = '';
+		}
+	}
+
+	function handleCategoryChange() {
+		subcategory = '';
+		showNewSubcategory = false;
+		newSubcategoryName = '';
+	}
+
+	function handleSubcategoryChange() {
+		if (subcategory === '__new__') {
+			showNewSubcategory = true;
+			newSubcategoryName = '';
+		} else {
+			showNewSubcategory = false;
+			newSubcategoryName = '';
 		}
 	}
 
@@ -184,7 +231,11 @@
 		loading = false;
 	}
 
-	function handleCtrlEnterSubmit(event: KeyboardEvent) {
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			close();
+		}
 		if (event.ctrlKey && event.key === 'Enter' && form) {
 			event.preventDefault();
 			form.requestSubmit();
@@ -201,6 +252,7 @@
 			form.reportValidity();
 		}
 		loading = true;
+		error = '';
 		const formData = new FormData(form);
 		const data = Object.fromEntries(formData.entries());
 
@@ -219,8 +271,6 @@
 				throw new Error('Failed to add bookmark');
 			}
 
-			console.log('Bookmark added successfully:', data);
-
 			await clearInputs();
 			success = true;
 
@@ -228,8 +278,9 @@
 			setTimeout(() => {
 				close();
 			}, 2000);
-		} catch (error) {
-			console.error('Error adding bookmark:', error);
+		} catch (err) {
+			console.error('Error adding bookmark:', err);
+			error = 'Failed to save bookmark. Please try again.';
 		} finally {
 			loading = false;
 		}
@@ -247,7 +298,7 @@
 	</div>
 {:else}
 	<form
-		onkeyup={handleCtrlEnterSubmit}
+		onkeydown={handleKeydown}
 		bind:this={form}
 		class="p-5 pb-0 overflow-y-auto h-full flex flex-col"
 		method="POST"
@@ -338,21 +389,49 @@
 					</button>
 				</div>
 			{:else}
-				<div class="mt-1.5 flex gap-2">
-					<select
-						id="category"
-						class="input flex-1 bg-white dark:bg-gray-800 text-sm"
-						bind:value={category}
-						name="category"
-					>
-						<option value="" selected>Select a category</option>
-						{#each categories as cat}
-							<option value={cat.id}>{cat.name}</option>
-						{/each}
-					</select>
-					<button type="button" class="button-ghost px-3 py-2 text-xs whitespace-nowrap" onclick={toggleNewCategoryInput}>
-						New
-					</button>
+				<div class="mt-1.5 flex flex-col gap-2">
+					<div class="flex gap-2">
+						<select
+							id="category"
+							class="input flex-1 bg-white dark:bg-gray-800 text-sm"
+							bind:value={category}
+							name={subcategory && subcategory !== '__new__' ? undefined : 'category'}
+							onchange={handleCategoryChange}
+						>
+							<option value="" selected>Select a category</option>
+							{#each parentCategories as parent}
+								<option value={parent.id}>{parent.name}</option>
+							{/each}
+						</select>
+						<button type="button" class="button-ghost px-3 py-2 text-xs whitespace-nowrap" onclick={toggleNewCategoryInput}>
+							New
+						</button>
+					</div>
+
+					{#if hasChildren}
+						<select
+							class="input w-full bg-white dark:bg-gray-800 text-sm"
+							bind:value={subcategory}
+							name={subcategory && subcategory !== '__new__' ? 'category' : undefined}
+							onchange={handleSubcategoryChange}
+						>
+							<option value="">No subcategory</option>
+							{#each selectedChildren as child}
+								<option value={child.id}>{child.name}</option>
+							{/each}
+							<option value="__new__">+ New subcategory</option>
+						</select>
+						{#if showNewSubcategory}
+							<input
+								type="text"
+								name="newCategory"
+								bind:value={newSubcategoryName}
+								class="input w-full text-sm"
+								placeholder="New subcategory name"
+							/>
+							<input type="hidden" name="newCategoryParent" value={category} />
+						{/if}
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -365,6 +444,10 @@
 			<TagInput bind:selectedTags {existingTags} name="tags" placeholder="Add tags..." />
 		</div>
 	</div>
+
+	{#if error}
+		<p class="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+	{/if}
 
 	<!-- Sticky Footer -->
 	<div class="mt-4 px-5 pb-5 border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-end gap-2">

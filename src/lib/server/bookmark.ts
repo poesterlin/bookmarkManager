@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from './db';
 import {
 	type User,
@@ -19,6 +19,7 @@ export interface BookmarksDTO {
 	theme?: string;
 	category?: string;
 	newCategory?: string;
+	parentCategoryId?: string;
 }
 
 export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO) {
@@ -57,10 +58,38 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 
 	await db.transaction(async (tx) => {
 		if (form.newCategory) {
+			let parentId: string | null = null;
+
+			if (form.parentCategoryId) {
+				const [parent] = await db
+					.select()
+					.from(categoriesTable)
+					.where(and(eq(categoriesTable.userId, user.id), eq(categoriesTable.id, form.parentCategoryId)))
+					.limit(1);
+
+				if (!parent) {
+					throw new Error('Parent category not found');
+				}
+				if (parent.parentId) {
+					throw new Error('Sub-categories cannot have children (max 1 level)');
+				}
+				parentId = parent.id;
+			}
+
+			const filterConditions = [
+				eq(categoriesTable.userId, user.id),
+				eq(categoriesTable.name, form.newCategory)
+			];
+			if (parentId) {
+				filterConditions.push(eq(categoriesTable.parentId, parentId));
+			} else {
+				filterConditions.push(isNull(categoriesTable.parentId));
+			}
+
 			const [category] = await db
 				.select()
 				.from(categoriesTable)
-				.where(and(eq(categoriesTable.userId, user.id), eq(categoriesTable.name, form.newCategory)))
+				.where(and(...filterConditions))
 				.limit(1);
 
 			if (category) {
@@ -71,7 +100,8 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 				await tx.insert(categoriesTable).values({
 					id: categoryId,
 					name: form.newCategory,
-					userId: user.id
+					userId: user.id,
+					parentId
 				} satisfies typeof categoriesTable.$inferInsert);
 			}
 		}

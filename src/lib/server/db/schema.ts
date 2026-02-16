@@ -135,17 +135,19 @@ export const categoriesTable = pgTable(
 		name: text('name').notNull(),
 		userId: text('user_id')
 			.notNull()
-			.references(() => usersTable.id, fullCascade)
+			.references(() => usersTable.id, fullCascade),
+		parentId: text('parent_id').references((): any => categoriesTable.id, fullCascade)
 	},
 	(table) => [
 		index('categories_user_id_idx').on(table.userId),
 		index('categories_name_idx').on(table.name),
-		uniqueIndex('categories_user_id_name_unique_idx').on(table.userId, table.name)
+		uniqueIndex('categories_user_id_name_parent_unique_idx').on(table.userId, table.name, table.parentId)
 	]
 );
 
 export type Category = typeof categoriesTable.$inferSelect & {
 	isShared?: boolean | null;
+	children?: Category[];
 };
 
 export const sharedCategoriesTable = pgTable(

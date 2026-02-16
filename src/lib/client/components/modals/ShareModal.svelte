@@ -37,7 +37,7 @@
 				<option disabled selected value="" class="bg-white dark:bg-gray-900 dark:text-gray-200/60">
 					Select a category
 				</option>
-				{#each categories as category}
+				{#each categories.filter(c => !c.parentId) as category}
 					<option value={category.id} class="bg-white dark:bg-gray-900 dark:text-gray-200/60"
 						>{category.name}</option
 					>
