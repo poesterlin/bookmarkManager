@@ -74,6 +74,7 @@
 			{handleAddBookmark}
 			categories={data.categories}
 			shared={data.sharedCategories}
+			sharedSubcategories={data.sharedSubcategories}
 			bind:isMenuOpen
 			{shareModalHandler}
 		/>

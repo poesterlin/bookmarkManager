@@ -20,6 +20,7 @@
 		handleAddBookmark: () => void;
 		categories: Category[];
 		shared: { name: string | null; id: string }[];
+		sharedSubcategories: { id: string; name: string | null; shareId: string }[];
 		isMenuOpen?: boolean;
 		shareModalHandler: { open: () => void; close: () => void };
 	}
@@ -28,6 +29,7 @@
 		handleAddBookmark,
 		categories,
 		shared,
+		sharedSubcategories,
 		isMenuOpen = $bindable(false),
 		shareModalHandler
 	}: Props = $props();
@@ -43,12 +45,36 @@
 			return acc;
 		}, {})
 	);
+	let sharedChildrenByParent = $derived(
+		sharedSubcategories.reduce<Record<string, { id: string; name: string | null; shareId: string }[]>>(
+			(acc, c) => {
+				(acc[c.shareId] ??= []).push(c);
+				return acc;
+			},
+			{}
+		)
+	);
 
 	let isSwiping = $state(false);
 	let startX = 0;
 	let startY = 0;
 	let deltaX = $state(0);
 	let startTime = 0;
+	let isDesktop = $state(false);
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+
+		const media = window.matchMedia('(min-width: 768px)');
+		const updateIsDesktop = () => {
+			isDesktop = media.matches;
+		};
+
+		updateIsDesktop();
+		media.addEventListener('change', updateIsDesktop);
+
+		return () => media.removeEventListener('change', updateIsDesktop);
+	});
 
 	// --- Constants ---
 	const MIN_SWIPE_DISTANCE = [100, 70] as const; // Pixels needed to trigger open/close
@@ -276,6 +302,8 @@
 	style:translate={toPercent(deltaX)}
 	class:immediate={isSwiping}
 	class:hide={!isMenuOpen}
+	inert={!isDesktop && !isMenuOpen}
+	aria-hidden={!isDesktop && !isMenuOpen}
 >
 	<div class="p-4">
 		<button
@@ -371,11 +399,32 @@
 
 				{#each shared as category}
 					{#if category.name}
-						<div
-							onpointerup={() => dragStore.addToCategory(category)}
-							class="flex items-center"
-						>
-							{@render categoryLink(category.id, category.name, true, false, false, false)}
+						{@const sharedChildren = sharedChildrenByParent[category.id]}
+						<div>
+							<div
+								onpointerup={() => dragStore.addToCategory(category)}
+								class="flex items-center"
+							>
+								{@render categoryLink(category.id, category.name, true, false, false, false)}
+							</div>
+							{#if sharedChildren?.length}
+								<div class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1 expanded">
+									<div class="sub-categories-inner">
+										<div class="min-h-0">
+											{#each sharedChildren as child}
+												{#if child.name}
+													<div
+														onpointerup={() => dragStore.addToCategory(child)}
+														class="flex items-center"
+													>
+														{@render categoryLink(child.id, child.name, false, false, true, false)}
+													</div>
+												{/if}
+											{/each}
+										</div>
+									</div>
+								</div>
+							{/if}
 						</div>
 					{/if}
 				{/each}
