@@ -116,6 +116,7 @@
 				<BookmarkList
 					bookmarks={data.bookmarks}
 					categories={data.categories}
+					sharedSubcategories={data.sharedSubcategories}
 					addBookmark={handleAddBookmark}
 				/>
 			</div>

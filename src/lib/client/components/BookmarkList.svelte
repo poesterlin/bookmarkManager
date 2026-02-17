@@ -10,8 +10,14 @@
 	let {
 		bookmarks,
 		categories,
+		sharedSubcategories,
 		addBookmark
-	}: { bookmarks: Bookmark[]; categories: Category[]; addBookmark: () => void } = $props();
+	}: {
+		bookmarks: Bookmark[];
+		categories: Category[];
+		sharedSubcategories: { id: string; name: string | null; shareId: string }[];
+		addBookmark: () => void;
+	} = $props();
 
 	let list = $derived(searchStore.isSet() ? searchStore.results : bookmarks);
 	let selectedCategoryId = $derived(page.url.searchParams.get('category'));
@@ -19,7 +25,13 @@
 		if (!selectedCategoryId) {
 			return [];
 		}
-		return categories.filter((category) => category.parentId === selectedCategoryId);
+		const ownedChildren = categories
+			.filter((category) => category.parentId === selectedCategoryId)
+			.map((category) => ({ id: category.id, name: category.name }));
+		const sharedChildren = sharedSubcategories
+			.filter((category) => category.shareId === selectedCategoryId && !!category.name)
+			.map((category) => ({ id: category.id, name: category.name! }));
+		return [...ownedChildren, ...sharedChildren];
 	});
 	let selectedCategoryName = $derived.by(() => {
 		if (!selectedCategoryId) {

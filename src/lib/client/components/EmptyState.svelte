@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { addQueryParam } from '$lib/client/util';
-	import type { Category } from '$lib/server/db/schema';
 	import { IconArrowRight, IconBookmark, IconFolder } from '@tabler/icons-svelte';
 
 	const {
@@ -10,7 +9,7 @@
 		selectedCategoryName
 	}: {
 		addBookmark: () => void;
-		subcategories?: Category[];
+		subcategories?: { id: string; name: string }[];
 		selectedCategoryName?: string;
 	} = $props();
 
