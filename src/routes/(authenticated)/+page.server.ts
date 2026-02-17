@@ -56,13 +56,16 @@ export const load: PageServerLoad = async (event) => {
 
 	let filters = [] as SQL<any>[];
 
-	let sharedCategory: { id: string; categoryId: string; owner: string } | undefined = undefined;
+	let sharedCategory:
+		| { id: string; categoryId: string; owner: string; selectedCategoryId: string }
+		| undefined = undefined;
 	if (options.category) {
 		const [shared] = await db
 			.select({
 				id: sharedCategoriesTable.id,
 				categoryId: sharedCategoriesTable.categoryId,
-				owner: sharedCategoriesTable.owner
+				owner: sharedCategoriesTable.owner,
+				selectedCategoryId: sharedCategoriesTable.categoryId
 			})
 			.from(sharedCategoriesTable)
 			.where(
@@ -86,8 +89,9 @@ export const load: PageServerLoad = async (event) => {
 			const [sharedSubCategory] = await db
 				.select({
 					id: sharedCategoriesTable.id,
-					categoryId: categoriesTable.id,
-					owner: sharedCategoriesTable.owner
+					categoryId: sharedCategoriesTable.categoryId,
+					owner: sharedCategoriesTable.owner,
+					selectedCategoryId: categoriesTable.id
 				})
 				.from(sharedCategoriesTable)
 				.innerJoin(categoriesTable, eq(categoriesTable.parentId, sharedCategoriesTable.categoryId))
@@ -102,7 +106,7 @@ export const load: PageServerLoad = async (event) => {
 		}
 
 		if (sharedCategory) {
-			filters.push(eq(bookmarksTable.category, sharedCategory.categoryId));
+			filters.push(eq(bookmarksTable.category, sharedCategory.selectedCategoryId));
 		} else {
 			filters.push(eq(bookmarksTable.category, options.category));
 		}
@@ -160,7 +164,7 @@ export const load: PageServerLoad = async (event) => {
 	const [bookmarks, categories, sharedCategories, sharedSubcategories, tags] = await Promise.all([
 		sharedCategory ?
 			getSharedBookmarks(
-				sharedCategory.categoryId,
+				sharedCategory.selectedCategoryId,
 				order,
 				locals.user.id,
 				sharedCategory.owner,

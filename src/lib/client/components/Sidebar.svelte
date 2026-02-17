@@ -400,6 +400,8 @@
 				{#each shared as category}
 					{#if category.name}
 						{@const sharedChildren = sharedChildrenByParent[category.id]}
+						{@const hasSharedChildren = sharedChildren && sharedChildren.length > 0}
+						{@const isSharedExpanded = hasSharedChildren && (selectedCategory === category.id || sharedChildren.some((c) => selectedCategory === c.id))}
 						<div>
 							<div
 								onpointerup={() => dragStore.addToCategory(category)}
@@ -407,8 +409,11 @@
 							>
 								{@render categoryLink(category.id, category.name, true, false, false, false)}
 							</div>
-							{#if sharedChildren?.length}
-								<div class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1 expanded">
+							{#if hasSharedChildren}
+								<div
+									class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1"
+									class:expanded={isSharedExpanded}
+								>
 									<div class="sub-categories-inner">
 										<div class="min-h-0">
 											{#each sharedChildren as child}
