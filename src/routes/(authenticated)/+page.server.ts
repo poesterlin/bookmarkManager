@@ -79,27 +79,9 @@ export const load: PageServerLoad = async (event) => {
 		sharedCategory = shared;
 
 		if (sharedCategory) {
-			// reset user filter - shared categories show results from all users
-			// Include bookmarks from the shared category and its children
-			const childCategories = await db
-				.select({ id: categoriesTable.id })
-				.from(categoriesTable)
-				.where(eq(categoriesTable.parentId, sharedCategory.categoryId));
-
-			const categoryIds = [sharedCategory.categoryId, ...childCategories.map(c => c.id)];
-			filters.push(inArray(bookmarksTable.category, categoryIds));
+			filters.push(eq(bookmarksTable.category, sharedCategory.categoryId));
 		} else {
-			// Include bookmarks from the selected category and its children
-			const childCategories = await db
-				.select({ id: categoriesTable.id })
-				.from(categoriesTable)
-				.where(and(
-					eq(categoriesTable.parentId, options.category),
-					eq(categoriesTable.userId, locals.user.id)
-				));
-
-			const categoryIds = [options.category, ...childCategories.map(c => c.id)];
-			filters.push(inArray(bookmarksTable.category, categoryIds));
+			filters.push(eq(bookmarksTable.category, options.category));
 		}
 	} else if (!options.archived) {
 		filters.push(isNull(bookmarksTable.fromShareId));
@@ -584,13 +566,6 @@ export const actions: Actions = {
  * Get shared bookmarks for a specific category. This will be shown to the user the category is shared with as well as the owner of the category.
  */
 async function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userId: string, showArchived?: boolean) {
-	const childCategories = await db
-		.select({ id: categoriesTable.id })
-		.from(categoriesTable)
-		.where(eq(categoriesTable.parentId, categoryId));
-
-	const categoryIds = [categoryId, ...childCategories.map(c => c.id)];
-
 	return db.select({
 		...getTableColumns(bookmarksTable),
 		tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`
@@ -612,7 +587,7 @@ async function getSharedBookmarks(categoryId: string, order: SQL<unknown>, userI
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(order)
 		.where(and(
-			inArray(categoriesTable.id, categoryIds),
+			eq(categoriesTable.id, categoryId),
 			showArchived ? isNotNull(bookmarksTable.deletedAt) : isNull(bookmarksTable.deletedAt)
 		));
 }
