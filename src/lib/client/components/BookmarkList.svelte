@@ -2,14 +2,31 @@
 	import { flip } from 'svelte/animate';
 	import BookmarkCard from './BookmarkCard.svelte';
 	import EmptyState from './EmptyState.svelte';
-	import type { Bookmark } from '$lib/server/db/schema';
+	import type { Bookmark, Category } from '$lib/server/db/schema';
 	import { searchStore } from '../stores/search.svelte';
 	import { page } from '$app/state';
 	import { dragStore } from '../stores/drag-store.svelte';
 
-	let { bookmarks, addBookmark }: { bookmarks: Bookmark[]; addBookmark: () => void } = $props();
+	let {
+		bookmarks,
+		categories,
+		addBookmark
+	}: { bookmarks: Bookmark[]; categories: Category[]; addBookmark: () => void } = $props();
 
 	let list = $derived(searchStore.isSet() ? searchStore.results : bookmarks);
+	let selectedCategoryId = $derived(page.url.searchParams.get('category'));
+	let categoryChildren = $derived.by(() => {
+		if (!selectedCategoryId) {
+			return [];
+		}
+		return categories.filter((category) => category.parentId === selectedCategoryId);
+	});
+	let selectedCategoryName = $derived.by(() => {
+		if (!selectedCategoryId) {
+			return undefined;
+		}
+		return categories.find((category) => category.id === selectedCategoryId)?.name;
+	});
 </script>
 
 <svelte:window
@@ -20,7 +37,11 @@
 
 <div class="fade-in space-y-4">
 	{#if bookmarks.length === 0}
-		<EmptyState {addBookmark} />
+		<EmptyState
+			{addBookmark}
+			subcategories={categoryChildren}
+			selectedCategoryName={selectedCategoryName}
+		/>
 	{:else}
 		<div class="grid-cols-cards grid gap-4">
 			{#each list as bookmark (bookmark.id)}

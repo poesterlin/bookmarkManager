@@ -112,7 +112,11 @@
 				</div>
 			{/if}
 			<div class="ignore-scroll mx-auto max-w-6xl p-2 !pt-2 pb-24 md:p-4 lg:p-6">
-				<BookmarkList bookmarks={data.bookmarks} addBookmark={handleAddBookmark} />
+				<BookmarkList
+					bookmarks={data.bookmarks}
+					categories={data.categories}
+					addBookmark={handleAddBookmark}
+				/>
 			</div>
 		</main>
 	</div>
