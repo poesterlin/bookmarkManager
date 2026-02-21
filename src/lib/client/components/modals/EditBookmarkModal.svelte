@@ -24,7 +24,7 @@
 
 	let title = $state(bookmark.title);
 	let description = $state(bookmark.description || '');
-	let selectedCategoryId = $state(bookmark.category?.id ?? '');
+	let selectedCategoryId = $state(bookmark.fromShareId ?? bookmark.category?.id ?? '');
 
 	function handleSubmit() {
 		toastStore.show('Successfully edited Bookmark');
