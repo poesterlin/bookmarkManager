@@ -2,34 +2,21 @@
 	import AddBookmark from './AddBookmark.svelte';
 	import WaitForAuth from './WaitForAuth.svelte';
 	import BookmarkList from './BookmarkList.svelte';
+	import Toast from './Toast.svelte';
 	import { type StoredValue, storedValue, tokenKey } from './state.svelte';
 	import { IconPlus, IconList } from '@tabler/icons-svelte';
 
 	let auth: StoredValue<string | undefined>;
-	let logs: string[] = [];
 	let view: 'add' | 'list' = 'add';
 
 	onMount(() => {
-		const oldlog = window.console.log;
-
-		window.console.log = (...args) => {
-			oldlog(...args);
-			logs.push(JSON.stringify(args, null, 4));
-			logs = logs;
-		};
-
 		storedValue<string | undefined>(tokenKey).then((value) => {
-			console.log('init auth');
 			auth = value;
 		});
 	});
 </script>
 
 <main>
-	<!-- {#each logs as log}
-		<pre>{log}</pre>
-	{/each} -->
-
 	{#if auth?.state}
 		<div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
 			<!-- Tabs Navigation -->
@@ -76,6 +63,11 @@
 						<BookmarkList token={auth.state} />
 					</div>
 				{/if}
+			</div>
+
+			<!-- Toast Container -->
+			<div class="fixed bottom-3 right-3 z-50 flex flex-col gap-2 max-w-[300px]">
+				<Toast />
 			</div>
 		</div>
 	{:else}

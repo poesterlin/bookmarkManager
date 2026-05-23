@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { IconLoader, IconExternalLink, IconCopy, IconTrash, IconSearch, IconX } from '@tabler/icons-svelte';
+	import { createApi, ApiError } from '../../lib/api';
+	import { showToast } from './toast.svelte';
 
 	interface Bookmark {
 		id: string;
@@ -21,6 +23,9 @@
 	let error = $state<string | null>(null);
 	let copied = $state<string | null>(null);
 	let searchQuery = $state('');
+	let deleting = $state<string | null>(null);
+
+	const api = createApi(() => token);
 
 	function filterBookmarks() {
 		if (!searchQuery.trim()) {
@@ -38,46 +43,51 @@
 			loading = true;
 			error = null;
 
-			const response = await fetch(import.meta.env.VITE_HOST + '/api/bookmarks', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to fetch bookmarks');
-			}
-
-			const data = await response.json();
+			const data = await api.get<{ bookmarks: Bookmark[] }>('/api/bookmarks');
 			bookmarks = data.bookmarks || [];
 			filterBookmarks();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load bookmarks';
-			console.error('Error fetching bookmarks:', err);
+		} catch (err: unknown) {
+			if (err instanceof ApiError) {
+				if (!err.isAuthError) {
+					error = err.message;
+				}
+			} else {
+				error = 'Failed to load bookmarks';
+			}
 		} finally {
 			loading = false;
 		}
 	}
 
 	async function deleteBookmark(id: string) {
+		const bookmark = bookmarks.find((b) => b.id === id);
+		const removedIndex = bookmarks.findIndex((b) => b.id === id);
+		if (removedIndex === -1) return;
+
+		// Optimistic removal
+		const removed = bookmarks[removedIndex];
+		bookmarks = bookmarks.filter((b) => b.id !== id);
+		filterBookmarks();
+		deleting = id;
+
 		try {
-			const response = await fetch(import.meta.env.VITE_HOST + `/api/bookmarks/${id}`, {
-				method: 'DELETE',
-				headers: {
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to delete bookmark');
-			}
-
-			bookmarks = bookmarks.filter((b) => b.id !== id);
+			await api.delete(`/api/bookmarks/${id}`);
+			showToast('Bookmark deleted', 'success');
+		} catch (err: unknown) {
+			// Rollback on failure
+			bookmarks = [
+				...bookmarks.slice(0, removedIndex),
+				removed,
+				...bookmarks.slice(removedIndex)
+			];
 			filterBookmarks();
-		} catch (err) {
-			console.error('Error deleting bookmark:', err);
+			if (err instanceof ApiError) {
+				if (!err.isAuthError) {
+					showToast('Failed to delete bookmark', 'error');
+				}
+			}
+		} finally {
+			deleting = null;
 		}
 	}
 
@@ -88,8 +98,8 @@
 			setTimeout(() => {
 				copied = null;
 			}, 2000);
-		} catch (err) {
-			console.error('Failed to copy:', err);
+		} catch (err: unknown) {
+			showToast('Failed to copy URL', 'error');
 		}
 	}
 
@@ -140,7 +150,7 @@
 	{:else if error}
 		<div class="flex items-center justify-center flex-1 p-4">
 			<div class="text-center">
-				<p class="text-sm text-red-600 dark:text-red-400 mb-3">⚠️ {error}</p>
+				<p class="text-sm text-red-600 dark:text-red-400 mb-3">Failed to load bookmarks</p>
 				<button onclick={fetchBookmarks} class="button-primary text-sm"> Try Again </button>
 			</div>
 		</div>
@@ -184,6 +194,9 @@
 							<div class="flex-1 min-w-0">
 								<h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
 									{bookmark.title}
+									{#if deleting === bookmark.id}
+										<span class="ml-2 text-xs text-gray-400">Deleting...</span>
+									{/if}
 								</h4>
 								<p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
 									{new URL(bookmark.url).hostname}
@@ -235,9 +248,14 @@
 							<button
 								onclick={() => deleteBookmark(bookmark.id)}
 								title="Delete bookmark"
-								class="flex items-center justify-center p-1.5 text-xs rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+								disabled={deleting === bookmark.id}
+								class="flex items-center justify-center p-1.5 text-xs rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
 							>
-								<IconTrash size={14} />
+								{#if deleting === bookmark.id}
+									<IconLoader size={14} class="animate-spin" />
+								{:else}
+									<IconTrash size={14} />
+								{/if}
 							</button>
 						</div>
 					</div>

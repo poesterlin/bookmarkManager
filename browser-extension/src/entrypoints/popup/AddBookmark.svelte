@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { IconLoader, IconCheck } from '@tabler/icons-svelte';
 	import { inputsKey, type StoredValue, storedValue } from './state.svelte';
+	import { createApi, ApiError } from '../../lib/api';
+	import { showToast } from './toast.svelte';
 	import TagInput from './TagInput.svelte';
 
 	interface Category {
@@ -25,8 +27,9 @@
 
 	let form = $state<HTMLFormElement>();
 	let loading = $state(false);
-	let success = $state(false);
+	let submitted = $state(false);
 	let error = $state('');
+	let fetchingData = $state(false);
 
 	let url = $state<string>();
 	let title = $state<string>();
@@ -46,6 +49,8 @@
 	let existingTags: string[] = $state([]);
 	let categories: Category[] = $state([]);
 	let newCategoryParent = $state<string>('');
+
+	const api = createApi(() => token);
 
 	let parentCategories = $derived(categories.filter((c) => !c.parentId));
 	let childrenByParent = $derived(
@@ -91,11 +96,6 @@
 			url = tab.url ?? tab.pendingUrl;
 			title = tab.title;
 			faviconData = tab.favIconUrl;
-
-			// TODO: get description from the page
-			// TODO: get favicon link from the page
-
-			// after the tab is loaded, see if the window accidentally closed and restore the inputs
 		});
 
 		fetchTagsAndCategories();
@@ -103,22 +103,12 @@
 
 	async function fetchTags() {
 		try {
-			const response = await fetch(import.meta.env.VITE_HOST + '/api/tags', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to fetch tags and categories');
-			}
-
-			const data = await response.json();
+			const data = await api.get<{ tags: { name: string }[] }>('/api/tags');
 			existingTags = data.tags.map((tag: { name: string }) => tag.name);
-		} catch (error) {
-			console.error('Error fetching tags and categories:', error);
+		} catch (err: unknown) {
+			if (err instanceof ApiError && !err.isAuthError) {
+				showToast('Failed to load tags', 'error');
+			}
 		}
 	}
 
@@ -143,30 +133,21 @@
 
 	async function fetchCategories() {
 		try {
-			const response = await fetch(import.meta.env.VITE_HOST + '/api/categories', {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to fetch categories');
-			}
-
-			const data = await response.json();
+			const data = await api.get<{ categories: Category[] }>('/api/categories');
 			categories = data.categories;
-		} catch (error) {
-			console.error('Error fetching categories:', error);
+		} catch (err: unknown) {
+			if (err instanceof ApiError && !err.isAuthError) {
+				showToast('Failed to load categories', 'error');
+			}
 		}
 	}
 
 	async function fetchTagsAndCategories() {
+		fetchingData = true;
 		try {
 			await Promise.all([fetchTags(), fetchCategories()]);
-		} catch (error) {
-			console.error('Error fetching tags and categories:', error);
+		} finally {
+			fetchingData = false;
 		}
 
 		restoreInputs();
@@ -207,25 +188,16 @@
 		loading = true;
 
 		try {
-			const res = await fetch(`/info`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({ url })
-			});
-
-			if (res.ok) {
-				const data = await res.json();
-				console.log(data);
-				title = title || data.title;
-				description = description || data.description;
-				theme = data.theme;
-				favicon = data.favicon;
-				faviconData = data.faviconData;
+			const data: any = await api.post('/info', { url });
+			title = title || data.title;
+			description = description || data.description;
+			theme = data.theme;
+			favicon = data.favicon;
+			faviconData = data.faviconData;
+		} catch (err: unknown) {
+			if (err instanceof ApiError && !err.isAuthError) {
+				showToast('Failed to fetch page info', 'error');
 			}
-		} catch (error) {
-			console.error('Error during autofill fetch:', error);
 		}
 
 		loading = false;
@@ -250,6 +222,7 @@
 
 		if (!form.checkValidity()) {
 			form.reportValidity();
+			return;
 		}
 		loading = true;
 		error = '';
@@ -257,30 +230,32 @@
 		const data = Object.fromEntries(formData.entries());
 
 		try {
-			// Send the form data to the server
-			const res = await fetch(import.meta.env.VITE_HOST + '/api/bookmarks', {
-				method: 'POST',
-				body: JSON.stringify(data),
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${token}`
-				}
-			});
-
-			if (!res.ok) {
-				throw new Error('Failed to add bookmark');
-			}
-
+			await api.post('/api/bookmarks', data);
 			await clearInputs();
-			success = true;
+			submitted = true;
+			showToast('Bookmark saved!', 'success');
 
 			// Auto-close after 2 seconds
 			setTimeout(() => {
 				close();
 			}, 2000);
-		} catch (err) {
-			console.error('Error adding bookmark:', err);
-			error = 'Failed to save bookmark. Please try again.';
+		} catch (err: unknown) {
+			if (err instanceof ApiError) {
+				if (err.isValidationError) {
+					const fields = (err.data?.error as Record<string, unknown>)?.fields as Record<string, string> | undefined;
+					if (fields) {
+						error = Object.values(fields).join(', ');
+					} else {
+						error = 'Invalid input. Please check your entries.';
+					}
+				} else if (!err.isAuthError) {
+					error = err.message;
+					showToast(err.message, 'error');
+				}
+			} else {
+				error = 'Failed to save bookmark. Please try again.';
+				showToast(error, 'error');
+			}
 		} finally {
 			loading = false;
 		}
@@ -288,7 +263,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-{#if success}
+{#if submitted}
 	<div class="flex h-full flex-col items-center justify-center p-6">
 		<div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/20">
 			<IconCheck class="h-10 w-10 text-green-600 dark:text-green-400" />
@@ -374,7 +349,12 @@
 			<label for="category" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
 				Category
 			</label>
-			{#if showNewCategoryInput}
+			{#if fetchingData}
+				<div class="mt-1.5 flex items-center gap-2 text-sm text-gray-500">
+					<IconLoader class="h-4 w-4 animate-spin" />
+					Loading categories...
+				</div>
+			{:else if showNewCategoryInput}
 				<div class="mt-1.5 flex gap-2">
 					<input
 						type="text"

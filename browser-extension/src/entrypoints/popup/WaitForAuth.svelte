@@ -3,26 +3,25 @@
 
 	let abortController: AbortController | null = null;
 	let challenge: StoredValue<string | undefined>;
-	let fallback: string;
+	let fallback: string = $state('');
+	let status = $state<'idle' | 'waiting' | 'error'>('idle');
 
 	onMount(() => {
 		let cleanup = () => {};
 
-		console.log('mounted');
-
 		storedValue<string | undefined>(challengeKey)
 			.then(async (value) => {
 				challenge = value;
+				if (challenge.get()) {
+					fallback = challenge.get()!;
+				}
 				await startChallenge();
 			})
 			.then(() => {
-				console.log('Starting challenge...', challenge.get());
 				cleanup = tryAuthenticate();
 			})
 			.catch(() => {
-				if (abortController) {
-					abortController.abort();
-				}
+				status = 'error';
 			});
 
 		return () => {
@@ -32,23 +31,23 @@
 
 	async function startChallenge() {
 		if (challenge.get()) {
-			console.log('Challenge token already exists:', challenge);
 			return;
 		}
+
+		status = 'waiting';
 
 		const response = await fetch(import.meta.env.VITE_HOST + '/challenge', { method: 'POST' });
 
 		if (!response.ok) {
+			status = 'error';
 			throw new Error('Failed to fetch challenge token');
 		}
 
 		const { token } = await response.json();
 		await challenge.set(token);
 
-		console.log('Challenge token received:', token);
 		fallback = token;
 
-		// open tab to authenticate
 		await browser.tabs.create({
 			url: `${import.meta.env.VITE_HOST}/challenge/${token}`,
 			active: true
@@ -86,19 +85,23 @@
 
 	function tryAuthenticate() {
 		const interval = setInterval(async () => {
-			console.log('Checking authentication...');
 			try {
 				const session = await getSession();
 
 				if (session) {
-					console.log('Authenticated successfully:', session);
 					clearInterval(interval);
 					await browser.storage.local.set({
 						[tokenKey]: session
 					});
 				}
 			} catch (error) {
-				console.error('Error during authentication:', error);
+				if (!challenge.get()) {
+					try {
+						await startChallenge();
+					} catch {
+						status = 'error';
+					}
+				}
 			}
 		}, 3000);
 
@@ -111,17 +114,27 @@
 	}
 </script>
 
-<div class="w-max p-4">
-	<h1>Wait for authentication</h1>
-	<p>We are waiting for you to authenticate with the server.</p>
+<div class="flex h-full flex-col items-center justify-center p-6 space-y-4">
+	<h1 class="text-lg font-semibold text-gray-900 dark:text-white">Authentication Required</h1>
+	{#if status === 'waiting'}
+		<p class="text-sm text-gray-600 dark:text-gray-400 text-center">
+			A browser tab was opened for you to sign in. Once authenticated, this popup will continue automatically.
+		</p>
+	{:else if status === 'error'}
+		<p class="text-sm text-red-600 dark:text-red-400 text-center">
+			Failed to start authentication. Please try again.
+		</p>
+	{/if}
+
 	{#if fallback}
 		<a
 			href="{import.meta.env.VITE_HOST}/challenge/{fallback}"
 			target="_blank"
-			class="text-underline mt-2">Open Tab manually</a
+			class="text-sm text-primary-600 dark:text-primary-400 underline mt-2"
+		>Open Tab manually</a
 		>
 	{:else}
-		<button on:click={startChallenge} class="mt-2 bg-white p-4 text-black">
+		<button onclick={() => startChallenge().catch(() => (status = 'error'))} class="button-primary mt-2">
 			Start authentication
 		</button>
 	{/if}
