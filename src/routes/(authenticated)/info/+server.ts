@@ -1,4 +1,5 @@
 import { assert, validateAuth } from '$lib/server/util';
+import { validateAuthHeader, corsHeaders, getCorsResponse } from '$lib/server/auth';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { JSDOM } from 'jsdom';
@@ -12,10 +13,24 @@ const schema = z.object({
 });
 
 export const POST: RequestHandler = async (event) => {
-	validateAuth(event);
+	const authHeader = event.request.headers.get('Authorization');
+	if (authHeader?.startsWith('Bearer ')) {
+		await validateAuthHeader(event);
+	} else {
+		validateAuth(event);
+	}
 
 	const form = await event.request.json();
-	const { url } = schema.parse(form);
+	const parsed = schema.safeParse(form);
+
+	if (!parsed.success) {
+		return json(
+			{ error: { code: 'VALIDATION_ERROR', message: 'Invalid URL', fields: { url: 'Invalid URL' } } },
+			{ status: 400, headers: corsHeaders }
+		);
+	}
+
+	const { url } = parsed.data;
 	const sanitizedUrl = sanitizeUrl(url);
 
 	const error = await checkDNS(sanitizedUrl);
@@ -31,8 +46,10 @@ export const POST: RequestHandler = async (event) => {
 		data.faviconData = await fetchFaviconBase64(fullFaviconUrl);
 	}
 
-	return json(data);
+	return json(data, { headers: corsHeaders });
 };
+
+export const OPTIONS: RequestHandler = getCorsResponse;
 
 /**
  * Sanitize the URL to ensure it is a valid HTTPS URL and strip query strings and fragments.
