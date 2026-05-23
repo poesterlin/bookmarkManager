@@ -9,13 +9,12 @@ export async function storedValue<T>(key: string, defaultValue?: T) {
 	});
 
 	browser.storage.onChanged.addListener((changes, area) => {
-		console.log('storage changed', JSON.stringify(changes, null, 2));
 		if (area !== 'local' || key in changes === false) {
 			return;
 		}
 
 		const newValue = changes[key].newValue;
-		if (newValue !== undefined && newValue !== state) {
+		if (newValue !== state) {
 			state = newValue;
 		}
 	});
