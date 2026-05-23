@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
-import { error, json } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 import { createBookmark } from '$lib/server/bookmark';
+import { formatZodError } from '$lib/server/api';
 import { db } from '$lib/server/db';
 import { bookmarksTable, bookmarkTags, tagsTable, categoriesTable } from '$lib/server/db/schema';
 import { eq, isNull, desc, getTableColumns, sql } from 'drizzle-orm';
@@ -48,13 +49,11 @@ export const POST: RequestHandler = async (event) => {
 	const parsed = schema.safeParse(body);
 
 	if (!parsed.success) {
-		error(400, {
-			message: 'Invalid input'
-		});
+		return json(formatZodError(parsed.error), { status: 400, headers: corsHeaders });
 	}
 
-	await createBookmark(user, parsed.data);
-	return new Response(null, { headers: corsHeaders });
+	const result = await createBookmark(user, parsed.data);
+	return json(result, { status: 201, headers: corsHeaders });
 };
 
 export const OPTIONS: RequestHandler = getCorsResponse;

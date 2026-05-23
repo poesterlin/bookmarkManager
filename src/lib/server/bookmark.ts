@@ -56,6 +56,8 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 		}
 	}
 
+	const id = generateId();
+
 	await db.transaction(async (tx) => {
 		if (form.newCategory) {
 			let parentId: string | null = null;
@@ -106,7 +108,6 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 			}
 		}
 
-		const id = generateId();
 		await tx.insert(bookmarksTable).values({
 			id,
 			title: form.title,
@@ -167,4 +168,6 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 			);
 		}
 	});
+
+	return { id };
 }
