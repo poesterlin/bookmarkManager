@@ -8,6 +8,7 @@ import * as table from '$lib/server/db/schema';
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 export const sessionCookieName = 'auth-session';
+export const secretSessionCookieName = 'secret-session';
 
 export function generateSessionToken() {
 	const bytes = crypto.getRandomValues(new Uint8Array(18));
@@ -78,6 +79,49 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 	event.cookies.delete(sessionCookieName, {
 		path: '/'
 	});
+}
+
+export function setSecretSessionCookie(event: RequestEvent, token: string) {
+	event.cookies.set(secretSessionCookieName, token, {
+		path: '/',
+		maxAge: undefined
+	});
+}
+
+export function deleteSecretSessionCookie(event: RequestEvent) {
+	event.cookies.delete(secretSessionCookieName, {
+		path: '/'
+	});
+}
+
+export function createSecretSessionToken(userId: string, pinHash: string) {
+	return encodeHexLowerCase(sha256(new TextEncoder().encode(userId + ':' + pinHash)));
+}
+
+export function validateSecretSessionToken(
+	token: string,
+	userId: string,
+	pinHash: string | null
+): boolean {
+	if (!pinHash) return false;
+	const expected = createSecretSessionToken(userId, pinHash);
+	return token === expected;
+}
+
+export async function isSecretUnlocked(event: RequestEvent, userId: string): Promise<boolean> {
+	const secretToken = event.cookies.get(secretSessionCookieName);
+	if (!secretToken || !userId) return false;
+
+	const { db } = await import('$lib/server/db');
+	const { usersTable } = await import('$lib/server/db/schema');
+	const { eq } = await import('drizzle-orm');
+	const [userRecord] = await db
+		.select({ secretPinHash: usersTable.secretPinHash })
+		.from(usersTable)
+		.where(eq(usersTable.id, userId))
+		.limit(1);
+
+	return validateSecretSessionToken(secretToken, userId, userRecord?.secretPinHash ?? null);
 }
 
 export async function validateAuthHeader(event: RequestEvent) {

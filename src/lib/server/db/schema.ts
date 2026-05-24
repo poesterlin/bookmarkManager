@@ -5,7 +5,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	uniqueIndex,
+	uniqueIndex
 } from 'drizzle-orm/pg-core';
 
 const fullCascade = { onDelete: 'cascade', onUpdate: 'cascade' } as const;
@@ -18,7 +18,8 @@ export const usersTable = pgTable(
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull(),
 		lastLogin: timestamp('last_login', { withTimezone: true, mode: 'date' }),
 		username: text('username').notNull().unique('user_username_unique'),
-		passwordHash: text('password_hash').notNull()
+		passwordHash: text('password_hash').notNull(),
+		secretPinHash: text('secret_pin_hash')
 	},
 	(table) => [uniqueIndex('user_email_idx').on(table.email)]
 );
@@ -66,7 +67,11 @@ export const bookmarksTable = pgTable(
 		clicks: integer('clicks').notNull().default(0),
 		lastClicked: timestamp('last_clicked', { withTimezone: true, mode: 'date' }),
 		deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'date' }),
-		fromShareId: text('from_share_id').references(() => sharedCategoriesTable.id, { onDelete: 'set null', onUpdate: 'cascade' })
+		fromShareId: text('from_share_id').references(() => sharedCategoriesTable.id, {
+			onDelete: 'set null',
+			onUpdate: 'cascade'
+		}),
+		isSecret: boolean('is_secret').notNull().default(false)
 	},
 	(table) => [
 		index('bookmarks_composite').on(
@@ -108,7 +113,7 @@ export const tagsTable = pgTable(
 );
 
 export type Tag = typeof tagsTable.$inferSelect & {
-	shared?: true
+	shared?: true;
 };
 
 export const bookmarkTags = pgTable(
@@ -141,7 +146,11 @@ export const categoriesTable = pgTable(
 	(table) => [
 		index('categories_user_id_idx').on(table.userId),
 		index('categories_name_idx').on(table.name),
-		uniqueIndex('categories_user_id_name_parent_unique_idx').on(table.userId, table.name, table.parentId)
+		uniqueIndex('categories_user_id_name_parent_unique_idx').on(
+			table.userId,
+			table.name,
+			table.parentId
+		)
 	]
 );
 
@@ -151,26 +160,25 @@ export type Category = typeof categoriesTable.$inferSelect & {
 };
 
 export const sharedCategoriesTable = pgTable(
-	"shared_categories",
+	'shared_categories',
 	{
-		id: text("id").primaryKey(),
-		categoryId: text("category_id").notNull().references(() => categoriesTable.id, fullCascade),
+		id: text('id').primaryKey(),
+		categoryId: text('category_id')
+			.notNull()
+			.references(() => categoriesTable.id, fullCascade),
 		owner: text('owner_id')
 			.notNull()
 			.references(() => usersTable.id, fullCascade),
-		userId: text('user_id')
-			.references(() => usersTable.id, fullCascade),
-		token: text("token"),
-		allowWriteAccess: boolean("allow_writes").notNull().default(false),
-		createdAt: timestamp('created_at').notNull().defaultNow(),
+		userId: text('user_id').references(() => usersTable.id, fullCascade),
+		token: text('token'),
+		allowWriteAccess: boolean('allow_writes').notNull().default(false),
+		createdAt: timestamp('created_at').notNull().defaultNow()
 	},
-	(table) => [
-		uniqueIndex("no_douple_categories").on(table.categoryId, table.userId)
-	]
+	(table) => [uniqueIndex('no_douple_categories').on(table.categoryId, table.userId)]
 );
 
 export type SharedCategory = {
 	id: string;
 	name: string;
 	allowWriteAccess: boolean;
-}
+};

@@ -1,15 +1,21 @@
 services:
-  app:
+  bookmarks:
     build: .
     env_file: .env
     restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     dns:
       - 1.1.1.1
       - 1.0.0.1
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.rtcam.rule=Host(`${HOST_DOMAIN}`)'
-      - 'traefik.http.services.rtcam.loadbalancer.server.port=3000'
+      - 'traefik.http.routers.bookmarks.rule=Host(`${HOST_DOMAIN}`)'
+      - 'traefik.http.services.bookmarks.loadbalancer.server.port=3000'
     networks:
       - traefik_web
 

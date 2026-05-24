@@ -6,6 +6,7 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 	if (!sessionToken) {
 		event.locals.user = null;
 		event.locals.session = null;
+		event.locals.secretUnlocked = false;
 
 		const isHomePage = event.url.pathname === '/';
 		if (isHomePage) {
@@ -25,10 +26,29 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 
 		event.locals.user = user;
 		event.locals.session = session;
+
+		const secretToken = event.cookies.get(auth.secretSessionCookieName);
+		if (session && user && secretToken) {
+			const { db } = await import('$lib/server/db');
+			const { usersTable } = await import('$lib/server/db/schema');
+			const { eq } = await import('drizzle-orm');
+			const [userRecord] = await db
+				.select({ secretPinHash: usersTable.secretPinHash })
+				.from(usersTable)
+				.where(eq(usersTable.id, user.id))
+				.limit(1);
+			event.locals.secretUnlocked = auth.validateSecretSessionToken(
+				secretToken,
+				user.id,
+				userRecord?.secretPinHash ?? null
+			);
+		} else {
+			event.locals.secretUnlocked = false;
+		}
 	} catch {
-		// If session validation fails, clear session data
 		event.locals.user = null;
 		event.locals.session = null;
+		event.locals.secretUnlocked = false;
 	}
 
 	return resolve(event);

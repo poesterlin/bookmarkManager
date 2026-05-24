@@ -2,49 +2,47 @@ import { invalidateAll } from '$app/navigation';
 import type { Bookmark } from '$lib/server/db/schema';
 
 class DragStore {
-    card = $state<Bookmark>();
-    pos = $state<{ x: number, y: number }>();
-    isDragging = $state(false);
+	card = $state<Bookmark>();
+	pos = $state<{ x: number; y: number }>();
+	isDragging = $state(false);
 
-    start(bookmark: Bookmark) {
-        this.card = bookmark;
-    }
-    
-    activate() {
-        this.isDragging = !!this.pos && !!this.card;
-        document.documentElement.style.userSelect = "none";
-    }
+	start(bookmark: Bookmark) {
+		this.card = bookmark;
+	}
 
-    move(x: number, y: number) {
-        this.pos = { x, y };
-    }
+	activate() {
+		this.isDragging = !!this.pos && !!this.card;
+		document.documentElement.style.userSelect = 'none';
+	}
 
-    end() {
-        this.card = undefined;
-        this.pos = undefined;
-        this.isDragging = false;
-        document.documentElement.style.userSelect = "auto";
-    }
+	move(x: number, y: number) {
+		this.pos = { x, y };
+	}
 
-    async addToCategory(category: { id: string }) {
-        if (!this.isDragging) {
-            return;
-        }
+	end() {
+		this.card = undefined;
+		this.pos = undefined;
+		this.isDragging = false;
+		document.documentElement.style.userSelect = 'auto';
+	}
 
-        const form = new FormData();
-        form.append("bookmark", this.card!.id);
-        form.append("category", category.id);
+	async addToCategory(category: { id: string }) {
+		if (!this.isDragging) {
+			return;
+		}
 
-        this.end();
+		const form = new FormData();
+		form.append('bookmark', this.card!.id);
+		form.append('category', category.id);
 
-        await fetch("?/update-category", {
-            method: "POST",
-            body: form
-        });
-        await invalidateAll();
-    }
+		this.end();
 
-
+		await fetch('?/update-category', {
+			method: 'POST',
+			body: form
+		});
+		await invalidateAll();
+	}
 }
 
 export const dragStore = new DragStore();

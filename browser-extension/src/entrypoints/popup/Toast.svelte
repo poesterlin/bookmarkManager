@@ -29,11 +29,16 @@
 
 {#each getToasts() as toast (toast.id)}
 	<div
-		class="flex items-center gap-2 px-3 py-2 rounded-lg border shadow-lg text-sm {colorClasses[toast.type]} fade-in"
+		class="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm shadow-lg {colorClasses[
+			toast.type
+		]} fade-in"
 	>
 		{#if icons[toast.type]}
-			<svelte:component this={icons[toast.type]} class="h-4 w-4 flex-shrink-0 {iconColors[toast.type]}" />
+			<svelte:component
+				this={icons[toast.type]}
+				class="h-4 w-4 flex-shrink-0 {iconColors[toast.type]}"
+			/>
 		{/if}
-		<span class="{textColors[toast.type]}">{toast.message}</span>
+		<span class={textColors[toast.type]}>{toast.message}</span>
 	</div>
 {/each}

@@ -7,6 +7,7 @@ declare global {
 		interface Locals {
 			user: ValidatedSessionResult['user'];
 			session: ValidatedSessionResult['session'];
+			secretUnlocked: boolean;
 		}
 
 		// interface PageData {}

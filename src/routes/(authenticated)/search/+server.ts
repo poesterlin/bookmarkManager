@@ -8,6 +8,7 @@ import {
 	type Tag
 } from '$lib/server/db/schema';
 import { validateAuth } from '$lib/server/util';
+import { isSecretUnlocked } from '$lib/server/auth';
 import { json } from '@sveltejs/kit';
 import { and, eq, getTableColumns, or, sql } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
@@ -18,6 +19,20 @@ export const GET: RequestHandler = async (event) => {
 
 	if (!searchTerm) {
 		return new Response('Bad Request', { status: 400 });
+	}
+
+	const secretUnlocked = await isSecretUnlocked(event, locals.user.id);
+
+	const filters = [
+		or(
+			sql`similarity(${bookmarksTable.title}, ${searchTerm}) > 0.05`,
+			sql`similarity(${bookmarksTable.description}, ${searchTerm}) > 0.08`
+		),
+		eq(bookmarksTable.userId, locals.user.id)
+	];
+
+	if (!secretUnlocked) {
+		filters.push(eq(bookmarksTable.isSecret, false));
 	}
 
 	const results = await db
@@ -32,15 +47,7 @@ export const GET: RequestHandler = async (event) => {
 				)
 		})
 		.from(bookmarksTable)
-		.where(
-			and(
-				or(
-					sql`similarity(${bookmarksTable.title}, ${searchTerm}) > 0.05`,
-					sql`similarity(${bookmarksTable.description}, ${searchTerm}) > 0.08`
-				),
-				eq(bookmarksTable.userId, locals.user.id)
-			)
-		)
+		.where(and(...filters))
 		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))

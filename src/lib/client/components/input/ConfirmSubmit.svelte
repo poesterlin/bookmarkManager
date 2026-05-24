@@ -48,9 +48,8 @@
 				{@render formSlot()}
 			</div>
 		{/if}
-		
-		<div class="mt-4 flex justify-between">
 
+		<div class="mt-4 flex justify-between">
 			<button
 				autofocus
 				type="button"

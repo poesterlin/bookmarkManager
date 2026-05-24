@@ -8,7 +8,7 @@ class AppState {
 		this.isDarkMode = dark;
 	}
 
-	updateScroll(e: UIEvent & { currentTarget: EventTarget & HTMLElement; }) {
+	updateScroll(e: UIEvent & { currentTarget: EventTarget & HTMLElement }) {
 		const deltaY = e.currentTarget.scrollTop - this.yPos;
 		const mod = this.isTouching ? 1.1 : 2;
 		this.yPos = e.currentTarget.scrollTop;

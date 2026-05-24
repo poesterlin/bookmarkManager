@@ -49,11 +49,7 @@
 
 <div class="fade-in space-y-4">
 	{#if bookmarks.length === 0}
-		<EmptyState
-			{addBookmark}
-			subcategories={categoryChildren}
-			selectedCategoryName={selectedCategoryName}
-		/>
+		<EmptyState {addBookmark} subcategories={categoryChildren} {selectedCategoryName} />
 	{:else}
 		<div class="grid-cols-cards grid gap-4">
 			{#each list as bookmark (bookmark.id)}
@@ -70,7 +66,7 @@
 
 	{#if dragStore.card && dragStore.isDragging && dragStore.pos}
 		<div
-			class="glass fixed hidden rounded-xl p-4 shadow-xl md:block z-90 w-sm"
+			class="glass fixed z-90 hidden w-sm rounded-xl p-4 shadow-xl md:block"
 			style:left="{dragStore.pos.x}px"
 			style:top="{dragStore.pos.y}px"
 		>

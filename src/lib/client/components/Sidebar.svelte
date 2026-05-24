@@ -8,6 +8,8 @@
 		IconFolder,
 		IconFolderOpen,
 		IconFriends,
+		IconLock,
+		IconLockOpen,
 		IconPlus,
 		IconShare,
 		IconStar,
@@ -23,6 +25,9 @@
 		sharedSubcategories: { id: string; name: string | null; shareId: string }[];
 		isMenuOpen?: boolean;
 		shareModalHandler: { open: () => void; close: () => void };
+		secretUnlocked: boolean;
+		hasPin: boolean;
+		onOpenUnlockModal: () => void;
 	}
 
 	let {
@@ -31,7 +36,10 @@
 		shared,
 		sharedSubcategories,
 		isMenuOpen = $bindable(false),
-		shareModalHandler
+		shareModalHandler,
+		secretUnlocked,
+		hasPin,
+		onOpenUnlockModal
 	}: Props = $props();
 
 	let selectedCategory = $derived(page.url.searchParams.get('category'));
@@ -46,13 +54,12 @@
 		}, {})
 	);
 	let sharedChildrenByParent = $derived(
-		sharedSubcategories.reduce<Record<string, { id: string; name: string | null; shareId: string }[]>>(
-			(acc, c) => {
-				(acc[c.shareId] ??= []).push(c);
-				return acc;
-			},
-			{}
-		)
+		sharedSubcategories.reduce<
+			Record<string, { id: string; name: string | null; shareId: string }[]>
+		>((acc, c) => {
+			(acc[c.shareId] ??= []).push(c);
+			return acc;
+		}, {})
 	);
 
 	let isSwiping = $state(false);
@@ -270,7 +277,14 @@
 	></button>
 {/if}
 
-{#snippet categoryLink(id: string, name: string, shared: boolean, sharing: boolean, sub: boolean, expanded: boolean)}
+{#snippet categoryLink(
+	id: string,
+	name: string,
+	shared: boolean,
+	sharing: boolean,
+	sub: boolean,
+	expanded: boolean
+)}
 	<a
 		data-sveltekit-replacestate
 		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
@@ -283,7 +297,8 @@
 		{#if shared}
 			<IconShare class="mr-2 h-5 w-5 shrink-0" />
 		{:else if sub}
-			<span class="mr-2 h-4 w-4 shrink-0 text-center text-gray-400 dark:text-gray-500">&#8226;</span>
+			<span class="mr-2 h-4 w-4 shrink-0 text-center text-gray-400 dark:text-gray-500">&#8226;</span
+			>
 		{:else if expanded}
 			<IconFolderOpen class="mr-2 h-5 w-5 shrink-0" />
 		{:else}
@@ -332,7 +347,7 @@
               {page.url.searchParams.has('favorite')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href={replaceQueryParam(page.url, ['archived', 'category'], 'favorite')}
+				href={replaceQueryParam(page.url, ['archived', 'category', 'secret'], 'favorite')}
 			>
 				<IconStar class="mr-2 h-5 w-5" />
 				Favorites
@@ -343,11 +358,47 @@
               {page.url.searchParams.has('archived')
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
-				href={replaceQueryParam(page.url, ['favorite', 'category'], 'archived')}
+				href={replaceQueryParam(page.url, ['favorite', 'category', 'secret'], 'archived')}
 			>
 				<IconArchive class="mr-2 h-5 w-5" />
 				Archive
 			</a>
+			{#if hasPin}
+				{#if secretUnlocked}
+					<div
+						class="flex items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
+						{page.url.searchParams.has('secret')
+							? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline dark:focus:outline-gray-100'
+							: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
+					>
+						<a
+							data-sveltekit-replacestate
+							class="flex flex-1 items-center"
+							href={replaceQueryParam(page.url, ['archived', 'favorite', 'category'], 'secret')}
+						>
+							<IconLockOpen class="mr-2 h-5 w-5" />
+							Secrets
+						</a>
+						<form method="POST" action="?/lock" class="flex shrink-0 items-center">
+							<button
+								type="submit"
+								class="rounded p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+								title="Lock secrets"
+							>
+								<IconLock class="h-4 w-4" />
+							</button>
+						</form>
+					</div>
+				{:else}
+					<button
+						class="flex w-full items-center rounded-lg px-3 py-2 text-left text-gray-700 transition-all hover:bg-white/50 dark:text-gray-200 dark:hover:bg-white/10"
+						onclick={onOpenUnlockModal}
+					>
+						<IconLock class="mr-2 h-5 w-5" />
+						Secrets
+					</button>
+				{/if}
+			{/if}
 		</nav>
 
 		{#if categories.length > 0 || shared.length > 0}
@@ -367,17 +418,24 @@
 				{#each parentCategories as category}
 					{@const children = childrenByParent[category.id]}
 					{@const hasChildren = children && children.length > 0}
-					{@const isExpanded = hasChildren && (selectedCategory === category.id || children.some((c: {id: string}) => selectedCategory === c.id))}
+					{@const isExpanded =
+						hasChildren &&
+						(selectedCategory === category.id ||
+							children.some((c: { id: string }) => selectedCategory === c.id))}
 					<div>
-						<div
-							onpointerup={() => dragStore.addToCategory(category)}
-							class="flex items-center"
-						>
-							{@render categoryLink(category.id, category.name, false, category.isShared || false, false, isExpanded)}
+						<div onpointerup={() => dragStore.addToCategory(category)} class="flex items-center">
+							{@render categoryLink(
+								category.id,
+								category.name,
+								false,
+								category.isShared || false,
+								false,
+								isExpanded
+							)}
 						</div>
 						{#if hasChildren}
 							<div
-								class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1"
+								class="sub-categories my-1 ml-[7px] border-l border-gray-200 pl-3 dark:border-gray-700"
 								class:expanded={isExpanded}
 							>
 								<div class="sub-categories-inner">
@@ -401,17 +459,17 @@
 					{#if category.name}
 						{@const sharedChildren = sharedChildrenByParent[category.id]}
 						{@const hasSharedChildren = sharedChildren && sharedChildren.length > 0}
-						{@const isSharedExpanded = hasSharedChildren && (selectedCategory === category.id || sharedChildren.some((c) => selectedCategory === c.id))}
+						{@const isSharedExpanded =
+							hasSharedChildren &&
+							(selectedCategory === category.id ||
+								sharedChildren.some((c) => selectedCategory === c.id))}
 						<div>
-							<div
-								onpointerup={() => dragStore.addToCategory(category)}
-								class="flex items-center"
-							>
+							<div onpointerup={() => dragStore.addToCategory(category)} class="flex items-center">
 								{@render categoryLink(category.id, category.name, true, false, false, false)}
 							</div>
 							{#if hasSharedChildren}
 								<div
-									class="sub-categories border-l border-gray-200 dark:border-gray-700 ml-[7px] pl-3 my-1"
+									class="sub-categories my-1 ml-[7px] border-l border-gray-200 pl-3 dark:border-gray-700"
 									class:expanded={isSharedExpanded}
 								>
 									<div class="sub-categories-inner">

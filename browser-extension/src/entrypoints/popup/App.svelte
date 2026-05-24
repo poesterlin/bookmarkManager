@@ -18,35 +18,41 @@
 
 <main>
 	{#if auth?.state}
-		<div class="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
+		<div class="flex h-screen flex-col bg-gray-50 dark:bg-gray-950">
 			<!-- Tabs Navigation -->
-			<div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+			<div
+				class="border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900"
+			>
 				<div class="flex">
 					<button
 						onclick={() => (view = 'add')}
-						class="flex-1 px-4 py-3 flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-200 relative group {view ===
+						class="group relative flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all duration-200 {view ===
 						'add'
 							? 'text-primary-600 dark:text-primary-400'
-							: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
+							: 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'}"
 					>
 						<IconPlus size={18} />
 						<span>Add</span>
 						{#if view === 'add'}
-							<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500"></div>
+							<div
+								class="from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500 absolute right-0 bottom-0 left-0 h-0.5 bg-gradient-to-r"
+							></div>
 						{/if}
 					</button>
 					<div class="w-px bg-gray-200 dark:bg-gray-700"></div>
 					<button
 						onclick={() => (view = 'list')}
-						class="flex-1 px-4 py-3 flex items-center justify-center gap-2 font-semibold text-sm transition-all duration-200 relative group {view ===
+						class="group relative flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-all duration-200 {view ===
 						'list'
 							? 'text-primary-600 dark:text-primary-400'
-							: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}"
+							: 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'}"
 					>
 						<IconList size={18} />
 						<span>List</span>
 						{#if view === 'list'}
-							<div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500"></div>
+							<div
+								class="from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500 absolute right-0 bottom-0 left-0 h-0.5 bg-gradient-to-r"
+							></div>
 						{/if}
 					</button>
 				</div>
@@ -66,7 +72,7 @@
 			</div>
 
 			<!-- Toast Container -->
-			<div class="fixed bottom-3 right-3 z-50 flex flex-col gap-2 max-w-[300px]">
+			<div class="fixed right-3 bottom-3 z-50 flex max-w-[300px] flex-col gap-2">
 				<Toast />
 			</div>
 		</div>

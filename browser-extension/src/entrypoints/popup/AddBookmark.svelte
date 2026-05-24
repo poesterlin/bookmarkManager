@@ -62,9 +62,7 @@
 		}, {})
 	);
 
-	let selectedChildren = $derived(
-		category ? (childrenByParent[category] ?? []) : []
-	);
+	let selectedChildren = $derived(category ? (childrenByParent[category] ?? []) : []);
 	let hasChildren = $derived(selectedChildren.length > 0);
 
 	// stored value for the inputs
@@ -242,7 +240,9 @@
 		} catch (err: unknown) {
 			if (err instanceof ApiError) {
 				if (err.isValidationError) {
-					const fields = (err.data?.error as Record<string, unknown>)?.fields as Record<string, string> | undefined;
+					const fields = (err.data?.error as Record<string, unknown>)?.fields as
+						| Record<string, string>
+						| undefined;
 					if (fields) {
 						error = Object.values(fields).join(', ');
 					} else {
@@ -265,7 +265,9 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 {#if submitted}
 	<div class="flex h-full flex-col items-center justify-center p-6">
-		<div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/20">
+		<div
+			class="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-100 to-green-50 dark:from-green-900/20 dark:to-green-800/20"
+		>
 			<IconCheck class="h-10 w-10 text-green-600 dark:text-green-400" />
 		</div>
 		<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Bookmark Saved!</h3>
@@ -275,167 +277,191 @@
 	<form
 		onkeydown={handleKeydown}
 		bind:this={form}
-		class="p-5 pb-0 overflow-y-auto h-full flex flex-col"
+		class="flex h-full flex-col overflow-y-auto p-5 pb-0"
 		method="POST"
 		action="/?/add"
 		onsubmit={submit}
 	>
 		<div class="mb-5">
 			<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Save Bookmark</h3>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Add to your collection</p>
+			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Add to your collection</p>
 		</div>
 
-		<div class="space-y-3 flex-1">
-		<!-- URL -->
-		<div>
-			<label for="url" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-				URL
-			</label>
-			<div class="input mt-1.5 flex overflow-hidden !p-0">
+		<div class="flex-1 space-y-3">
+			<!-- URL -->
+			<div>
+				<label
+					for="url"
+					class="block text-xs font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-300"
+				>
+					URL
+				</label>
+				<div class="input mt-1.5 flex overflow-hidden !p-0">
+					<input
+						type="text"
+						id="url"
+						name="url"
+						bind:value={url}
+						required
+						class="w-full bg-transparent py-2 pl-3 text-sm focus:outline-0"
+						placeholder="https://example.com"
+						onblur={autofill}
+					/>
+
+					{#if loading && !faviconData}
+						<IconLoader class="mx-2 h-8 w-8 animate-spin text-gray-400"></IconLoader>
+					{/if}
+
+					{#if faviconData}
+						<img src={faviconData} alt="favicon" class="h-8 w-8 flex-shrink-0 rounded p-1" />
+					{/if}
+				</div>
+			</div>
+
+			<!-- Title -->
+			<div>
+				<label
+					for="title"
+					class="block text-xs font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-300"
+				>
+					Title
+				</label>
 				<input
 					type="text"
-					id="url"
-					name="url"
-					bind:value={url}
+					id="title"
+					name="title"
 					required
-					class="w-full py-2 pl-3 focus:outline-0 bg-transparent text-sm"
-					placeholder="https://example.com"
-					onblur={autofill}
+					bind:value={title}
+					class="input mt-1.5 w-full text-sm"
+					placeholder="My Awesome Website"
 				/>
+			</div>
 
-				{#if loading && !faviconData}
-					<IconLoader class="mx-2 h-8 w-8 animate-spin text-gray-400"></IconLoader>
-				{/if}
+			<!-- Description -->
+			<div>
+				<label
+					for="description"
+					class="block text-xs font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-300"
+				>
+					Description (optional)
+				</label>
+				<textarea
+					id="description"
+					name="description"
+					class="input mt-1.5 w-full text-sm"
+					rows="2"
+					bind:value={description}
+					placeholder="Add a description..."
+				></textarea>
+			</div>
 
-				{#if faviconData}
-					<img src={faviconData} alt="favicon" class="h-8 w-8 rounded p-1 flex-shrink-0" />
+			<!-- Category -->
+			<div>
+				<label
+					for="category"
+					class="block text-xs font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-300"
+				>
+					Category
+				</label>
+				{#if fetchingData}
+					<div class="mt-1.5 flex items-center gap-2 text-sm text-gray-500">
+						<IconLoader class="h-4 w-4 animate-spin" />
+						Loading categories...
+					</div>
+				{:else if showNewCategoryInput}
+					<div class="mt-1.5 flex gap-2">
+						<input
+							type="text"
+							id="newCategory"
+							name="newCategory"
+							bind:value={newCategory}
+							class="input flex-1 text-sm"
+							placeholder="New category"
+						/>
+						<button
+							type="button"
+							class="button-ghost px-3 py-2 text-xs"
+							onclick={toggleNewCategoryInput}
+						>
+							Cancel
+						</button>
+					</div>
+				{:else}
+					<div class="mt-1.5 flex flex-col gap-2">
+						<div class="flex gap-2">
+							<select
+								id="category"
+								class="input flex-1 bg-white text-sm dark:bg-gray-800"
+								bind:value={category}
+								name={subcategory && subcategory !== '__new__' ? undefined : 'category'}
+								onchange={handleCategoryChange}
+							>
+								<option value="" selected>Select a category</option>
+								{#each parentCategories as parent}
+									<option value={parent.id}>{parent.name}</option>
+								{/each}
+							</select>
+							<button
+								type="button"
+								class="button-ghost px-3 py-2 text-xs whitespace-nowrap"
+								onclick={toggleNewCategoryInput}
+							>
+								New
+							</button>
+						</div>
+
+						{#if category}
+							<select
+								class="input w-full bg-white text-sm dark:bg-gray-800"
+								bind:value={subcategory}
+								name={subcategory && subcategory !== '__new__' ? 'category' : undefined}
+								onchange={handleSubcategoryChange}
+							>
+								<option value="">No subcategory</option>
+								{#each selectedChildren as child}
+									<option value={child.id}>{child.name}</option>
+								{/each}
+								<option value="__new__">+ New subcategory</option>
+							</select>
+							{#if showNewSubcategory}
+								<input
+									type="text"
+									name="newCategory"
+									bind:value={newSubcategoryName}
+									class="input w-full text-sm"
+									placeholder="New subcategory name"
+								/>
+								<input type="hidden" name="newCategoryParent" value={category} />
+							{/if}
+						{/if}
+					</div>
 				{/if}
+			</div>
+
+			<!-- Tags -->
+			<div>
+				<label
+					class="mb-1.5 block text-xs font-semibold tracking-wide text-gray-700 uppercase dark:text-gray-300"
+				>
+					Tags
+				</label>
+				<TagInput bind:selectedTags {existingTags} name="tags" placeholder="Add tags..." />
 			</div>
 		</div>
 
-		<!-- Title -->
-		<div>
-			<label for="title" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-				Title
-			</label>
-			<input
-				type="text"
-				id="title"
-				name="title"
-				required
-				bind:value={title}
-				class="input mt-1.5 w-full text-sm"
-				placeholder="My Awesome Website"
-			/>
+		{#if error}
+			<p class="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+		{/if}
+
+		<!-- Sticky Footer -->
+		<div
+			class="mt-4 flex justify-end gap-2 border-t border-gray-200 px-5 pt-4 pb-5 dark:border-gray-700"
+		>
+			<button type="button" class="button-ghost px-4 py-2 text-sm" onclick={close}> Cancel </button>
+			<button type="submit" class="button-primary px-4 py-2 text-sm" disabled={loading}>
+				{loading ? 'Saving...' : 'Add Bookmark'}
+			</button>
 		</div>
-
-		<!-- Description -->
-		<div>
-			<label for="description" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-				Description (optional)
-			</label>
-			<textarea
-				id="description"
-				name="description"
-				class="input mt-1.5 w-full text-sm"
-				rows="2"
-				bind:value={description}
-				placeholder="Add a description..."
-			></textarea>
-		</div>
-
-		<!-- Category -->
-		<div>
-			<label for="category" class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-				Category
-			</label>
-			{#if fetchingData}
-				<div class="mt-1.5 flex items-center gap-2 text-sm text-gray-500">
-					<IconLoader class="h-4 w-4 animate-spin" />
-					Loading categories...
-				</div>
-			{:else if showNewCategoryInput}
-				<div class="mt-1.5 flex gap-2">
-					<input
-						type="text"
-						id="newCategory"
-						name="newCategory"
-						bind:value={newCategory}
-						class="input flex-1 text-sm"
-						placeholder="New category"
-					/>
-					<button type="button" class="button-ghost px-3 py-2 text-xs" onclick={toggleNewCategoryInput}>
-						Cancel
-					</button>
-				</div>
-			{:else}
-				<div class="mt-1.5 flex flex-col gap-2">
-					<div class="flex gap-2">
-						<select
-							id="category"
-							class="input flex-1 bg-white dark:bg-gray-800 text-sm"
-							bind:value={category}
-							name={subcategory && subcategory !== '__new__' ? undefined : 'category'}
-							onchange={handleCategoryChange}
-						>
-							<option value="" selected>Select a category</option>
-							{#each parentCategories as parent}
-								<option value={parent.id}>{parent.name}</option>
-							{/each}
-						</select>
-						<button type="button" class="button-ghost px-3 py-2 text-xs whitespace-nowrap" onclick={toggleNewCategoryInput}>
-							New
-						</button>
-					</div>
-
-					{#if category}
-						<select
-							class="input w-full bg-white dark:bg-gray-800 text-sm"
-							bind:value={subcategory}
-							name={subcategory && subcategory !== '__new__' ? 'category' : undefined}
-							onchange={handleSubcategoryChange}
-						>
-							<option value="">No subcategory</option>
-							{#each selectedChildren as child}
-								<option value={child.id}>{child.name}</option>
-							{/each}
-							<option value="__new__">+ New subcategory</option>
-						</select>
-						{#if showNewSubcategory}
-							<input
-								type="text"
-								name="newCategory"
-								bind:value={newSubcategoryName}
-								class="input w-full text-sm"
-								placeholder="New subcategory name"
-							/>
-							<input type="hidden" name="newCategoryParent" value={category} />
-						{/if}
-					{/if}
-				</div>
-			{/if}
-		</div>
-
-		<!-- Tags -->
-		<div>
-			<label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-1.5">
-				Tags
-			</label>
-			<TagInput bind:selectedTags {existingTags} name="tags" placeholder="Add tags..." />
-		</div>
-	</div>
-
-	{#if error}
-		<p class="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-	{/if}
-
-	<!-- Sticky Footer -->
-	<div class="mt-4 px-5 pb-5 border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-end gap-2">
-		<button type="button" class="button-ghost px-4 py-2 text-sm" onclick={close}> Cancel </button>
-		<button type="submit" class="button-primary px-4 py-2 text-sm" disabled={loading}>
-			{loading ? 'Saving...' : 'Add Bookmark'}
-		</button>
-	</div>
 
 		{#if theme}
 			<input type="hidden" name="theme" bind:value={theme} />

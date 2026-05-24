@@ -12,11 +12,11 @@ class TagStore {
 
 		return this.existingTags.filter(
 			(tag) =>
-				tag.toLowerCase().includes(this.trimmedTagInput.toLowerCase()) && !this.selected.includes(tag)
+				tag.toLowerCase().includes(this.trimmedTagInput.toLowerCase()) &&
+				!this.selected.includes(tag)
 		);
 	});
 	public showSuggestions = $derived(this.filteredTags.length > 0 && this.trimmedTagInput !== '');
-
 
 	public handleTagInputKeydown(event: KeyboardEvent) {
 		switch (event.key) {

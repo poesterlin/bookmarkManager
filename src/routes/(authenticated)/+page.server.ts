@@ -6,11 +6,14 @@ import {
 	categoriesTable,
 	sharedCategoriesTable,
 	tagsTable,
+	usersTable,
 	type Category,
 	type Tag
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm, validateOptions } from '$lib/server/util';
-import { error, redirect } from '@sveltejs/kit';
+import * as auth from '$lib/server/auth';
+import { error, redirect, fail } from '@sveltejs/kit';
+import { hash, verify } from '@node-rs/argon2';
 import {
 	and,
 	asc,
@@ -41,6 +44,10 @@ const optionsSchema = z.object({
 	archived: z
 		.string()
 		.transform((val) => !val || val === 'true')
+		.optional(),
+	secret: z
+		.string()
+		.transform((val) => val === 'true')
 		.optional(),
 
 	// share target params
@@ -144,7 +151,25 @@ export const load: PageServerLoad = async (event) => {
 		filters.push(isNull(bookmarksTable.deletedAt));
 	}
 
+	if (options.secret) {
+		if (!locals.secretUnlocked) {
+			error(403, 'Secret bookmarks are locked');
+		}
+		filters.push(eq(bookmarksTable.isSecret, true));
+	}
+
 	filters.push(eq(bookmarksTable.userId, locals.user.id));
+
+	if (!locals.secretUnlocked) {
+		filters.push(eq(bookmarksTable.isSecret, false));
+	}
+
+	const [userRecord] = await db
+		.select({ secretPinHash: usersTable.secretPinHash })
+		.from(usersTable)
+		.where(eq(usersTable.id, locals.user.id))
+		.limit(1);
+	const hasPin = !!userRecord?.secretPinHash;
 
 	let order: any = bookmarksTable.createdAt;
 	if (options.order === 'date-asc') {
@@ -241,6 +266,8 @@ export const load: PageServerLoad = async (event) => {
 		sharedSubcategories,
 		tags,
 		filteredTag,
+		secretUnlocked: locals.secretUnlocked,
+		hasPin,
 		shareTarget: {
 			title: options.title,
 			text: options.text,
@@ -253,7 +280,14 @@ export const actions: Actions = {
 	add: validateForm(
 		z.object({
 			title: z.string().min(1).max(500),
-			url: z.string().url(),
+			url: z.preprocess(
+				(v) => {
+					const val = String(v ?? '').trim();
+					if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
+					return val;
+				},
+				z.string().url()
+			),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
 			parentCategoryId: z.string().optional(),
@@ -263,7 +297,11 @@ export const actions: Actions = {
 				.transform((val) => val?.split(',') ?? []),
 			description: z.string().optional(),
 			theme: z.string().optional(),
-			favicon: z.string().optional()
+			favicon: z.string().optional(),
+			isSecret: z
+				.string()
+				.optional()
+				.transform((val) => val === 'true')
 		}),
 		async (event, form) => {
 			const locals = validateAuth(event);
@@ -274,7 +312,14 @@ export const actions: Actions = {
 	update: validateForm(
 		z.object({
 			id: z.string().min(1),
-			url: z.string().url(),
+			url: z.preprocess(
+				(v) => {
+					const val = String(v ?? '').trim();
+					if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
+					return val;
+				},
+				z.string().url()
+			),
 			title: z.string().min(1).max(100),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
@@ -283,7 +328,11 @@ export const actions: Actions = {
 				.string()
 				.optional()
 				.transform((val) => val?.split(',').filter(Boolean) ?? []),
-			description: z.string().optional()
+			description: z.string().optional(),
+			isSecret: z
+				.string()
+				.optional()
+				.transform((val) => val === 'true')
 		}),
 		async (event, form) => {
 			const locals = validateAuth(event);
@@ -393,8 +442,9 @@ export const actions: Actions = {
 						url: form.url,
 						title: form.title,
 						description: form.description,
-						category: categoryId, // Set determined categoryId or null
-						updatedAt: new Date()
+						category: categoryId,
+						updatedAt: new Date(),
+						isSecret: form.isSecret ?? false
 					})
 					.where(and(eq(bookmarksTable.id, form.id), eq(bookmarksTable.userId, locals.user.id))); // Redundant user check, but safe
 
@@ -622,6 +672,95 @@ export const actions: Actions = {
 					updatedAt: new Date()
 				})
 				.where(eq(bookmarksTable.id, form.bookmark));
+		}
+	),
+
+	unlock: async (event) => {
+		const locals = validateAuth(event);
+		const formData = await event.request.formData();
+		const pin = formData.get('pin')?.toString() ?? '';
+
+		if (pin.length < 4 || pin.length > 6) {
+			return fail(400, { error: 'PIN must be 4-6 digits' });
+		}
+
+		const [userRecord] = await db
+			.select({ secretPinHash: usersTable.secretPinHash })
+			.from(usersTable)
+			.where(eq(usersTable.id, locals.user.id))
+			.limit(1);
+
+		if (!userRecord?.secretPinHash) {
+			return fail(400, { error: 'No PIN has been set' });
+		}
+
+		const validPin = await verify(userRecord.secretPinHash, pin, {
+			memoryCost: 19456,
+			timeCost: 2,
+			outputLen: 32,
+			parallelism: 1
+		});
+
+		if (!validPin) {
+			return fail(401, { error: 'Incorrect PIN' });
+		}
+
+		const token = auth.createSecretSessionToken(locals.user.id, userRecord.secretPinHash);
+		auth.setSecretSessionCookie(event, token);
+
+		return { success: true };
+	},
+
+	lock: async (event) => {
+		validateAuth(event);
+		auth.deleteSecretSessionCookie(event);
+		redirect(302, '/');
+	},
+
+	'set-pin': validateForm(
+		z.object({
+			pin: z.string().min(4).max(6),
+			currentPin: z.string().optional()
+		}),
+		async (event, form) => {
+			const locals = validateAuth(event);
+
+			const [userRecord] = await db
+				.select({ secretPinHash: usersTable.secretPinHash })
+				.from(usersTable)
+				.where(eq(usersTable.id, locals.user.id))
+				.limit(1);
+
+			if (userRecord?.secretPinHash) {
+				if (!form.currentPin) {
+					error(400, 'Current PIN is required to change it');
+				}
+				const validPin = await verify(userRecord.secretPinHash, form.currentPin, {
+					memoryCost: 19456,
+					timeCost: 2,
+					outputLen: 32,
+					parallelism: 1
+				});
+				if (!validPin) {
+					error(401, 'Current PIN is incorrect');
+				}
+			}
+
+			const newPinHash = await hash(form.pin, {
+				memoryCost: 19456,
+				timeCost: 2,
+				outputLen: 32,
+				parallelism: 1
+			});
+
+			await db
+				.update(usersTable)
+				.set({ secretPinHash: newPinHash })
+				.where(eq(usersTable.id, locals.user.id));
+
+			auth.deleteSecretSessionCookie(event);
+
+			redirect(302, '/');
 		}
 	)
 };

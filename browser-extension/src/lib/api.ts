@@ -52,7 +52,9 @@ export function createApi(getToken: () => string | undefined) {
 			}
 			throw new ApiError(
 				res.status,
-				typeof data?.error === 'object' && data.error && typeof (data.error as Record<string, unknown>).message === 'string'
+				typeof data?.error === 'object' &&
+				data.error &&
+				typeof (data.error as Record<string, unknown>).message === 'string'
 					? (data.error as Record<string, string>).message
 					: `Request failed (${res.status})`,
 				data

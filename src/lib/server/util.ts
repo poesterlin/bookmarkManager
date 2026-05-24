@@ -80,7 +80,10 @@ export function validateAuth(events: any): RequiredProperty<App.Locals> | never 
 	return locals;
 }
 
-export function validateOptions<T extends ZodObject<any>, Options extends z.infer<T>>(event: any, validator: T)  {
+export function validateOptions<T extends ZodObject<any>, Options extends z.infer<T>>(
+	event: any,
+	validator: T
+) {
 	const params = event.url.searchParams.entries();
 	const search = Object.fromEntries(params);
 	const parsedOptions = validator.safeParse(search);

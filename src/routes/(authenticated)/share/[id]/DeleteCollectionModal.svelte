@@ -47,7 +47,7 @@
 	}
 </script>
 
-<Modal {onClose} class="p-6 max-w-md">
+<Modal {onClose} class="max-w-md p-6">
 	<h2 class="text-2xl font-bold text-red-600 dark:text-red-400">Delete Collection</h2>
 	<p class="mt-4 text-gray-700 dark:text-gray-300">
 		Are you sure you want to delete <strong>{collectionName}</strong>?

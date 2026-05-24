@@ -14,6 +14,7 @@ A simple bookmark manager that allows you to save, organize and track your bookm
 - Browser extension to save bookmarks directly from the browser
 - Dark mode
 - PWA including Share Target
+- Hidden bookmarks that are secured with a pin
 
 ## Screenshots
 

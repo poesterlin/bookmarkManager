@@ -4,7 +4,7 @@
 		description: string;
 	}
 
-	let { title = $bindable(), description  = $bindable()}: Props = $props();
+	let { title = $bindable(), description = $bindable() }: Props = $props();
 </script>
 
 <div>

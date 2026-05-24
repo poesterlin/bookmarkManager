@@ -2,6 +2,7 @@
 	import { afterNavigate, pushState, replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import AddBookmarkModal from '$lib/client/components/modals/AddBookmarkModal.svelte';
+	import PinUnlockModal from '$lib/client/components/modals/PinUnlockModal.svelte';
 	import { app } from '$lib/client/stores/app.svelte';
 	import BookmarkList from '$lib/client/components/BookmarkList.svelte';
 	import EditBookmarkModal from '$lib/client/components/modals/EditBookmarkModal.svelte';
@@ -21,6 +22,7 @@
 	let mainEl: HTMLElement;
 	let isMenuOpen = $state(false);
 	let isShareMenuOpen = $state(false);
+	let isPinUnlockOpen = $state(false);
 
 	const shareModalHandler = {
 		open: () => (isShareMenuOpen = true),
@@ -77,6 +79,9 @@
 			sharedSubcategories={data.sharedSubcategories}
 			bind:isMenuOpen
 			{shareModalHandler}
+			secretUnlocked={data.secretUnlocked}
+			hasPin={data.hasPin}
+			onOpenUnlockModal={() => (isPinUnlockOpen = true)}
 		/>
 
 		<main
@@ -130,6 +135,7 @@
 			sharedCategories={data.sharedCategories}
 			existingTags={data.tags.map((tag) => tag.name)}
 			shareData={data.shareTarget}
+			hasPin={data.hasPin}
 		/>
 	{/if}
 
@@ -140,11 +146,16 @@
 			categories={data.categories}
 			sharedCategories={data.sharedCategories}
 			existingTags={data.tags.map((tag) => tag.name)}
+			hasPin={data.hasPin}
 		/>
 	{/if}
 
 	{#if isShareMenuOpen}
 		<ShareModal onClose={handleCloseModal} categories={data.categories} />
+	{/if}
+
+	{#if isPinUnlockOpen}
+		<PinUnlockModal onClose={() => (isPinUnlockOpen = false)} />
 	{/if}
 </div>
 

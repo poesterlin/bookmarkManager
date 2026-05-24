@@ -10,26 +10,26 @@
 	let { onClose, editingShareId, hasWriteAccess }: Props = $props();
 </script>
 
-<Modal {onClose} class="p-4 !border-accent-300 !border-1">
-	<h2 class="text-lg font-semibold text-accent-300">Permissions</h2>
+<Modal {onClose} class="!border-accent-300 !border-1 p-4">
+	<h2 class="text-accent-300 text-lg font-semibold">Permissions</h2>
 	<p class="mb-12 w-1/2">Manage the write permissions for this shared collection.</p>
 
 	{#if hasWriteAccess}
 		<form action="?/deny-write" method="POST">
 			<input type="hidden" name="id" value={editingShareId} />
 			<button type="submit" class="bg-primary-600 mx-auto">Deny Write Access</button>
-            <p class="mt-4 text-secondary-200">
-                This will prevent the user from making changes to the collection.
-            </p>
+			<p class="text-secondary-200 mt-4">
+				This will prevent the user from making changes to the collection.
+			</p>
 		</form>
 	{:else}
 		<form action="?/allow-write" method="POST">
 			<input type="hidden" name="id" value={editingShareId} />
-			<button type="submit" class="bg-accent-600  mx-auto">Allow Write Access</button>
+			<button type="submit" class="bg-accent-600 mx-auto">Allow Write Access</button>
 
-            <p class="mt-4 text-secondary-600">
-                This will allow the user to add bookmarks to the collection.
-            </p>
+			<p class="text-secondary-600 mt-4">
+				This will allow the user to add bookmarks to the collection.
+			</p>
 		</form>
 	{/if}
 </Modal>

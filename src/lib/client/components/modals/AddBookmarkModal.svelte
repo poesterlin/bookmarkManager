@@ -9,6 +9,7 @@
 	import BookmarkFormFields from '../input/BookmarkFormFields.svelte';
 	import CategoryInput from '../input/CategoryInput.svelte';
 	import TagInput from '../input/TagInput.svelte';
+	import { IconLock } from '@tabler/icons-svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -20,9 +21,17 @@
 			description?: string;
 			url?: string;
 		};
+		hasPin?: boolean;
 	}
 
-	let { onClose, categories, sharedCategories, existingTags = [], shareData }: Props = $props();
+	let {
+		onClose,
+		categories,
+		sharedCategories,
+		existingTags = [],
+		shareData,
+		hasPin = false
+	}: Props = $props();
 
 	tagStore.existingTags = existingTags;
 
@@ -30,6 +39,7 @@
 	let title = $state(shareData?.title || '');
 	let description = $state(shareData?.description || '');
 	let selectedCategoryId = $state('');
+	let isSecret = $state(false);
 
 	$effect(() => {
 		if (shareData?.url) {
@@ -67,5 +77,17 @@
 		<BookmarkFormFields bind:title bind:description />
 		<CategoryInput {categories} {sharedCategories} bind:selectedCategoryId />
 		<TagInput name="tags" placeholder="Add tags..." label="Tags" />
+		{#if hasPin}
+			<label class="flex cursor-pointer items-center gap-3 text-gray-700 dark:text-gray-300">
+				<input type="hidden" name="isSecret" value={isSecret.toString()} />
+				<input
+					type="checkbox"
+					bind:checked={isSecret}
+					class="text-primary-600 focus:ring-primary-500 h-4 w-4 rounded border-gray-300"
+				/>
+				<IconLock class="h-4 w-4" />
+				<span class="text-sm">Secret bookmark</span>
+			</label>
+		{/if}
 	</BookmarkForm>
 </Modal>

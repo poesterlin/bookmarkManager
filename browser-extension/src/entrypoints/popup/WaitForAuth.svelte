@@ -114,14 +114,15 @@
 	}
 </script>
 
-<div class="flex h-full flex-col items-center justify-center p-6 space-y-4">
+<div class="flex h-full flex-col items-center justify-center space-y-4 p-6">
 	<h1 class="text-lg font-semibold text-gray-900 dark:text-white">Authentication Required</h1>
 	{#if status === 'waiting'}
-		<p class="text-sm text-gray-600 dark:text-gray-400 text-center">
-			A browser tab was opened for you to sign in. Once authenticated, this popup will continue automatically.
+		<p class="text-center text-sm text-gray-600 dark:text-gray-400">
+			A browser tab was opened for you to sign in. Once authenticated, this popup will continue
+			automatically.
 		</p>
 	{:else if status === 'error'}
-		<p class="text-sm text-red-600 dark:text-red-400 text-center">
+		<p class="text-center text-sm text-red-600 dark:text-red-400">
 			Failed to start authentication. Please try again.
 		</p>
 	{/if}
@@ -130,11 +131,13 @@
 		<a
 			href="{import.meta.env.VITE_HOST}/challenge/{fallback}"
 			target="_blank"
-			class="text-sm text-primary-600 dark:text-primary-400 underline mt-2"
-		>Open Tab manually</a
+			class="text-primary-600 dark:text-primary-400 mt-2 text-sm underline">Open Tab manually</a
 		>
 	{:else}
-		<button onclick={() => startChallenge().catch(() => (status = 'error'))} class="button-primary mt-2">
+		<button
+			onclick={() => startChallenge().catch(() => (status = 'error'))}
+			class="button-primary mt-2"
+		>
 			Start authentication
 		</button>
 	{/if}

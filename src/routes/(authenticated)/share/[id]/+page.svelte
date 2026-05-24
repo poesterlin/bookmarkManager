@@ -108,7 +108,9 @@
 
 	function openDeleteModal() {
 		if (data.shares.length > 0) {
-			toastStore.show('Cannot delete collection with active shares. Please revoke all shares first.');
+			toastStore.show(
+				'Cannot delete collection with active shares. Please revoke all shares first.'
+			);
 			return;
 		}
 		showDeleteModal = true;
@@ -128,23 +130,23 @@
 						bind:value={nameInput}
 						onkeydown={handleKeydown}
 						autofocus
-						class="w-full rounded-lg border-2 border-primary-500 px-4 py-3 text-3xl font-bold text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+						class="border-primary-500 w-full rounded-lg border-2 px-4 py-3 text-3xl font-bold text-gray-800 dark:bg-gray-700 dark:text-gray-200"
 					/>
 					{#if nameError}
-						<p class="mt-3 text-red-500 text-sm font-medium">{nameError}</p>
+						<p class="mt-3 text-sm font-medium text-red-500">{nameError}</p>
 					{/if}
 					<div class="mt-4 flex gap-3">
 						<button
 							onclick={saveName}
 							disabled={isSubmittingName}
-							class="rounded-lg bg-primary-600 px-6 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 transition-colors"
+							class="bg-primary-600 hover:bg-primary-700 rounded-lg px-6 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50"
 						>
 							{isSubmittingName ? 'Saving...' : 'Save'}
 						</button>
 						<button
 							onclick={cancelEdit}
 							disabled={isSubmittingName}
-							class="rounded-lg bg-gray-400 px-6 py-2 text-sm font-semibold text-white hover:bg-gray-500 disabled:opacity-50 transition-colors"
+							class="rounded-lg bg-gray-400 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-500 disabled:opacity-50"
 						>
 							Cancel
 						</button>
@@ -159,7 +161,7 @@
 			<button
 				onclick={() => (editingName = true)}
 				title="Edit collection name"
-				class="ml-2 rounded-lg p-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+				class="ml-2 rounded-lg p-2 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
 			>
 				<IconEdit class="h-6 w-6 text-gray-600 dark:text-gray-400" />
 			</button>
@@ -170,7 +172,7 @@
 		<form action="?/create" method="POST">
 			<button
 				type="submit"
-				class="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 rounded-lg px-8 py-3 text-lg font-semibold text-white shadow-md transition-all duration-300 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+				class="bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 w-full rounded-lg px-8 py-3 text-lg font-semibold text-white shadow-md transition-all duration-300 focus:ring-2 focus:ring-offset-2 focus:outline-none sm:w-auto"
 			>
 				Create Share Link
 			</button>
@@ -178,7 +180,7 @@
 
 		<button
 			onclick={openDeleteModal}
-			class="flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg border-2 border-red-400 px-8 py-3 font-semibold text-red-400 shadow-md transition-all duration-300 hover:bg-red-400 hover:text-white focus:ring-2 focus:outline-none"
+			class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-red-400 px-8 py-3 font-semibold text-red-400 shadow-md transition-all duration-300 hover:bg-red-400 hover:text-white focus:ring-2 focus:outline-none sm:w-auto"
 		>
 			Delete Collection
 			<IconTrash class="h-5 w-5" />

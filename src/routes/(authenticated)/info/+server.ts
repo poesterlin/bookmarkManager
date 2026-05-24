@@ -25,7 +25,9 @@ export const POST: RequestHandler = async (event) => {
 
 	if (!parsed.success) {
 		return json(
-			{ error: { code: 'VALIDATION_ERROR', message: 'Invalid URL', fields: { url: 'Invalid URL' } } },
+			{
+				error: { code: 'VALIDATION_ERROR', message: 'Invalid URL', fields: { url: 'Invalid URL' } }
+			},
 			{ status: 400, headers: corsHeaders }
 		);
 	}

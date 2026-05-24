@@ -7,6 +7,7 @@
 		IconCopy,
 		IconExternalLink,
 		IconLoader,
+		IconLock,
 		IconPencil,
 		IconRestore,
 		IconStar,
@@ -98,6 +99,9 @@
 		class="title !mb-0 line-clamp-3 flex items-center text-lg font-semibold text-gray-800 dark:text-gray-200"
 	>
 		{bookmark.title}
+		{#if bookmark.isSecret}
+			<IconLock class="ml-1.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+		{/if}
 	</h3>
 	<p class="url truncate text-xs text-gray-500 dark:text-gray-400">
 		{formatUrl(bookmark.url)}
@@ -152,7 +156,8 @@
 		</a>
 	{/if}
 	{#each bookmark.tags as tag}
-		{@const style = 'bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium'}
+		{@const style =
+			'bg-accent-100 text-accent-800 dark:bg-accent-800/60 dark:text-accent-100 h-max rounded-full px-2 py-1 text-xs font-medium'}
 		{#if tag.name}
 			<a data-sveltekit-replacestate class={style} href={tag.id ? `/?tag=${tag.id}` : ''}>
 				{tag.name}

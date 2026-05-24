@@ -16,7 +16,7 @@
 				collection:
 				<span class="font-semibold">{data.sharingCategory.name}</span>.
 			</p>
-			<div class="mask card-grid mb-6 grid gap-4 opacity-80 pointer-events-none">
+			<div class="mask card-grid pointer-events-none mb-6 grid gap-4 opacity-80">
 				{#each data.bookmarks as bookmark (bookmark.id)}
 					<div
 						class="limit-to-odds glass row-span-3 grid grid-rows-subgrid rounded-xl p-4 transition-all duration-300 hover:shadow-xl"
@@ -25,7 +25,12 @@
 					</div>
 				{/each}
 			</div>
-			<form method="POST" action="?/confirm&token={data.sharingCategory.token}" use:enhance class="-mt-8">
+			<form
+				method="POST"
+				action="?/confirm&token={data.sharingCategory.token}"
+				use:enhance
+				class="-mt-8"
+			>
 				<button
 					type="submit"
 					class="relative z-10 w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-gray-900"

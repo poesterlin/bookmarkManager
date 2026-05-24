@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { IconLoader, IconExternalLink, IconCopy, IconTrash, IconSearch, IconX } from '@tabler/icons-svelte';
+	import {
+		IconLoader,
+		IconExternalLink,
+		IconCopy,
+		IconTrash,
+		IconSearch,
+		IconX
+	} from '@tabler/icons-svelte';
 	import { createApi, ApiError } from '../../lib/api';
 	import { showToast } from './toast.svelte';
 
@@ -32,8 +39,8 @@
 			filteredBookmarks = bookmarks;
 		} else {
 			const query = searchQuery.toLowerCase();
-			filteredBookmarks = bookmarks.filter((b) =>
-				b.title.toLowerCase().includes(query) || b.url.toLowerCase().includes(query)
+			filteredBookmarks = bookmarks.filter(
+				(b) => b.title.toLowerCase().includes(query) || b.url.toLowerCase().includes(query)
 			);
 		}
 	}
@@ -75,11 +82,7 @@
 			showToast('Bookmark deleted', 'success');
 		} catch (err: unknown) {
 			// Rollback on failure
-			bookmarks = [
-				...bookmarks.slice(0, removedIndex),
-				removed,
-				...bookmarks.slice(removedIndex)
-			];
+			bookmarks = [...bookmarks.slice(0, removedIndex), removed, ...bookmarks.slice(removedIndex)];
 			filterBookmarks();
 			if (err instanceof ApiError) {
 				if (!err.isAuthError) {
@@ -112,9 +115,13 @@
 	});
 </script>
 
-<div class="flex flex-col h-full bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+<div
+	class="flex h-full flex-col bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950"
+>
 	<!-- Search Bar -->
-	<div class="sticky top-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 z-10">
+	<div
+		class="sticky top-0 z-10 border-b border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
+	>
 		<div class="relative flex items-center">
 			<IconSearch class="absolute left-3 h-4 w-4 text-gray-400" />
 			<input
@@ -123,7 +130,7 @@
 				bind:value={searchQuery}
 				onchange={filterBookmarks}
 				oninput={filterBookmarks}
-				class="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400"
+				class="focus:ring-primary-500 dark:focus:ring-primary-400 w-full rounded-lg border border-gray-300 bg-white py-2 pr-10 pl-10 text-gray-900 placeholder-gray-500 focus:ring-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
 			/>
 			{#if searchQuery}
 				<button
@@ -141,31 +148,33 @@
 
 	<!-- Content -->
 	{#if loading}
-		<div class="flex items-center justify-center flex-1">
+		<div class="flex flex-1 items-center justify-center">
 			<div class="text-center">
-				<IconLoader class="h-8 w-8 animate-spin text-primary-500 mx-auto mb-2" />
+				<IconLoader class="text-primary-500 mx-auto mb-2 h-8 w-8 animate-spin" />
 				<p class="text-sm text-gray-600 dark:text-gray-400">Loading bookmarks...</p>
 			</div>
 		</div>
 	{:else if error}
-		<div class="flex items-center justify-center flex-1 p-4">
+		<div class="flex flex-1 items-center justify-center p-4">
 			<div class="text-center">
-				<p class="text-sm text-red-600 dark:text-red-400 mb-3">Failed to load bookmarks</p>
+				<p class="mb-3 text-sm text-red-600 dark:text-red-400">Failed to load bookmarks</p>
 				<button onclick={fetchBookmarks} class="button-primary text-sm"> Try Again </button>
 			</div>
 		</div>
 	{:else if bookmarks.length === 0}
-		<div class="flex items-center justify-center flex-1 p-4">
+		<div class="flex flex-1 items-center justify-center p-4">
 			<div class="text-center">
-				<div class="text-4xl mb-3">📚</div>
+				<div class="mb-3 text-4xl">📚</div>
 				<p class="text-sm font-medium text-gray-900 dark:text-white">No bookmarks yet</p>
-				<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Start adding bookmarks to see them here</p>
+				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+					Start adding bookmarks to see them here
+				</p>
 			</div>
 		</div>
 	{:else if filteredBookmarks.length === 0}
-		<div class="flex items-center justify-center flex-1 p-4">
+		<div class="flex flex-1 items-center justify-center p-4">
 			<div class="text-center">
-				<div class="text-4xl mb-3">🔍</div>
+				<div class="mb-3 text-4xl">🔍</div>
 				<p class="text-sm text-gray-600 dark:text-gray-400">No bookmarks match "{searchQuery}"</p>
 			</div>
 		</div>
@@ -174,31 +183,33 @@
 			<div class="space-y-2">
 				{#each filteredBookmarks as bookmark (bookmark.id)}
 					<div
-						class="group p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-md dark:hover:shadow-lg transition-all duration-200 cursor-pointer"
+						class="group hover:border-primary-300 dark:hover:border-primary-700 cursor-pointer rounded-lg border border-gray-200 bg-white p-3 transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:shadow-lg"
 					>
 						<!-- Header with Title and Favicon -->
-						<div class="flex gap-2.5 mb-2">
+						<div class="mb-2 flex gap-2.5">
 							{#if bookmark.favicon}
 								<img
 									src={bookmark.favicon}
 									alt="favicon"
-									class="h-5 w-5 rounded flex-shrink-0 mt-0.5 object-cover"
+									class="mt-0.5 h-5 w-5 flex-shrink-0 rounded object-cover"
 								/>
 							{:else}
 								<div
-									class="h-5 w-5 rounded flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5 bg-gradient-to-br from-primary-400 to-primary-600"
+									class="from-primary-400 to-primary-600 mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-gradient-to-br text-xs font-bold text-white"
 								>
 									{bookmark.title.charAt(0).toUpperCase()}
 								</div>
 							{/if}
-							<div class="flex-1 min-w-0">
-								<h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-tight">
+							<div class="min-w-0 flex-1">
+								<h4
+									class="truncate text-sm leading-tight font-semibold text-gray-900 dark:text-gray-100"
+								>
 									{bookmark.title}
 									{#if deleting === bookmark.id}
 										<span class="ml-2 text-xs text-gray-400">Deleting...</span>
 									{/if}
 								</h4>
-								<p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+								<p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
 									{new URL(bookmark.url).hostname}
 								</p>
 							</div>
@@ -206,7 +217,7 @@
 
 						<!-- Description -->
 						{#if bookmark.description}
-							<p class="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 ml-7">
+							<p class="mb-2 ml-7 line-clamp-2 text-xs text-gray-600 dark:text-gray-400">
 								{bookmark.description}
 							</p>
 						{/if}
@@ -215,7 +226,7 @@
 						{#if bookmark.category}
 							<div class="mb-3 ml-7">
 								<span
-									class="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium"
+									class="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
 								>
 									{bookmark.category.name}
 								</span>
@@ -223,11 +234,13 @@
 						{/if}
 
 						<!-- Actions -->
-						<div class="flex gap-2 pt-2 ml-7 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+						<div
+							class="ml-7 flex gap-2 pt-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+						>
 							<button
 								onclick={() => visitBookmark(bookmark.url)}
 								title="Open bookmark in new tab"
-								class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium rounded bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+								class="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 flex flex-1 items-center justify-center gap-1 rounded px-2 py-1.5 text-xs font-medium transition-colors"
 							>
 								<IconExternalLink size={14} />
 								<span>Visit</span>
@@ -235,7 +248,7 @@
 							<button
 								onclick={() => copyUrl(bookmark.url, bookmark.id)}
 								title="Copy URL to clipboard"
-								class="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+								class="flex flex-1 items-center justify-center gap-1 rounded bg-gray-100 px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
 							>
 								{#if copied === bookmark.id}
 									<span class="text-green-600 dark:text-green-400">✓</span>
@@ -249,7 +262,7 @@
 								onclick={() => deleteBookmark(bookmark.id)}
 								title="Delete bookmark"
 								disabled={deleting === bookmark.id}
-								class="flex items-center justify-center p-1.5 text-xs rounded text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+								class="flex items-center justify-center rounded p-1.5 text-xs text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
 							>
 								{#if deleting === bookmark.id}
 									<IconLoader size={14} class="animate-spin" />
@@ -264,7 +277,9 @@
 		</div>
 
 		<!-- Footer with count -->
-		<div class="sticky bottom-0 px-4 py-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-xs text-gray-600 dark:text-gray-400">
+		<div
+			class="sticky bottom-0 border-t border-gray-200 bg-white px-4 py-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
+		>
 			Showing {filteredBookmarks.length} of {bookmarks.length}
 			{bookmarks.length === 1 ? 'bookmark' : 'bookmarks'}
 		</div>

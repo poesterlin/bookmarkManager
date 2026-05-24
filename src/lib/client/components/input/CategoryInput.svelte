@@ -81,9 +81,7 @@
 				class="input w-full"
 				placeholder="New category name"
 			/>
-			<button type="button" class="button-ghost" onclick={toggleNewCategoryInput}>
-				Cancel
-			</button>
+			<button type="button" class="button-ghost" onclick={toggleNewCategoryInput}> Cancel </button>
 		</div>
 	{:else}
 		<div class="mt-1 flex flex-col gap-2">

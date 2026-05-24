@@ -169,15 +169,13 @@
 					<IconChevronDown
 						size={14}
 						stroke-width={2}
-						class="hidden transition-transform duration-200 md:inline {sortOpen ? 'rotate-180' : ''}"
+						class="hidden transition-transform duration-200 md:inline {sortOpen
+							? 'rotate-180'
+							: ''}"
 					/>
 				</button>
 				{#if sortOpen}
-					<div
-						class="fixed inset-0 z-40"
-						role="none"
-						onclick={() => (sortOpen = false)}
-					></div>
+					<div class="fixed inset-0 z-40" role="none" onclick={() => (sortOpen = false)}></div>
 					<div
 						class="absolute right-0 z-50 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-[#1f1f2e]"
 						transition:fade={{ duration: 120 }}
@@ -199,17 +197,9 @@
 								{/if}
 								<span class="flex-1">{option.label}</span>
 								{#if option.dir === 'asc'}
-									<IconSortAscending
-										size={16}
-										stroke-width={1.5}
-										class="opacity-40"
-									/>
+									<IconSortAscending size={16} stroke-width={1.5} class="opacity-40" />
 								{:else}
-									<IconSortDescending
-										size={16}
-										stroke-width={1.5}
-										class="opacity-40"
-									/>
+									<IconSortDescending size={16} stroke-width={1.5} class="opacity-40" />
 								{/if}
 							</a>
 						{/each}
@@ -245,5 +235,4 @@
 	.shadow {
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
-
 </style>

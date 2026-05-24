@@ -14,10 +14,18 @@
 	let favicon = $state<string>();
 	let faviconData = $state<string>();
 
+	function normalizeUrl(raw: string) {
+		if (!raw) return raw;
+		const trimmed = raw.trim();
+		if (/^https?:\/\//i.test(trimmed)) return trimmed;
+		return `https://${trimmed}`;
+	}
+
 	async function autofill() {
 		if (!url) {
 			return;
 		}
+		url = normalizeUrl(url);
 		loading = true;
 
 		try {

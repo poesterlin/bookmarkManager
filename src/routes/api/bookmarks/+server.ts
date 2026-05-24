@@ -1,16 +1,23 @@
-import { z } from 'zod';
-import type { RequestHandler } from './$types';
-import { json } from '@sveltejs/kit';
+import { formatZodError } from '$lib/server/api';
 import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 import { createBookmark } from '$lib/server/bookmark';
-import { formatZodError } from '$lib/server/api';
 import { db } from '$lib/server/db';
-import { bookmarksTable, bookmarkTags, tagsTable, categoriesTable } from '$lib/server/db/schema';
-import { eq, isNull, desc, getTableColumns, sql } from 'drizzle-orm';
+import { bookmarksTable, bookmarkTags, categoriesTable, tagsTable } from '$lib/server/db/schema';
+import { json } from '@sveltejs/kit';
+import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import type { RequestHandler } from './$types';
 
 const schema = z.object({
 	title: z.string().min(1).max(500),
-	url: z.string().url(),
+	url: z.preprocess(
+		(v) => {
+			const val = String(v ?? '').trim();
+			if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
+			return val;
+		},
+		z.string().url()
+	),
 	category: z.string().optional(),
 	newCategory: z.string().optional(),
 	tags: z
@@ -25,18 +32,26 @@ const schema = z.object({
 export const GET: RequestHandler = async (event) => {
 	const { user } = await validateAuthHeader(event);
 
-	const bookmarks = await db.select({
-		...getTableColumns(bookmarksTable),
-		tags: sql<any[]>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL)`.as('tags'),
-		category: sql<any>`json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as('category')
-	})
+	const bookmarks = await db
+		.select({
+			...getTableColumns(bookmarksTable),
+			tags: sql<
+				any[]
+			>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL)`.as(
+				'tags'
+			),
+			category:
+				sql<any>`json_build_object('id', ${categoriesTable.id}, 'name', ${categoriesTable.name})`.as(
+					'category'
+				)
+		})
 		.from(bookmarksTable)
 		.leftJoin(bookmarkTags, eq(bookmarksTable.id, bookmarkTags.bookmarkId))
 		.leftJoin(tagsTable, eq(bookmarkTags.tagId, tagsTable.id))
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(desc(bookmarksTable.createdAt))
-		.where(eq(bookmarksTable.userId, user.id))
+		.where(and(eq(bookmarksTable.userId, user.id), eq(bookmarksTable.isSecret, false)))
 		.limit(100);
 
 	return json({ bookmarks }, { headers: corsHeaders });

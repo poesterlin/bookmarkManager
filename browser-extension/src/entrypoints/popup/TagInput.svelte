@@ -123,12 +123,12 @@
 	>
 		{#each selectedTags as tag (tag)}
 			<span
-				class="flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+				class="flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
 			>
 				{tag}
 				<button
 					type="button"
-					class="ml-1.5 flex-shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 focus:outline-none"
+					class="ml-1.5 flex-shrink-0 text-amber-600 hover:text-amber-800 focus:outline-none dark:text-amber-400 dark:hover:text-amber-200"
 					onclick={() => removeTag(tag)}
 					aria-label={`Remove ${tag} tag`}
 				>
@@ -142,7 +142,7 @@
 			bind:value={tagInput}
 			onkeydown={handleTagInputKeydown}
 			onfocus={handleInputFocus}
-			class="min-w-[80px] flex-grow border-none bg-transparent py-1 text-sm focus:ring-0 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+			class="min-w-[80px] flex-grow border-none bg-transparent py-1 text-sm text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none dark:text-white dark:placeholder-gray-500"
 			placeholder={selectedTags.length === 0 ? placeholder : ''}
 			autocomplete="off"
 		/>
@@ -150,13 +150,13 @@
 	<!-- Suggestions Dropdown -->
 	{#if showSuggestions && filteredTags.length > 0}
 		<ul
-			class="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg focus:outline-none"
+			class="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg focus:outline-none dark:border-gray-600 dark:bg-gray-800"
 		>
 			{#each filteredTags as tag, index (tag)}
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 				<li
-					class="relative cursor-pointer px-3 py-2 select-none text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeSuggestionIndex ===
+					class="relative cursor-pointer px-3 py-2 text-sm text-gray-900 transition-colors select-none hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 {activeSuggestionIndex ===
 					index
 						? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
 						: ''}"

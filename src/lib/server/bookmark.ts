@@ -20,6 +20,7 @@ export interface BookmarksDTO {
 	category?: string;
 	newCategory?: string;
 	parentCategoryId?: string;
+	isSecret?: boolean;
 }
 
 export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO) {
@@ -31,10 +32,7 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 			.select()
 			.from(sharedCategoriesTable)
 			.where(
-				and(
-					eq(sharedCategoriesTable.id, form.category),
-					eq(sharedCategoriesTable.userId, user.id)
-				)
+				and(eq(sharedCategoriesTable.id, form.category), eq(sharedCategoriesTable.userId, user.id))
 			)
 			.limit(1);
 
@@ -66,7 +64,9 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 				const [parent] = await db
 					.select()
 					.from(categoriesTable)
-					.where(and(eq(categoriesTable.userId, user.id), eq(categoriesTable.id, form.parentCategoryId)))
+					.where(
+						and(eq(categoriesTable.userId, user.id), eq(categoriesTable.id, form.parentCategoryId))
+					)
 					.limit(1);
 
 				if (!parent) {
@@ -120,7 +120,8 @@ export async function createBookmark(user: Pick<User, 'id'>, form: BookmarksDTO)
 			isFavorite: false,
 			theme: form.theme,
 			favicon: form.favicon,
-			fromShareId
+			fromShareId,
+			isSecret: form.isSecret ?? false
 		} satisfies typeof bookmarksTable.$inferInsert);
 
 		if (form.tags) {

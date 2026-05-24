@@ -64,7 +64,9 @@
 			</button>
 			<button type="submit" class="button-primary" disabled={submitting}>
 				{#if submitting}
-					<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+					<span
+						class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+					></span>
 				{:else}
 					{submitLabel}
 				{/if}
