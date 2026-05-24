@@ -16,6 +16,7 @@
 	import type { PageServerData } from './$types';
 	import { fly } from 'svelte/transition';
 	import ShareModal from '$lib/client/components/modals/ShareModal.svelte';
+	import type { Bookmark } from '$lib/server/db/schema';
 
 	let { data }: { data: PageServerData } = $props();
 	let isScrolled = $state(false);
@@ -58,6 +59,13 @@
 	function toggleSidebar() {
 		isMenuOpen = !isMenuOpen;
 	}
+
+	function handleOptimisticEdit(id: string, changes: Partial<Bookmark>) {
+		const idx = data.bookmarks.findIndex((b) => b.id === id);
+		if (idx !== -1) {
+			Object.assign(data.bookmarks[idx], changes);
+		}
+	}
 </script>
 
 <svelte:window
@@ -99,6 +107,7 @@
 							{@const show = tag.name && (!data.filteredTag || data.filteredTag.id === tag.id)}
 							<a
 								animate:flip={{ duration: 150 }}
+								data-sveltekit-preload-data="hover"
 								href={toggleQueryParam(page.url, 'tag', tag.id)}
 								class:hidden={!show}
 								class="bg-accent-100 text-accent-800 dark:bg-accent-900 dark:text-accent-100 flex w-max w-max max-w-[calc(100%+2rem)] min-w-max items-center gap-1 rounded-full px-2 py-1.5 text-xs font-medium whitespace-nowrap"
@@ -147,6 +156,7 @@
 			sharedCategories={data.sharedCategories}
 			existingTags={data.tags.map((tag) => tag.name)}
 			hasPin={data.hasPin}
+			onOptimisticEdit={handleOptimisticEdit}
 		/>
 	{/if}
 

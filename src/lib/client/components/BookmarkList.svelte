@@ -19,7 +19,12 @@
 		addBookmark: () => void;
 	} = $props();
 
-	let list = $derived(searchStore.isSet() ? searchStore.results : bookmarks);
+	let deletedIds = $state(new Set<string>());
+
+	let list = $derived.by(() => {
+		const source = searchStore.isSet() ? searchStore.results : bookmarks;
+		return source.filter((b) => !deletedIds.has(b.id));
+	});
 	let selectedCategoryId = $derived(page.url.searchParams.get('category'));
 	let categoryChildren = $derived.by(() => {
 		if (!selectedCategoryId) {
@@ -58,7 +63,7 @@
 					animate:flip={{ duration: 250 }}
 					class:archived={bookmark.deletedAt && !page.url.searchParams.has('archived')}
 				>
-					<BookmarkCard {bookmark} />
+					<BookmarkCard {bookmark} ondeleted={(id) => deletedIds.add(id)} />
 				</div>
 			{/each}
 		</div>

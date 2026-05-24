@@ -1,5 +1,5 @@
 import { invalidateAll } from '$app/navigation';
-import type { Bookmark } from '$lib/server/db/schema';
+import type { Bookmark, Category } from '$lib/server/db/schema';
 
 class DragStore {
 	card = $state<Bookmark>();
@@ -26,9 +26,14 @@ class DragStore {
 		document.documentElement.style.userSelect = 'auto';
 	}
 
-	async addToCategory(category: { id: string }) {
+	async addToCategory(category: { id: string; name?: string | null }) {
 		if (!this.isDragging) {
 			return;
+		}
+
+		if (this.card) {
+			const resolvedName = category.name ?? this.card.category?.name ?? '';
+			this.card.category = { id: category.id, name: resolvedName } as Category;
 		}
 
 		const form = new FormData();

@@ -10,9 +10,19 @@
 		subHeader: string;
 		onSubmit: () => void;
 		children: any;
+		optimisticFn?: () => void;
 	}
 
-	let { onClose, formAction, submitLabel, header, subHeader, onSubmit, children }: Props = $props();
+	let {
+		onClose,
+		formAction,
+		submitLabel,
+		header,
+		subHeader,
+		onSubmit,
+		children,
+		optimisticFn
+	}: Props = $props();
 
 	let form: HTMLFormElement;
 	let submitting = $state(false);
@@ -36,6 +46,7 @@
 		bind:this={form}
 		use:enhance={() => {
 			submitting = true;
+			optimisticFn?.();
 			return async ({ update, result }) => {
 				submitting = false;
 				if (result.type === 'success' || result.type === 'redirect') {

@@ -280,14 +280,11 @@ export const actions: Actions = {
 	add: validateForm(
 		z.object({
 			title: z.string().min(1).max(500),
-			url: z.preprocess(
-				(v) => {
-					const val = String(v ?? '').trim();
-					if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
-					return val;
-				},
-				z.string().url()
-			),
+			url: z.preprocess((v) => {
+				const val = String(v ?? '').trim();
+				if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
+				return val;
+			}, z.string().url()),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
 			parentCategoryId: z.string().optional(),
@@ -312,14 +309,11 @@ export const actions: Actions = {
 	update: validateForm(
 		z.object({
 			id: z.string().min(1),
-			url: z.preprocess(
-				(v) => {
-					const val = String(v ?? '').trim();
-					if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
-					return val;
-				},
-				z.string().url()
-			),
+			url: z.preprocess((v) => {
+				const val = String(v ?? '').trim();
+				if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
+				return val;
+			}, z.string().url()),
 			title: z.string().min(1).max(100),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),

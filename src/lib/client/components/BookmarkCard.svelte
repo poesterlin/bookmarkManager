@@ -21,9 +21,10 @@
 	interface Props {
 		bookmark: Bookmark;
 		disabled?: boolean;
+		ondeleted?: (id: string) => void;
 	}
 
-	let { bookmark, disabled }: Props = $props();
+	let { bookmark, disabled, ondeleted }: Props = $props();
 	let error = $state(false);
 
 	function formatUrl(url: string): string {
@@ -149,6 +150,7 @@
 	{#if bookmark.category?.name}
 		<a
 			data-sveltekit-replacestate
+			data-sveltekit-preload-data="hover"
 			href={bookmark.category.id ? `/?category=${bookmark.category.id}` : ''}
 			class="bg-secondary-100 text-secondary-800 dark:bg-secondary-800/60 dark:text-secondary-100 h-max rounded-full px-2 py-1 text-xs font-medium"
 		>
@@ -181,7 +183,15 @@
 
 	<div class="flex items-center space-x-1">
 		{#if bookmark.deletedAt}
-			<form action="/?/restore" use:enhance method="POST" title="Restore">
+			<form
+				action="/?/restore"
+				use:enhance={() => {
+					bookmark.deletedAt = null;
+					return ({ update }) => update();
+				}}
+				method="POST"
+				title="Restore"
+			>
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
 					{disabled}
@@ -192,7 +202,15 @@
 				</button>
 			</form>
 
-			<form action="/?/delete" use:enhance method="POST" title="Delete">
+			<form
+				action="/?/delete"
+				use:enhance={() => {
+					ondeleted?.(bookmark.id);
+					return ({ update }) => update();
+				}}
+				method="POST"
+				title="Delete"
+			>
 				<input type="hidden" name="id" value={bookmark.id} />
 				<button
 					{disabled}
@@ -223,7 +241,15 @@
 			{/if}
 
 			{#if bookmark.canArchive}
-				<form action="/?/archive" use:enhance method="POST" title="Archive">
+				<form
+					action="/?/archive"
+					use:enhance={() => {
+						bookmark.deletedAt = new Date();
+						return ({ update }) => update();
+					}}
+					method="POST"
+					title="Archive"
+				>
 					<input type="hidden" name="id" value={bookmark.id} />
 					<button
 						{disabled}

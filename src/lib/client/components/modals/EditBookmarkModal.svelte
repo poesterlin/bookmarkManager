@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Bookmark, Category, SharedCategory } from '$lib/server/db/schema';
+	import type { Bookmark, Category, SharedCategory, Tag } from '$lib/server/db/schema';
 	import { tagStore } from '../../stores/tags.svelte';
 	import { toastStore } from '../../stores/toast.svelte';
 	import Modal from './Modal.svelte';
@@ -17,6 +17,16 @@
 		existingTags?: string[];
 		onClose: () => void;
 		hasPin?: boolean;
+		onOptimisticEdit?: (
+			id: string,
+			changes: {
+				title: string;
+				description: string;
+				category?: Category;
+				tags: Tag[];
+				isSecret: boolean;
+			}
+		) => void;
 	}
 
 	let {
@@ -25,7 +35,8 @@
 		sharedCategories,
 		existingTags = [],
 		onClose,
-		hasPin = false
+		hasPin = false,
+		onOptimisticEdit
 	}: Props = $props();
 
 	tagStore.existingTags = existingTags;
@@ -39,6 +50,34 @@
 	function handleSubmit() {
 		toastStore.show('Successfully edited Bookmark');
 	}
+
+	function handleOptimistic() {
+		if (!onOptimisticEdit) return;
+
+		let categoryObj: Category | undefined = categories.find((c) => c.id === selectedCategoryId);
+		if (!categoryObj && selectedCategoryId) {
+			const shared = sharedCategories.find((c) => c.id === selectedCategoryId);
+			if (shared) {
+				categoryObj = { id: shared.id, name: shared.name } as Category;
+			}
+		}
+
+		const tagObjects: Tag[] = tagStore.selected.map((name) => ({
+			name,
+			id: '',
+			createdAt: new Date(),
+			updatedAt: new Date(),
+			userId: ''
+		}));
+
+		onOptimisticEdit(bookmark.id, {
+			title,
+			description,
+			category: categoryObj,
+			tags: tagObjects,
+			isSecret
+		});
+	}
 </script>
 
 <Modal {onClose}>
@@ -49,6 +88,7 @@
 		header="Edit Bookmark"
 		subHeader="Update the details for this bookmark."
 		onSubmit={handleSubmit}
+		optimisticFn={handleOptimistic}
 	>
 		<input type="hidden" name="id" value={bookmark.id} />
 		<URLInput url={bookmark.url} />

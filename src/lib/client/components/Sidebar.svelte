@@ -287,6 +287,7 @@
 )}
 	<a
 		data-sveltekit-replacestate
+		data-sveltekit-preload-data="hover"
 		href={replaceQueryParam(page.url, ['archived', 'favorite'], 'category', id)}
 		class="flex w-full items-center rounded-lg px-3 text-left transition-all dark:hover:bg-white/10
 			{sub ? 'py-1.5 text-sm' : 'py-2'}
@@ -332,11 +333,36 @@
 		<nav class="space-y-1">
 			<a
 				data-sveltekit-replacestate
+				data-sveltekit-preload-data="hover"
 				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
               {Array.from(page.url.searchParams.entries()).length === 0
 					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
 					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200 '}"
 				href="/"
+			>
+				<IconWorld class="mr-2 h-5 w-5" />
+				All Bookmarks
+			</a>
+			<a
+				data-sveltekit-replacestate
+				data-sveltekit-preload-data="hover"
+				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
+              {page.url.searchParams.has('favorite')
+					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
+					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
+				href={replaceQueryParam(page.url, ['archived', 'category'], 'favorite')}
+			>
+				<IconStar class="mr-2 h-5 w-5" />
+				Favorites
+			</a>
+			<a
+				data-sveltekit-replacestate
+				data-sveltekit-preload-data="hover"
+				class="flex w-full items-center rounded-lg px-3 py-2 text-left transition-all dark:hover:bg-white/10
+              {page.url.searchParams.has('archived')
+					? 'bg-primary-100 text-primary-700 dark:text-primary-200 font-medium dark:bg-transparent dark:outline dark:focus:underline  dark:focus:outline-gray-100'
+					: 'text-gray-700 hover:bg-white/50 dark:text-gray-200'}"
+				href={replaceQueryParam(page.url, ['favorite', 'category'], 'archived')}
 			>
 				<IconWorld class="mr-2 h-5 w-5" />
 				All Bookmarks
@@ -373,8 +399,11 @@
 					>
 						<a
 							data-sveltekit-replacestate
+							data-sveltekit-preload-data="hover"
 							class="flex flex-1 items-center"
-							href={replaceQueryParam(page.url, ['archived', 'favorite', 'category'], 'secret')}
+							href={page.url.searchParams.has('secret')
+								? replaceQueryParam(page.url, ['secret'], '')
+								: replaceQueryParam(page.url, ['archived', 'favorite', 'category'], 'secret')}
 						>
 							<IconLockOpen class="mr-2 h-5 w-5" />
 							Secrets

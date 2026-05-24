@@ -5,10 +5,9 @@
 	let challenge: StoredValue<string | undefined>;
 	let fallback: string = $state('');
 	let status = $state<'idle' | 'waiting' | 'error'>('idle');
+	let cleanup = () => {};
 
 	onMount(() => {
-		let cleanup = () => {};
-
 		storedValue<string | undefined>(challengeKey)
 			.then(async (value) => {
 				challenge = value;
@@ -28,6 +27,15 @@
 			cleanup();
 		};
 	});
+
+	async function reload() {
+		cleanup();
+		abortController = null;
+		await challenge.set(undefined);
+		fallback = '';
+		await startChallenge();
+		cleanup = tryAuthenticate();
+	}
 
 	async function startChallenge() {
 		if (challenge.get()) {
@@ -125,6 +133,9 @@
 		<p class="text-center text-sm text-red-600 dark:text-red-400">
 			Failed to start authentication. Please try again.
 		</p>
+		<button onclick={() => reload().catch(() => (status = 'error'))} class="button-primary mt-2">
+			Retry
+		</button>
 	{/if}
 
 	{#if fallback}

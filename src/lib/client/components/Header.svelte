@@ -110,7 +110,12 @@
 			{@render logo()}
 		</button>
 	{:else}
-		<a data-sveltekit-replacestate class="flex items-center justify-center" href="/">
+		<a
+			data-sveltekit-replacestate
+			class="flex items-center justify-center"
+			href="/"
+			data-sveltekit-preload-data="hover"
+		>
 			{@render logo()}
 		</a>
 	{/if}
@@ -183,6 +188,7 @@
 						{#each sortOptions as option}
 							<a
 								data-sveltekit-replacestate
+								data-sveltekit-preload-data="hover"
 								href={addQueryParam(page.url, 'order', option.value)}
 								class="flex items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-white/5
 									{currentSort === option.value
@@ -210,7 +216,13 @@
 	</div>
 
 	<div class="flex items-center justify-end gap-4">
-		<a href="/profile" aria-current={page.url.pathname === '/profile'} class="p-1" title="Profile">
+		<a
+			href="/profile"
+			data-sveltekit-preload-data="hover"
+			aria-current={page.url.pathname === '/profile'}
+			class="p-1"
+			title="Profile"
+		>
 			<IconUserCircle class="h-7 w-7 text-slate-500"></IconUserCircle>
 		</a>
 

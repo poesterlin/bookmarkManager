@@ -90,10 +90,11 @@
 			if (tabs.length === 0) return;
 			const tab = tabs[0];
 
-			// Grab all the tab details
 			url = tab.url ?? tab.pendingUrl;
 			title = tab.title;
 			faviconData = tab.favIconUrl;
+
+			autofill();
 		});
 
 		fetchTagsAndCategories();
