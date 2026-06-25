@@ -4,6 +4,7 @@
 	import { IconLock } from '@tabler/icons-svelte';
 	import Modal from './Modal.svelte';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		onClose: () => void;
@@ -11,6 +12,7 @@
 
 	let { onClose }: Props = $props();
 
+	let inputEl = $state<HTMLInputElement>();
 	let error = $state('');
 	let loading = $state(false);
 
@@ -27,6 +29,10 @@
 			}
 		};
 	};
+
+	$effect(() => {
+		inputEl?.focus();
+	});
 </script>
 
 <Modal {onClose}>
@@ -50,6 +56,7 @@
 				pattern="[0-9]*"
 				autocomplete="off"
 				placeholder="Enter PIN"
+				bind:this={inputEl}
 				class="focus:border-primary-500 focus:ring-primary-200 dark:focus:border-primary-400 w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-2xl tracking-widest focus:ring-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
 			/>
 			{#if error}
