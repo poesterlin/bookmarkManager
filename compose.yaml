@@ -15,6 +15,7 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.bookmarks.rule=Host(`${HOST_DOMAIN}`)'
+      - 'traefik.http.routers.bookmarks.priority=10'
       - 'traefik.http.services.bookmarks.loadbalancer.server.port=3000'
     networks:
       - traefik_web
