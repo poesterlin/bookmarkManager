@@ -8,6 +8,7 @@ export const POST: RequestHandler = async (event) => {
 
 	await auth.invalidateSession(event.locals.session.id);
 	auth.deleteSessionTokenCookie(event);
+	auth.deleteSecretSessionCookie(event);
 
 	return new Response(null, { status: 302, headers: { location: '/login' } });
 };

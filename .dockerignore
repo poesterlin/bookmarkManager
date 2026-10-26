@@ -1,0 +1,15 @@
+# secrets never belong in the image, runtime config comes from env_file
+.env
+.env.*
+!.env.example
+
+# installed / generated inside the image
+node_modules
+build
+.svelte-kit
+
+# not needed to build or run the server
+.git
+.github
+.vscode
+browser-extension

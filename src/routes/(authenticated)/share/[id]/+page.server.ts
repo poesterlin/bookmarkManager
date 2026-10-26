@@ -8,7 +8,7 @@ import {
 } from '$lib/server/db/schema';
 import { generateId, validateAuth, validateForm } from '$lib/server/util';
 import { error } from '@sveltejs/kit';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -76,8 +76,11 @@ export const actions: Actions = {
 				.where(
 					and(
 						eq(categoriesTable.userId, locals.user.id),
-						eq(categoriesTable.name, form.name)
-						// Exclude current category from check
+						eq(categoriesTable.name, form.name),
+						// names only have to be unique among siblings
+						category.parentId
+							? eq(categoriesTable.parentId, category.parentId)
+							: isNull(categoriesTable.parentId)
 					)
 				)
 				.limit(1);
@@ -124,6 +127,18 @@ export const actions: Actions = {
 				error(400, 'Cannot delete collection with active shares. Please revoke all shares first.');
 			}
 
+			// Sub-categories are deleted by the cascade together with their bookmarks, so the chosen
+			// bookmark action has to cover them as well.
+			const children = await db
+				.select({ id: categoriesTable.id })
+				.from(categoriesTable)
+				.where(eq(categoriesTable.parentId, category.id));
+			const categoryIds = [category.id, ...children.map((c) => c.id)];
+			const inCollection = and(
+				eq(bookmarksTable.userId, locals.user.id),
+				inArray(bookmarksTable.category, categoryIds)
+			);
+
 			await db.transaction(async (tx) => {
 				if (form.deleteMode === 'collection-only') {
 					// Handle bookmarks based on user choice
@@ -132,44 +147,20 @@ export const actions: Actions = {
 						await tx
 							.update(bookmarksTable)
 							.set({ category: null, updatedAt: new Date() })
-							.where(
-								and(
-									eq(bookmarksTable.userId, locals.user.id),
-									eq(bookmarksTable.category, event.params.id)
-								)
-							);
+							.where(inCollection);
 					} else if (form.bookmarkAction === 'archive') {
 						// Soft delete by setting deletedAt
 						await tx
 							.update(bookmarksTable)
 							.set({ deletedAt: new Date(), updatedAt: new Date() })
-							.where(
-								and(
-									eq(bookmarksTable.userId, locals.user.id),
-									eq(bookmarksTable.category, event.params.id)
-								)
-							);
+							.where(inCollection);
 					} else if (form.bookmarkAction === 'delete') {
 						// Hard delete bookmarks
-						await tx
-							.delete(bookmarksTable)
-							.where(
-								and(
-									eq(bookmarksTable.userId, locals.user.id),
-									eq(bookmarksTable.category, event.params.id)
-								)
-							);
+						await tx.delete(bookmarksTable).where(inCollection);
 					}
 				} else {
 					// with-bookmarks: delete all bookmarks
-					await tx
-						.delete(bookmarksTable)
-						.where(
-							and(
-								eq(bookmarksTable.userId, locals.user.id),
-								eq(bookmarksTable.category, event.params.id)
-							)
-						);
+					await tx.delete(bookmarksTable).where(inCollection);
 				}
 
 				// Delete the category
@@ -205,25 +196,13 @@ export const actions: Actions = {
 					.from(bookmarksTable)
 					.where(eq(bookmarksTable.fromShareId, form.id));
 
-				if (bookmarks.length > 0) {
-					// add a copy to the creators bookmarks. This will remove the foreign Tags.
-					await tx.insert(bookmarksTable).values(
-						bookmarks.map((bookmark) => ({
-							id: generateId(),
-							userId: bookmark.userId,
-							url: bookmark.url,
-							title: bookmark.title,
-							createdAt: bookmark.createdAt,
-							updatedAt: bookmark.updatedAt,
-							deletedAt: form.archive ? new Date() : null
-						}))
-					);
-
-					// create a category for the participant so they don't loose their contributed bookmarks
+				if (bookmarks.length > 0 && sharingCategory.shared_categories.userId) {
+					// The participant keeps their bookmarks: they are moved into a new category of
+					// their own (tags stay, they belong to the participant).
 					const newCategoryId = generateId();
 					await tx.insert(categoriesTable).values({
 						id: newCategoryId,
-						userId: sharingCategory.userId,
+						userId: sharingCategory.shared_categories.userId,
 						name: sharingCategory.categories.name
 					});
 
@@ -235,6 +214,28 @@ export const actions: Actions = {
 							category: newCategoryId
 						})
 						.where(eq(bookmarksTable.fromShareId, form.id));
+
+					// The collection keeps a copy owned by the collection owner, optionally archived.
+					// Secret bookmarks were never visible to the owner and are not copied.
+					const copies = bookmarks.filter((bookmark) => !bookmark.isSecret);
+					if (copies.length > 0) {
+						await tx.insert(bookmarksTable).values(
+							copies.map((bookmark) => ({
+								id: generateId(),
+								userId: locals.user.id,
+								category: sharingCategory.categories.id,
+								url: bookmark.url,
+								title: bookmark.title,
+								description: bookmark.description,
+								favicon: bookmark.favicon,
+								theme: bookmark.theme,
+								createdAt: bookmark.createdAt,
+								updatedAt: new Date(),
+								deletedAt: form.archive ? new Date() : bookmark.deletedAt,
+								isSecret: false
+							}))
+						);
+					}
 				}
 
 				await tx.delete(sharedCategoriesTable).where(eq(sharedCategoriesTable.id, form.id));

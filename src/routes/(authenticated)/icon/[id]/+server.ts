@@ -21,16 +21,31 @@ export const GET: RequestHandler = async (event) => {
 		return new Response('Bookmark not found', { status: 404 });
 	}
 
+	if (!URL.canParse(bookmark.url)) {
+		return new Response('Invalid bookmark URL', { status: 400 });
+	}
+
 	const size = 32;
 	const origin = new URL(bookmark.url).origin;
 	const url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(origin)}&sz=${size}`;
 
-	const res = await fetch(url.toString(), { method: 'GET' });
-	const clone = res.clone();
-	if (!clone.ok) {
+	let res: Response;
+	try {
+		res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+	} catch {
+		return new Response('Failed to fetch favicon', { status: 502 });
+	}
+	if (!res.ok) {
 		return new Response('Failed to fetch favicon', { status: 404 });
 	}
-	clone.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
 
-	return clone;
+	// fetch() response headers are immutable, and forwarding them all would also pass on
+	// content-encoding/length of the upstream response
+	return new Response(res.body, {
+		headers: {
+			'Content-Type': res.headers.get('content-type') ?? 'image/png',
+			// the endpoint needs auth, so only the browser may cache it
+			'Cache-Control': 'private, max-age=604800'
+		}
+	});
 };

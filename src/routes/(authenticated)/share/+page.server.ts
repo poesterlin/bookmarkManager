@@ -39,7 +39,7 @@ export const load: PageServerLoad = async (event) => {
 		error(404, 'Not found');
 	}
 
-	if (sharingCategory.userId === locals.user.id) {
+	if (sharingCategory.userId === locals.user.id || sharingCategory.owner === locals.user.username) {
 		redirect(302, '/');
 	}
 
@@ -50,7 +50,11 @@ export const load: PageServerLoad = async (event) => {
 	const bookmarks = await db
 		.select({
 			...getTableColumns(bookmarksTable),
-			tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`.as('tags'),
+			tags: sql<
+				Tag[]
+			>`coalesce(json_agg(json_build_object('name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL), '[]')`.as(
+				'tags'
+			),
 			category: sql<Category>`json_build_object('name', ${categoriesTable.name})`.as('category')
 		})
 		.from(bookmarksTable)
@@ -59,7 +63,11 @@ export const load: PageServerLoad = async (event) => {
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.where(
-			and(eq(categoriesTable.id, sharingCategory.categoryId), isNull(bookmarksTable.deletedAt))
+			and(
+				eq(categoriesTable.id, sharingCategory.categoryId),
+				isNull(bookmarksTable.deletedAt),
+				eq(bookmarksTable.isSecret, false)
+			)
 		)
 		.limit(6);
 
@@ -83,11 +91,37 @@ export const actions: Actions = {
 			error(404, 'Not found');
 		}
 
-		if (sharingCategory.userId !== locals.user.id) {
+		if (sharingCategory.userId === locals.user.id || sharingCategory.owner === locals.user.id) {
+			redirect(302, '/');
+		}
+
+		// an invite can only be claimed once
+		if (sharingCategory.userId) {
+			error(400, 'This invite has already been used');
+		}
+
+		const [alreadyShared] = await db
+			.select({ id: sharedCategoriesTable.id })
+			.from(sharedCategoriesTable)
+			.where(
+				and(
+					eq(sharedCategoriesTable.categoryId, sharingCategory.categoryId),
+					eq(sharedCategoriesTable.userId, locals.user.id)
+				)
+			)
+			.limit(1);
+
+		if (!alreadyShared) {
+			// the userId check makes concurrent claims of the same invite safe
 			await db
 				.update(sharedCategoriesTable)
 				.set({ userId: locals.user.id })
-				.where(eq(sharedCategoriesTable.id, sharingCategory.id));
+				.where(
+					and(
+						eq(sharedCategoriesTable.id, sharingCategory.id),
+						isNull(sharedCategoriesTable.userId)
+					)
+				);
 		}
 
 		redirect(302, '/');

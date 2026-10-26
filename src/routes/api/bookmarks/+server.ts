@@ -1,10 +1,11 @@
 import { formatZodError } from '$lib/server/api';
 import { corsHeaders, getCorsResponse, validateAuthHeader } from '$lib/server/auth';
 import { createBookmark } from '$lib/server/bookmark';
+import { parseTags } from '$lib/server/util';
 import { db } from '$lib/server/db';
 import { bookmarksTable, bookmarkTags, categoriesTable, tagsTable } from '$lib/server/db/schema';
 import { json } from '@sveltejs/kit';
-import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
@@ -17,10 +18,7 @@ const schema = z.object({
 	}, z.string().url()),
 	category: z.string().optional(),
 	newCategory: z.string().optional(),
-	tags: z
-		.string()
-		.optional()
-		.transform((val) => val?.split(',') ?? []),
+	tags: z.string().optional().transform(parseTags),
 	description: z.string().optional(),
 	theme: z.string().optional(),
 	favicon: z.string().optional()
@@ -34,7 +32,7 @@ export const GET: RequestHandler = async (event) => {
 			...getTableColumns(bookmarksTable),
 			tags: sql<
 				any[]
-			>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL)`.as(
+			>`coalesce(json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL), '[]')`.as(
 				'tags'
 			),
 			category:
@@ -48,7 +46,13 @@ export const GET: RequestHandler = async (event) => {
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
 		.groupBy(bookmarksTable.id, categoriesTable.id)
 		.orderBy(desc(bookmarksTable.createdAt))
-		.where(and(eq(bookmarksTable.userId, user.id), eq(bookmarksTable.isSecret, false)))
+		.where(
+			and(
+				eq(bookmarksTable.userId, user.id),
+				eq(bookmarksTable.isSecret, false),
+				isNull(bookmarksTable.deletedAt)
+			)
+		)
 		.limit(100);
 
 	return json({ bookmarks }, { headers: corsHeaders });
@@ -57,7 +61,7 @@ export const GET: RequestHandler = async (event) => {
 export const POST: RequestHandler = async (event) => {
 	const { user } = await validateAuthHeader(event);
 
-	const body = await event.request.json();
+	const body = await event.request.json().catch(() => null);
 	const parsed = schema.safeParse(body);
 
 	if (!parsed.success) {

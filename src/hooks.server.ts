@@ -27,24 +27,8 @@ const handleAuth: Handle = async ({ event, resolve }) => {
 		event.locals.user = user;
 		event.locals.session = session;
 
-		const secretToken = event.cookies.get(auth.secretSessionCookieName);
-		if (session && user && secretToken) {
-			const { db } = await import('$lib/server/db');
-			const { usersTable } = await import('$lib/server/db/schema');
-			const { eq } = await import('drizzle-orm');
-			const [userRecord] = await db
-				.select({ secretPinHash: usersTable.secretPinHash })
-				.from(usersTable)
-				.where(eq(usersTable.id, user.id))
-				.limit(1);
-			event.locals.secretUnlocked = auth.validateSecretSessionToken(
-				secretToken,
-				user.id,
-				userRecord?.secretPinHash ?? null
-			);
-		} else {
-			event.locals.secretUnlocked = false;
-		}
+		event.locals.secretUnlocked =
+			session && user ? await auth.isSecretUnlocked(event, user.id) : false;
 	} catch {
 		event.locals.user = null;
 		event.locals.session = null;

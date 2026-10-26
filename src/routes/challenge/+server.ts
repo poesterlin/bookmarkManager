@@ -45,9 +45,9 @@ export const GET: RequestHandler = async (event) => {
 		return json({ error: 'No token provided' }, { status: 400, headers });
 	}
 
+	// consume the token atomically so it can only be redeemed once
 	const [challenge] = await db
-		.select()
-		.from(challengeTokenTable)
+		.delete(challengeTokenTable)
 		.where(
 			and(
 				eq(challengeTokenTable.id, token),
@@ -56,7 +56,7 @@ export const GET: RequestHandler = async (event) => {
 				gt(challengeTokenTable.expiresAt, new Date())
 			)
 		)
-		.limit(1);
+		.returning();
 
 	if (!challenge || !challenge.userId) {
 		return json({ error: 'Invalid token' }, { status: 400, headers });
@@ -65,9 +65,6 @@ export const GET: RequestHandler = async (event) => {
 	const sessionToken = auth.generateSessionToken();
 	const session = await auth.createSession(sessionToken, challenge.userId);
 	auth.setSessionTokenCookie(event, sessionToken, session.expiresAt);
-
-	// delete token after use
-	await db.delete(challengeTokenTable).where(eq(challengeTokenTable.id, token));
 
 	return json(
 		{

@@ -1,4 +1,4 @@
-import { createBookmark } from '$lib/server/bookmark';
+import { createBookmark, findOrCreateCategory, resolveCategory } from '$lib/server/bookmark';
 import { db } from '$lib/server/db';
 import {
 	bookmarksTable,
@@ -10,10 +10,16 @@ import {
 	type Category,
 	type Tag
 } from '$lib/server/db/schema';
-import { generateId, validateAuth, validateForm, validateOptions } from '$lib/server/util';
+import {
+	generateId,
+	parseTags,
+	validateAuth,
+	validateForm,
+	validateOptions
+} from '$lib/server/util';
 import * as auth from '$lib/server/auth';
 import { error, redirect, fail } from '@sveltejs/kit';
-import { hash, verify } from '@node-rs/argon2';
+import { hash } from '@node-rs/argon2';
 import {
 	and,
 	asc,
@@ -189,6 +195,7 @@ export const load: PageServerLoad = async (event) => {
 					order,
 					locals.user.id,
 					sharedCategory.owner,
+					locals.secretUnlocked,
 					options.archived,
 					options.tag
 				)
@@ -288,10 +295,7 @@ export const actions: Actions = {
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
 			parentCategoryId: z.string().optional(),
-			tags: z
-				.string()
-				.optional()
-				.transform((val) => val?.split(',') ?? []),
+			tags: z.string().optional().transform(parseTags),
 			description: z.string().optional(),
 			theme: z.string().optional(),
 			favicon: z.string().optional(),
@@ -314,14 +318,11 @@ export const actions: Actions = {
 				if (val && !/^https?:\/\//i.test(val)) return `https://${val}`;
 				return val;
 			}, z.string().url()),
-			title: z.string().min(1).max(100),
+			title: z.string().min(1).max(500),
 			category: z.string().optional(),
 			newCategory: z.string().optional(),
 			parentCategoryId: z.string().optional(),
-			tags: z
-				.string()
-				.optional()
-				.transform((val) => val?.split(',').filter(Boolean) ?? []),
+			tags: z.string().optional().transform(parseTags),
 			description: z.string().optional(),
 			isSecret: z
 				.string()
@@ -342,93 +343,17 @@ export const actions: Actions = {
 				error(404, 'Bookmark not found or not owned by user');
 			}
 
-			// 2. Check if category exists and belongs to user
-			if (form.category) {
-				let [category] = await db
-					.select({ id: categoriesTable.id })
-					.from(categoriesTable)
-					.where(
-						and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
-					)
-					.limit(1);
-
-				if (!category) {
-					let sharedCategoryResults = await db
-						.select({ id: sharedCategoriesTable.categoryId })
-						.from(sharedCategoriesTable)
-						.where(
-							and(
-								eq(sharedCategoriesTable.userId, locals.user.id),
-								eq(sharedCategoriesTable.categoryId, form.category)
-							)
-						)
-						.limit(1);
-
-					if (sharedCategoryResults.length > 0) {
-						category = sharedCategoryResults[0];
-					}
-
-					if (!category) {
-						error(404, 'Category not found or not owned by user');
-					}
-				}
+			// 2. Resolve the target category. Shared collections are referenced by their share id.
+			let categoryId: string | null = null;
+			let fromShareId: string | null = null;
+			const newCategory = form.newCategory?.trim();
+			if (newCategory) {
+				categoryId = await findOrCreateCategory(locals.user, newCategory, form.parentCategoryId);
+			} else if (form.category) {
+				({ categoryId, fromShareId } = await resolveCategory(locals.user, form.category));
 			}
 
 			await db.transaction(async (tx) => {
-				let categoryId: string | null = null; // Use null to remove category
-
-				if (form.newCategory) {
-					// User wants to create/assign a new category
-					const parentFilter = form.parentCategoryId
-						? eq(categoriesTable.parentId, form.parentCategoryId)
-						: isNull(categoriesTable.parentId);
-
-					const [existingCategory] = await tx
-						.select({ id: categoriesTable.id })
-						.from(categoriesTable)
-						.where(
-							and(
-								eq(categoriesTable.userId, locals.user.id),
-								eq(categoriesTable.name, form.newCategory),
-								parentFilter
-							)
-						)
-						.limit(1);
-
-					if (existingCategory) {
-						categoryId = existingCategory.id;
-					} else {
-						categoryId = generateId();
-						await tx.insert(categoriesTable).values({
-							id: categoryId,
-							name: form.newCategory,
-							userId: locals.user.id,
-							parentId: form.parentCategoryId || null
-						});
-					}
-				} else if (form.category) {
-					// User selected an existing category
-					const [category] = await tx
-						.select({ id: categoriesTable.id })
-						.from(categoriesTable)
-						.where(
-							and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
-						)
-						.limit(1);
-
-					if (category) {
-						categoryId = category.id;
-					} else {
-						// Category ID provided but not found/valid for user
-						// Set to null or throw error depending on desired behavior
-						console.warn(
-							`Update: Category ID ${form.category} not found for user ${locals.user.id}`
-						);
-						categoryId = null;
-					}
-				}
-				// If neither newCategory nor category is provided, categoryId remains null
-
 				// 3. Update Bookmark Details
 				await tx
 					.update(bookmarksTable)
@@ -437,6 +362,7 @@ export const actions: Actions = {
 						title: form.title,
 						description: form.description,
 						category: categoryId,
+						fromShareId,
 						updatedAt: new Date(),
 						isSecret: form.isSecret ?? false
 					})
@@ -624,45 +550,13 @@ export const actions: Actions = {
 				error(404, { message: 'Bookmark not found' });
 			}
 
-			let [category] = await db
-				.select({ id: categoriesTable.id })
-				.from(categoriesTable)
-				.where(
-					and(eq(categoriesTable.userId, locals.user.id), eq(categoriesTable.id, form.category))
-				)
-				.limit(1);
-
-			if (!category) {
-				let [sharedCategory] = await db
-					.select({
-						categoryId: sharedCategoriesTable.categoryId,
-						allowWriteAccess: sharedCategoriesTable.allowWriteAccess
-					})
-					.from(sharedCategoriesTable)
-					.where(
-						and(
-							eq(sharedCategoriesTable.userId, locals.user.id),
-							eq(sharedCategoriesTable.id, form.category)
-						)
-					)
-					.limit(1);
-
-				if (sharedCategory) {
-					if (!sharedCategory.allowWriteAccess) {
-						error(403, 'You do not have write access to this collection');
-					}
-					category = { id: sharedCategory.categoryId };
-				}
-
-				if (!category) {
-					error(404, 'Category not found or not owned by user');
-				}
-			}
+			const { categoryId, fromShareId } = await resolveCategory(locals.user, form.category);
 
 			await db
 				.update(bookmarksTable)
 				.set({
-					category: category.id,
+					category: categoryId,
+					fromShareId,
 					updatedAt: new Date()
 				})
 				.where(eq(bookmarksTable.id, form.bookmark));
@@ -674,7 +568,7 @@ export const actions: Actions = {
 		const formData = await event.request.formData();
 		const pin = formData.get('pin')?.toString() ?? '';
 
-		if (pin.length < 4 || pin.length > 6) {
+		if (!/^\d{4,6}$/.test(pin)) {
 			return fail(400, { error: 'PIN must be 4-6 digits' });
 		}
 
@@ -688,15 +582,9 @@ export const actions: Actions = {
 			return fail(400, { error: 'No PIN has been set' });
 		}
 
-		const validPin = await verify(userRecord.secretPinHash, pin, {
-			memoryCost: 19456,
-			timeCost: 2,
-			outputLen: 32,
-			parallelism: 1
-		});
-
-		if (!validPin) {
-			return fail(401, { error: 'Incorrect PIN' });
+		const pinError = await auth.verifySecretPin(locals.user.id, userRecord.secretPinHash, pin);
+		if (pinError) {
+			return fail(401, { error: pinError });
 		}
 
 		const token = auth.createSecretSessionToken(locals.user.id, userRecord.secretPinHash);
@@ -713,7 +601,7 @@ export const actions: Actions = {
 
 	'set-pin': validateForm(
 		z.object({
-			pin: z.string().min(4).max(6),
+			pin: z.string().regex(/^\d{4,6}$/, 'PIN must be 4-6 digits'),
 			currentPin: z.string().optional()
 		}),
 		async (event, form) => {
@@ -729,23 +617,17 @@ export const actions: Actions = {
 				if (!form.currentPin) {
 					error(400, 'Current PIN is required to change it');
 				}
-				const validPin = await verify(userRecord.secretPinHash, form.currentPin, {
-					memoryCost: 19456,
-					timeCost: 2,
-					outputLen: 32,
-					parallelism: 1
-				});
-				if (!validPin) {
-					error(401, 'Current PIN is incorrect');
+				const pinError = await auth.verifySecretPin(
+					locals.user.id,
+					userRecord.secretPinHash,
+					form.currentPin
+				);
+				if (pinError) {
+					error(401, pinError);
 				}
 			}
 
-			const newPinHash = await hash(form.pin, {
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			});
+			const newPinHash = await hash(form.pin, auth.argon2Options);
 
 			await db
 				.update(usersTable)
@@ -767,11 +649,16 @@ async function getSharedBookmarks(
 	order: SQL<unknown>,
 	viewerId: string,
 	ownerId: string,
+	secretUnlocked: boolean,
 	showArchived?: boolean,
 	tagId?: string
 ) {
 	const sharedFilters = [
 		eq(categoriesTable.id, categoryId),
+		// secret bookmarks are only ever visible to their owner, and only while unlocked
+		secretUnlocked
+			? or(eq(bookmarksTable.isSecret, false), eq(bookmarksTable.userId, viewerId))
+			: eq(bookmarksTable.isSecret, false),
 		showArchived ? isNotNull(bookmarksTable.deletedAt) : isNull(bookmarksTable.deletedAt),
 		...(tagId
 			? [
@@ -790,7 +677,11 @@ async function getSharedBookmarks(
 	return db
 		.select({
 			...getTableColumns(bookmarksTable),
-			tags: sql<Tag[]>`json_agg(json_build_object('name', ${tagsTable.name}))`.as('tags'),
+			tags: sql<
+				Tag[]
+			>`coalesce(json_agg(json_build_object('name', ${tagsTable.name})) FILTER (WHERE ${tagsTable.id} IS NOT NULL), '[]')`.as(
+				'tags'
+			),
 			category: sql<Category>`json_build_object('name', ${categoriesTable.name})`.as('category'),
 			canEdit: sql<boolean>`${bookmarksTable.userId} = ${viewerId}`,
 			canArchive: sql<boolean>`${bookmarksTable.userId} = ${viewerId} OR ${viewerId} = ${ownerId}`
@@ -813,7 +704,7 @@ function getBookmarks(filters: SQL<unknown>[], order: SQL<unknown>, userId: stri
 			...getTableColumns(bookmarksTable),
 			tags: sql<
 				Tag[]
-			>`json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}, 'shared', ${tagsTable.userId} != ${userId}))`.as(
+			>`coalesce(json_agg(json_build_object('id', ${tagsTable.id},'name', ${tagsTable.name}, 'shared', ${tagsTable.userId} != ${userId})) FILTER (WHERE ${tagsTable.id} IS NOT NULL), '[]')`.as(
 				'tags'
 			),
 			category:

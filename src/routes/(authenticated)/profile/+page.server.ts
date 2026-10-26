@@ -4,9 +4,9 @@ import { assert, validateAuth, validateForm } from '$lib/server/util';
 import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { hash, verify } from '@node-rs/argon2';
+import { hash } from '@node-rs/argon2';
 import { z } from 'zod';
-import { deleteSecretSessionCookie } from '$lib/server/auth';
+import { argon2Options, deleteSecretSessionCookie, verifySecretPin } from '$lib/server/auth';
 
 export const load: PageServerLoad = async (event) => {
 	const locals = validateAuth(event);
@@ -42,7 +42,7 @@ export const actions: Actions = {
 
 	'set-pin': validateForm(
 		z.object({
-			pin: z.string().min(4).max(6),
+			pin: z.string().regex(/^\d{4,6}$/, 'PIN must be 4-6 digits'),
 			currentPin: z.string().optional()
 		}),
 		async (event, form) => {
@@ -58,23 +58,17 @@ export const actions: Actions = {
 				if (!form.currentPin) {
 					return { success: false, error: 'Current PIN is required to change it' };
 				}
-				const validPin = await verify(userRecord.secretPinHash, form.currentPin, {
-					memoryCost: 19456,
-					timeCost: 2,
-					outputLen: 32,
-					parallelism: 1
-				});
-				if (!validPin) {
-					return { success: false, error: 'Current PIN is incorrect' };
+				const pinError = await verifySecretPin(
+					locals.user.id,
+					userRecord.secretPinHash,
+					form.currentPin
+				);
+				if (pinError) {
+					return { success: false, error: pinError };
 				}
 			}
 
-			const newPinHash = await hash(form.pin, {
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			});
+			const newPinHash = await hash(form.pin, argon2Options);
 
 			await db
 				.update(usersTable)
@@ -104,15 +98,13 @@ export const actions: Actions = {
 				return { success: false, error: 'No PIN is set' };
 			}
 
-			const validPin = await verify(userRecord.secretPinHash, form.currentPin, {
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			});
-
-			if (!validPin) {
-				return { success: false, error: 'Current PIN is incorrect' };
+			const pinError = await verifySecretPin(
+				locals.user.id,
+				userRecord.secretPinHash,
+				form.currentPin
+			);
+			if (pinError) {
+				return { success: false, error: pinError };
 			}
 
 			await db

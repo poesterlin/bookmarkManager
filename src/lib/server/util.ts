@@ -16,6 +16,28 @@ export function validateUsername(username: unknown): username is string {
 	);
 }
 
+/**
+ * Turn the `redirect` form field (e.g. `?redirect=/foo`) into a safe same-origin path.
+ * Anything that is not a plain absolute path (`//evil.com`, `/\\evil.com`, `https://...`)
+ * falls back to `/`.
+ */
+export function safeRedirectPath(search: string | undefined): string {
+	if (!search) return '/';
+	const target = new URLSearchParams(search.replace(/^\?/, '')).get('redirect');
+	if (!target || !target.startsWith('/') || target.startsWith('//') || target.includes('\\')) {
+		return '/';
+	}
+	return target;
+}
+
+/**
+ * Split a comma separated tag list into unique, trimmed, non-empty tag names.
+ */
+export function parseTags(value: string | undefined): string[] {
+	if (!value) return [];
+	return [...new Set(value.split(',').map((tag) => tag.trim()))].filter(Boolean);
+}
+
 export function validatePassword(password: unknown): password is string {
 	return typeof password === 'string' && password.length >= 6 && password.length <= 255;
 }

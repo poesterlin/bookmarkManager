@@ -1,12 +1,18 @@
 import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { validateForm, validatePassword, validateUsername } from '$lib/server/util';
+import {
+	safeRedirectPath,
+	validateForm,
+	validatePassword,
+	validateUsername
+} from '$lib/server/util';
 import { verify } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 import { z } from 'zod';
+import { loginLimiter } from '$lib/server/rate-limit';
 
 export const load: PageServerLoad = async (event) => {
 	if (event.locals.user) {
@@ -39,6 +45,14 @@ export const actions: Actions = {
 				});
 			}
 
+			const limiterKey = username.toLowerCase();
+			const retryAfter = loginLimiter.retryAfter(limiterKey);
+			if (retryAfter > 0) {
+				return fail(429, {
+					message: `Too many failed logins. Please try again in ${Math.ceil(retryAfter / 60)} minutes.`
+				});
+			}
+
 			const results = await db
 				.select()
 				.from(table.usersTable)
@@ -46,24 +60,23 @@ export const actions: Actions = {
 
 			const existingUser = results.at(0);
 			if (!existingUser) {
+				loginLimiter.fail(limiterKey);
 				return fail(400, {
 					message:
 						"Oh no! We couldn't find that username or password. Please double-check and try again! 🌟"
 				});
 			}
 
-			const validPassword = await verify(existingUser.passwordHash, password, {
-				memoryCost: 19456,
-				timeCost: 2,
-				outputLen: 32,
-				parallelism: 1
-			});
+			const validPassword = await verify(existingUser.passwordHash, password, auth.argon2Options);
 			if (!validPassword) {
+				loginLimiter.fail(limiterKey);
 				return fail(400, {
 					message:
 						"Oh no! We couldn't find that username or password. Please double-check and try again! 🌟"
 				});
 			}
+
+			loginLimiter.reset(limiterKey);
 
 			const sessionToken = auth.generateSessionToken();
 			const session = await auth.createSession(sessionToken, existingUser.id);
@@ -74,16 +87,7 @@ export const actions: Actions = {
 				.set({ lastLogin: new Date() })
 				.where(eq(table.usersTable.id, existingUser.id));
 
-			let to = '/';
-			const redirectUrl = 'http://t' + form.redirect;
-			try {
-				const url = new URL(redirectUrl);
-				to = url.searchParams.get('redirect') || '/';
-			} catch {
-				// noop
-			}
-
-			return redirect(302, to);
+			return redirect(302, safeRedirectPath(form.redirect));
 		}
 	)
 };

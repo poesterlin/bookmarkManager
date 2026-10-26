@@ -7,11 +7,12 @@ import { validateAuth } from '$lib/server/util';
 interface BookmarkExportOptions {
 	folderName: string;
 	userId: string;
+	includeSecret: boolean;
 	fetch: typeof fetch;
 }
 
 async function exportBookmarksToHTML(options: BookmarkExportOptions) {
-	const { folderName, userId, fetch } = options;
+	const { folderName, userId, includeSecret, fetch } = options;
 
 	// Get current timestamp in seconds
 	const currentTimestamp = Math.floor(Date.now() / 1000);
@@ -28,7 +29,33 @@ async function exportBookmarksToHTML(options: BookmarkExportOptions) {
 		})
 		.from(bookmarksTable)
 		.leftJoin(categoriesTable, eq(bookmarksTable.category, categoriesTable.id))
-		.where(and(eq(bookmarksTable.userId, userId), isNull(bookmarksTable.deletedAt)));
+		.where(
+			and(
+				eq(bookmarksTable.userId, userId),
+				isNull(bookmarksTable.deletedAt),
+				includeSecret ? undefined : eq(bookmarksTable.isSecret, false)
+			)
+		);
+
+	// fetch icons concurrently instead of one request per bookmark in sequence
+	const icons = new Map<string, string>();
+	const withIcon = bookmarksList.filter((bookmark) => bookmark.favicon);
+	const concurrency = 8;
+	for (let i = 0; i < withIcon.length; i += concurrency) {
+		await Promise.all(
+			withIcon.slice(i, i + concurrency).map(async (bookmark) => {
+				try {
+					const res = await fetch(`/icon/${bookmark.id}`);
+					if (!res.ok) return;
+					const type = res.headers.get('content-type') ?? 'image/png';
+					const buffer = Buffer.from(await res.arrayBuffer());
+					icons.set(bookmark.id, `data:${type};base64,${buffer.toString('base64')}`);
+				} catch {
+					// export without icon
+				}
+			})
+		);
+	}
 
 	// Start building the HTML content
 	const htmlParts = [
@@ -37,7 +64,7 @@ async function exportBookmarksToHTML(options: BookmarkExportOptions) {
 		`<TITLE>Bookmarks</TITLE>`,
 		`<H1>Bookmarks</H1>`,
 		'<DL><p>',
-		`    <DT><H3 ADD_DATE="${currentTimestamp}" LAST_MODIFIED="${currentTimestamp}" PERSONAL_TOOLBAR_FOLDER="true">${folderName}</H3>`,
+		`    <DT><H3 ADD_DATE="${currentTimestamp}" LAST_MODIFIED="${currentTimestamp}" PERSONAL_TOOLBAR_FOLDER="true">${escapeHTML(folderName)}</H3>`,
 		'    <DL><p>'
 	];
 
@@ -59,7 +86,7 @@ async function exportBookmarksToHTML(options: BookmarkExportOptions) {
 		// Add category folder if it's not "Uncategorized"
 		if (category) {
 			htmlParts.push(
-				`        <DT><H3 ADD_DATE="${currentTimestamp}">${category}</H3>`,
+				`        <DT><H3 ADD_DATE="${currentTimestamp}">${escapeHTML(category)}</H3>`,
 				'        <DL><p>'
 			);
 		}
@@ -68,17 +95,8 @@ async function exportBookmarksToHTML(options: BookmarkExportOptions) {
 		for (const bookmark of categoryBookmarks) {
 			const createdTimestamp = Math.floor(new Date(bookmark.createdAt).getTime() / 1000);
 
-			// Fetch the icon if it exists
-			let iconAttr = '';
-			if (bookmark.favicon) {
-				const res = await fetch(`/icon/${bookmark.id}`);
-
-				if (res.ok) {
-					const arrayBuffer = await res.arrayBuffer();
-					const buffer = Buffer.from(arrayBuffer);
-					iconAttr = ` ICON="${buffer.toString('base64')}"`;
-				}
-			}
+			const icon = icons.get(bookmark.id);
+			const iconAttr = icon ? ` ICON="${icon}"` : '';
 
 			htmlParts.push(
 				`            <DT><A HREF="${escapeHTML(bookmark.url)}" ADD_DATE="${createdTimestamp}"${iconAttr}>${escapeHTML(
@@ -117,12 +135,13 @@ export const GET: RequestHandler = async (event) => {
 	const result = await exportBookmarksToHTML({
 		folderName: 'Bookmarks Toolbar',
 		userId: locals.user.id,
+		includeSecret: locals.secretUnlocked,
 		fetch
 	});
 
 	return new Response(result, {
 		headers: {
-			'Content-Type': 'text/html',
+			'Content-Type': 'text/html; charset=utf-8',
 			'Content-Disposition': `attachment; filename=bookmarks.html`
 		}
 	});

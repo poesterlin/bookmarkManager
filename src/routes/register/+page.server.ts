@@ -1,7 +1,13 @@
 import * as auth from '$lib/server/auth';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
-import { generateId, validateForm, validatePassword, validateUsername } from '$lib/server/util';
+import {
+	generateId,
+	safeRedirectPath,
+	validateForm,
+	validatePassword,
+	validateUsername
+} from '$lib/server/util';
 import { hash } from '@node-rs/argon2';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -123,16 +129,7 @@ export const actions: Actions = {
 				});
 			}
 
-			let to = '/';
-			const redirectUrl = 'http://t' + form.redirect;
-			try {
-				const url = new URL(redirectUrl);
-				to = url.searchParams.get('redirect') ?? '/';
-			} catch {
-				// ignore
-			}
-
-			return redirect(302, to);
+			return redirect(302, safeRedirectPath(form.redirect));
 		}
 	)
 };

@@ -22,7 +22,7 @@
 	let deletedIds = $state(new Set<string>());
 
 	let list = $derived.by(() => {
-		const source = searchStore.isSet() ? searchStore.results : bookmarks;
+		const source = searchStore.active && searchStore.results ? searchStore.results : bookmarks;
 		return source.filter((b) => !deletedIds.has(b.id));
 	});
 	let selectedCategoryId = $derived(page.url.searchParams.get('category'));
@@ -53,7 +53,29 @@
 />
 
 <div class="fade-in space-y-4">
-	{#if bookmarks.length === 0}
+	{#if searchStore.active && searchStore.results}
+		<p class="text-sm text-gray-500 dark:text-gray-400" aria-live="polite">
+			{#if list.length === 0}
+				No bookmarks found for <q class="font-medium">{searchStore.query.trim()}</q>.
+			{:else}
+				{list.length}{list.length === 50 ? '+' : ''}
+				{list.length === 1 ? 'result' : 'results'} for
+				<q class="font-medium">{searchStore.query.trim()}</q>
+			{/if}
+		</p>
+		{#if list.length > 0}
+			<div class="grid-cols-cards grid gap-4">
+				{#each list as bookmark (bookmark.id)}
+					<div
+						class="glass row-span-3 grid grid-rows-subgrid rounded-xl p-4 transition-all duration-300 hover:shadow-xl"
+						animate:flip={{ duration: 250 }}
+					>
+						<BookmarkCard {bookmark} ondeleted={(id) => deletedIds.add(id)} />
+					</div>
+				{/each}
+			</div>
+		{/if}
+	{:else if bookmarks.length === 0}
 		<EmptyState {addBookmark} subcategories={categoryChildren} {selectedCategoryName} />
 	{:else}
 		<div class="grid-cols-cards grid gap-4">

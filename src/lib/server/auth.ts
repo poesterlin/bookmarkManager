@@ -1,11 +1,22 @@
 import { error, type RequestEvent } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
+import { timingSafeEqual } from 'node:crypto';
+import { verify } from '@node-rs/argon2';
 import { sha256 } from '@oslojs/crypto/sha2';
 import { encodeBase64url, encodeHexLowerCase } from '@oslojs/encoding';
 import { db } from '$lib/server/db';
 import * as table from '$lib/server/db/schema';
+import { pinLimiter } from '$lib/server/rate-limit';
 
 const DAY_IN_MS = 1000 * 60 * 60 * 24;
+const SECRET_UNLOCK_MS = 1000 * 60 * 60 * 12;
+
+export const argon2Options = {
+	memoryCost: 19456,
+	timeCost: 2,
+	outputLen: 32,
+	parallelism: 1
+};
 
 export const sessionCookieName = 'auth-session';
 export const secretSessionCookieName = 'secret-session';
@@ -82,9 +93,10 @@ export function deleteSessionTokenCookie(event: RequestEvent) {
 }
 
 export function setSecretSessionCookie(event: RequestEvent, token: string) {
+	// session cookie, the token itself expires after SECRET_UNLOCK_MS
 	event.cookies.set(secretSessionCookieName, token, {
 		path: '/',
-		maxAge: undefined
+		sameSite: 'strict'
 	});
 }
 
@@ -94,8 +106,17 @@ export function deleteSecretSessionCookie(event: RequestEvent) {
 	});
 }
 
+function secretSignature(userId: string, pinHash: string, expiresAt: number) {
+	return encodeHexLowerCase(sha256(new TextEncoder().encode(`${userId}:${pinHash}:${expiresAt}`)));
+}
+
+/**
+ * Token proving the PIN was entered. It is bound to the current PIN hash (changing the PIN
+ * invalidates it) and expires after SECRET_UNLOCK_MS.
+ */
 export function createSecretSessionToken(userId: string, pinHash: string) {
-	return encodeHexLowerCase(sha256(new TextEncoder().encode(userId + ':' + pinHash)));
+	const expiresAt = Date.now() + SECRET_UNLOCK_MS;
+	return `${expiresAt}.${secretSignature(userId, pinHash, expiresAt)}`;
 }
 
 export function validateSecretSessionToken(
@@ -104,28 +125,62 @@ export function validateSecretSessionToken(
 	pinHash: string | null
 ): boolean {
 	if (!pinHash) return false;
-	const expected = createSecretSessionToken(userId, pinHash);
-	return token === expected;
+
+	const [expiresAtRaw, signature] = token.split('.');
+	const expiresAt = Number(expiresAtRaw);
+	if (!signature || !Number.isSafeInteger(expiresAt) || Date.now() >= expiresAt) {
+		return false;
+	}
+
+	const expected = Buffer.from(secretSignature(userId, pinHash, expiresAt));
+	const actual = Buffer.from(signature);
+	return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+
+/**
+ * Verify a secret PIN with brute force protection. Returns an error message, or null when the
+ * PIN is correct.
+ */
+export async function verifySecretPin(
+	userId: string,
+	pinHash: string,
+	pin: string
+): Promise<string | null> {
+	const retryAfter = pinLimiter.retryAfter(userId);
+	if (retryAfter > 0) {
+		return `Too many wrong PINs. Try again in ${Math.ceil(retryAfter / 60)} minutes.`;
+	}
+
+	const valid = await verify(pinHash, pin, argon2Options);
+	if (!valid) {
+		pinLimiter.fail(userId);
+		return 'Incorrect PIN';
+	}
+
+	pinLimiter.reset(userId);
+	return null;
 }
 
 export async function isSecretUnlocked(event: RequestEvent, userId: string): Promise<boolean> {
 	const secretToken = event.cookies.get(secretSessionCookieName);
 	if (!secretToken || !userId) return false;
 
-	const { db } = await import('$lib/server/db');
-	const { usersTable } = await import('$lib/server/db/schema');
-	const { eq } = await import('drizzle-orm');
 	const [userRecord] = await db
-		.select({ secretPinHash: usersTable.secretPinHash })
-		.from(usersTable)
-		.where(eq(usersTable.id, userId))
+		.select({ secretPinHash: table.usersTable.secretPinHash })
+		.from(table.usersTable)
+		.where(eq(table.usersTable.id, userId))
 		.limit(1);
 
 	return validateSecretSessionToken(secretToken, userId, userRecord?.secretPinHash ?? null);
 }
 
 export async function validateAuthHeader(event: RequestEvent) {
-	const token = event.request.headers.get('Authorization')?.split(' ')[1];
+	const [scheme, token] = event.request.headers.get('Authorization')?.split(' ') ?? [];
+	if (scheme !== 'Bearer') {
+		error(401, {
+			message: 'Unauthorized'
+		});
+	}
 	if (!token) {
 		error(401, {
 			message: 'Unauthorized'
@@ -143,10 +198,10 @@ export async function validateAuthHeader(event: RequestEvent) {
 	return result;
 }
 
+// Bearer token auth only: no credentials, so a wildcard origin is safe
 export const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
-	'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
-	'Access-Control-Allow-Credentials': 'true',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, DELETE',
 	'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 

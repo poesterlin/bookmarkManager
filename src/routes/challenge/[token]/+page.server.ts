@@ -1,20 +1,11 @@
 import { db } from '$lib/server/db';
 import { challengeTokenTable } from '$lib/server/db/schema';
 import { validateAuth } from '$lib/server/util';
-import { error, json, redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { error, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
 import { and, eq, gt, isNull } from 'drizzle-orm';
 
-// claim a challenge token
-export const load: PageServerLoad = async (event) => {
-	const locals = validateAuth(event);
-	const userId = locals.user.id;
-
-	const token = event.params.token;
-	if (!token) {
-		return error(400, { message: 'No token provided' });
-	}
-
+async function findOpenChallenge(token: string) {
 	const [challenge] = await db
 		.select()
 		.from(challengeTokenTable)
@@ -28,14 +19,43 @@ export const load: PageServerLoad = async (event) => {
 		)
 		.limit(1);
 
+	return challenge;
+}
+
+// Show a confirmation page. Claiming must be an explicit POST: otherwise anyone could create a
+// challenge, send the link to a logged-in user and redeem it for that user's session.
+export const load: PageServerLoad = async (event) => {
+	const locals = validateAuth(event);
+
+	const challenge = await findOpenChallenge(event.params.token);
 	if (!challenge) {
-		return json({ error: 'Invalid token' }, { status: 400 });
+		error(400, 'Invalid or expired token');
 	}
 
-	await db
-		.update(challengeTokenTable)
-		.set({ userId })
-		.where(eq(challengeTokenTable.id, challenge.id));
+	return { user: locals.user, expiresAt: challenge.expiresAt };
+};
 
-	redirect(302, '/');
+export const actions: Actions = {
+	// claim a challenge token
+	default: async (event) => {
+		const locals = validateAuth(event);
+
+		const [claimed] = await db
+			.update(challengeTokenTable)
+			.set({ userId: locals.user.id })
+			.where(
+				and(
+					eq(challengeTokenTable.id, event.params.token),
+					isNull(challengeTokenTable.userId),
+					gt(challengeTokenTable.expiresAt, new Date())
+				)
+			)
+			.returning({ id: challengeTokenTable.id });
+
+		if (!claimed) {
+			error(400, 'Invalid or expired token');
+		}
+
+		redirect(302, '/');
+	}
 };

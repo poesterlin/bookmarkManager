@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import type { Bookmark } from '$lib/server/db/schema';
 	import {
 		IconCheck,
 		IconChevronDown,
@@ -12,14 +11,13 @@
 		IconUserCircle,
 		IconX
 	} from '@tabler/icons-svelte';
+	import { untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { app } from '../stores/app.svelte';
 	import { searchStore } from '../stores/search.svelte';
 	import { addQueryParam } from '../util';
 
-	let searchQuery = $state('');
-	let isSearching = $state(false);
-	let abortController: AbortController | null = null;
+	let searchInput: HTMLInputElement;
 
 	let { isScrolled, toggleSidebar } = $props();
 
@@ -38,43 +36,50 @@
 	);
 
 	$effect(() => {
-		if (searchQuery) sortOpen = false;
+		if (searchStore.query) sortOpen = false;
 	});
 
+	// refresh the results when the page data changes, e.g. after editing a bookmark
+	let lastData = page.data;
 	$effect(() => {
-		if (abortController) {
-			abortController.abort();
+		if (page.data !== lastData) {
+			lastData = page.data;
+			untrack(() => searchStore.refresh());
 		}
+	});
 
-		if (!searchQuery || searchQuery.trim() === '' || searchQuery.length < 2) {
-			searchStore.clear();
+	function handleGlobalKeydown(e: KeyboardEvent) {
+		if (sortOpen && e.key === 'Escape') {
+			sortOpen = false;
 			return;
 		}
 
-		abortController = new AbortController();
-		const signal = abortController.signal;
+		const target = e.target as HTMLElement | null;
+		const isTyping =
+			target?.isContentEditable ||
+			target instanceof HTMLInputElement ||
+			target instanceof HTMLTextAreaElement ||
+			target instanceof HTMLSelectElement;
 
-		const search = async () => {
-			try {
-				isSearching = true;
-				const response = await fetch(`/search?query=${searchQuery}`, { signal });
-				if (!response.ok) {
-					throw new Error('Network response was not ok');
-				}
-				const data = (await response.json()) as Bookmark[];
-				searchStore.results = data;
-				console.log('Search results:', data);
-			} catch (error: any) {
-				if (error.name !== 'AbortError') {
-					console.error('Fetch error:', error);
-				}
-			} finally {
-				isSearching = false;
+		// "/" or Ctrl/Cmd+K focuses the search
+		if ((e.key === '/' && !isTyping) || (e.key === 'k' && (e.ctrlKey || e.metaKey))) {
+			e.preventDefault();
+			searchInput?.focus();
+			searchInput?.select();
+		}
+	}
+
+	function handleSearchKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') {
+			if (searchStore.query) {
+				searchStore.clear();
+			} else {
+				searchInput.blur();
 			}
-		};
-
-		search();
-	});
+		} else if (e.key === 'Enter') {
+			searchStore.run(true);
+		}
+	}
 
 	function toggleDarkMode() {
 		const darkModeEnabled =
@@ -87,11 +92,7 @@
 	}
 </script>
 
-<svelte:window
-	onkeydown={(e) => {
-		if (sortOpen && e.key === 'Escape') sortOpen = false;
-	}}
-/>
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 {#snippet logo()}
 	<span class="text-primary-500 mr-1 hidden text-2xl font-bold md:block">Bookmark</span>
@@ -123,7 +124,7 @@
 	<div
 		class="input focus-within:!border-primary-500 relative mx-auto flex w-[70%] max-w-lg min-w-0 flex-1 items-center !p-0 focus-within:!ring-0"
 	>
-		{#if isSearching}
+		{#if searchStore.loading}
 			<div
 				in:fade={{ duration: 200 }}
 				out:fade={{ duration: 200, delay: 500 }}
@@ -142,18 +143,25 @@
 			</div>
 		{/if}
 		<input
-			type="text"
-			placeholder="Search bookmarks..."
-			class="ml-10 min-w-0 flex-1 border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400"
-			bind:value={searchQuery}
+			type="search"
+			placeholder="Search bookmarks... ( / )"
+			aria-label="Search bookmarks"
+			autocomplete="off"
+			spellcheck="false"
+			class="ml-10 min-w-0 flex-1 border-none bg-transparent p-2 focus:outline-none dark:placeholder:text-gray-400 [&::-webkit-search-cancel-button]:hidden"
+			bind:this={searchInput}
+			bind:value={searchStore.query}
+			oninput={() => searchStore.run()}
+			onkeydown={handleSearchKeydown}
 		/>
-		{#if searchQuery}
+		{#if searchStore.query}
 			<button
 				type="button"
+				aria-label="Clear search"
 				class="shrink-0 px-2 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
 				onclick={() => {
-					searchQuery = '';
 					searchStore.clear();
+					searchInput.focus();
 				}}
 			>
 				<IconX size={18} stroke-width={1.5} />

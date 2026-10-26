@@ -65,6 +65,7 @@
 		if (idx !== -1) {
 			Object.assign(data.bookmarks[idx], changes);
 		}
+		searchStore.patch(id, changes);
 	}
 </script>
 

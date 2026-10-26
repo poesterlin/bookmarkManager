@@ -3,10 +3,9 @@ import { validateAuthHeader, corsHeaders, getCorsResponse } from '$lib/server/au
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 import { JSDOM } from 'jsdom';
-import { error, json } from '@sveltejs/kit';
-import { lookup } from 'dns/promises';
-import ipaddr from 'ipaddr.js';
-import { assertInstanceOf } from '$lib/client/util';
+import { error, isHttpError, json } from '@sveltejs/kit';
+import { cleanMetadata } from '$lib/server/metadata';
+import { safeFetch, UnsafeUrlError } from '$lib/server/safe-fetch';
 
 const schema = z.object({
 	url: z.string().url().trim()
@@ -35,16 +34,24 @@ export const POST: RequestHandler = async (event) => {
 	const { url } = parsed.data;
 	const sanitizedUrl = sanitizeUrl(url);
 
-	const error = await checkDNS(sanitizedUrl);
-	if (error) {
-		return error;
+	let text: string;
+	try {
+		text = await fetchWithSizeLimit(sanitizedUrl.toString());
+	} catch (e) {
+		if (e instanceof UnsafeUrlError) {
+			return json(
+				{ error: { code: 'INVALID_URL', message: e.message, fields: { url: e.message } } },
+				{ status: 400, headers: corsHeaders }
+			);
+		}
+		throw e;
 	}
+	const { siteName, ...data } = parseHTML(text);
+	// drop the site name and parts the title and description repeat from each other
+	Object.assign(data, cleanMetadata(sanitizedUrl.toString(), data, siteName));
 
-	const text = await fetchWithSizeLimit(sanitizedUrl.toString());
-	const data = await parseHTML(text);
-
-	if (data.favicon) {
-		const fullFaviconUrl = new URL(data.favicon, url);
+	if (data.favicon && URL.canParse(data.favicon, sanitizedUrl)) {
+		const fullFaviconUrl = new URL(data.favicon, sanitizedUrl);
 		data.faviconData = await fetchFaviconBase64(fullFaviconUrl);
 	}
 
@@ -54,7 +61,7 @@ export const POST: RequestHandler = async (event) => {
 export const OPTIONS: RequestHandler = getCorsResponse;
 
 /**
- * Sanitize the URL to ensure it is a valid HTTPS URL and strip query strings and fragments.
+ * Sanitize the URL to ensure it is a valid HTTPS URL and strip tracking parameters and fragments.
  * @param url
  * @returns sanitized URL
  */
@@ -85,9 +92,16 @@ function sanitizeUrl(url: string) {
 		error(400, 'Invalid URL');
 	}
 
-	// strip the query string and fragment from the URL
-	return new URL(`${protocol}//${parsedUrl.hostname}${parsedUrl.pathname}`);
+	// Keep the query (e.g. YouTube's ?v=), only drop tracking parameters, credentials and the
+	// fragment.
+	const sanitized = new URL(`${protocol}//${parsedUrl.hostname}${parsedUrl.pathname}`);
+	for (const [key, value] of parsedUrl.searchParams) {
+		if (!TRACKING_PARAM.test(key)) sanitized.searchParams.append(key, value);
+	}
+	return sanitized;
 }
+
+const TRACKING_PARAM = /^(utm_\w+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref_src)$/i;
 
 /**
  * Fetch the favicon from the given URL and convert it to a base64 string.
@@ -111,14 +125,11 @@ async function fetchFaviconBase64(
 	const urlString = fullFaviconUrl.toString();
 
 	try {
-		response = await fetch(urlString, {
-			signal: AbortSignal.timeout(1000), // Use the same timeout
+		response = await safeFetch(urlString, {
+			signal: AbortSignal.timeout(2000),
 			headers: {
-				Accept: 'image/*', // Accept various image types
-				// Add User-Agent here too
-				'User-Agent': 'MyBookmarkFetcher/1.0 (+http://your-website.com/about)'
-			},
-			redirect: 'follow'
+				Accept: 'image/*'
+			}
 		});
 
 		if (!response.ok) {
@@ -137,7 +148,9 @@ async function fetchFaviconBase64(
 			throw new Error('Response body stream is null'); // Treat this as unexpected
 		}
 	} catch (e: unknown) {
-		assertInstanceOf(e, Error);
+		if (!(e instanceof Error)) {
+			return undefined;
+		}
 		if (e.name === 'TimeoutError' || e.name === 'AbortError') {
 			console.warn(`Favicon fetch timed out for ${urlString}`);
 		} else {
@@ -182,7 +195,11 @@ async function fetchFaviconBase64(
 		// Combine chunks into a single Buffer
 		const imageBuffer = Buffer.concat(chunks);
 		const base64 = imageBuffer.toString('base64');
-		const fileType = response.headers.get('Content-Type') ?? 'image/png'; // Default if header missing
+		// only keep the media type, drop parameters like charset
+		const fileType = (response.headers.get('content-type') ?? 'image/png')
+			.split(';')[0]
+			.trim()
+			.toLowerCase();
 		return `data:${fileType};base64,${base64}`;
 	} catch (e) {
 		console.error(`Error processing favicon data for ${urlString}:`, e);
@@ -195,62 +212,33 @@ async function fetchFaviconBase64(
  * @param html - The HTML string to parse.
  * @returns An object containing the extracted data.
  */
-async function parseHTML(html: string) {
-	// Create a JSDOM instance
+function parseHTML(html: string) {
+	// JSDOM does not execute scripts unless `runScripts` is set
 	const dom = new JSDOM(html);
-	dom.window.eval = () => {
-		throw new Error('Script execution disabled.');
+	const doc = dom.window.document;
+
+	const meta = (selector: string) => doc.querySelector(selector)?.getAttribute('content')?.trim();
+	// Open Graph tags are spec'd as property="og:…", but some sites use name="og:…"
+	const og = (key: string) => meta(`meta[property='og:${key}'], meta[name='og:${key}']`);
+
+	const title = doc.querySelector('title')?.textContent?.trim() || og('title') || null;
+	const description = meta("meta[name='description']") || og('description') || null;
+	// rel is a token list, e.g. "shortcut icon"
+	const favicon =
+		doc.querySelector("link[rel~='icon']")?.getAttribute('href') ??
+		doc.querySelector("link[rel='apple-touch-icon']")?.getAttribute('href') ??
+		'/favicon.ico';
+	const theme = meta("meta[name='theme-color']") ?? null;
+	const siteName = og('site_name') || meta("meta[name='application-name']") || null;
+
+	return {
+		title,
+		description,
+		favicon,
+		theme,
+		siteName,
+		faviconData: undefined as undefined | string
 	};
-	const doc = dom.window.document; // Access the document object
-
-	// Query the elements - almost identical to your original code
-	const title = doc.querySelector('title')?.textContent ?? null;
-	const description =
-		doc.querySelector("meta[name='description']")?.getAttribute('content') ?? null;
-	const favicon = doc.querySelector("link[rel='icon']")?.getAttribute('href') ?? null;
-	const theme = doc.querySelector("meta[name='theme-color']")?.getAttribute('content') ?? null;
-
-	return { title, description, favicon, theme, faviconData: undefined as undefined | string };
-}
-
-/**
- * Check if the DNS resolves to a valid external IP address.
- * @param url - The URL object to check.
- * @returns A response indicating whether the DNS check passed or failed.
- */
-async function checkDNS(url: URL) {
-	let ip;
-	try {
-		const lookupResult = await lookup(url.hostname, { family: 4 });
-		ip = lookupResult.address;
-
-		if (!ip) {
-			throw new Error('DNS lookup failed to return an address');
-		}
-
-		const addr = ipaddr.parse(ip);
-
-		// Check if IP is allowed
-		const forbiddenRanges = [
-			'unspecified',
-			'broadcast',
-			'multicast',
-			'linkLocal',
-			'loopback',
-			'private',
-			'reserved'
-		];
-
-		if (forbiddenRanges.includes(addr.range())) {
-			console.error('Blocked SSRF attempt to internal IP:', ip);
-			return new Response('Invalid URL (points to internal resource)', {
-				status: 400
-			});
-		}
-	} catch (e) {
-		console.error('DNS lookup or IP check failed:', e);
-		return new Response('Failed to resolve URL host', { status: 400 });
-	}
 }
 
 /**
@@ -263,12 +251,11 @@ async function fetchWithSizeLimit(url: string, maxSizeBytes = 1 * 1024 * 1024) {
 	let response;
 	let responseBodyStream;
 	try {
-		response = await fetch(url, {
+		response = await safeFetch(url, {
 			signal: AbortSignal.timeout(5000),
 			headers: {
 				Accept: 'text/html'
-			},
-			redirect: 'follow'
+			}
 		});
 
 		if (!response.ok) {
@@ -277,15 +264,18 @@ async function fetchWithSizeLimit(url: string, maxSizeBytes = 1 * 1024 * 1024) {
 		}
 
 		const contentType = response.headers.get('content-type');
-		if (!contentType || !contentType.includes('text/html')) {
+		if (!contentType || !/text\/html|application\/xhtml\+xml/i.test(contentType)) {
 			console.warn(`Unexpected Content-Type for ${url}: ${contentType}`);
 			error(400, 'Invalid Content-Type');
 		}
 
 		responseBodyStream = response.body;
 	} catch (e: unknown) {
-		assertInstanceOf(e, Error);
-		if (e.name === 'AbortError') {
+		// let SvelteKit errors and SSRF rejections through unchanged
+		if (isHttpError(e) || e instanceof UnsafeUrlError) {
+			throw e;
+		}
+		if (e instanceof Error && (e.name === 'TimeoutError' || e.name === 'AbortError')) {
 			console.error(`Fetch timed out for ${url}`);
 			error(408, 'Fetch timeout');
 		}
@@ -308,7 +298,7 @@ async function fetchWithSizeLimit(url: string, maxSizeBytes = 1 * 1024 * 1024) {
 
 			bytesRead += value.byteLength;
 			if (bytesRead > maxSizeBytes) {
-				reader.cancel(); // Stop reading
+				await reader.cancel(); // Stop reading
 				console.error(`Response body limit exceeded for ${url}`);
 				// Don't return error to user, just process the partial HTML
 				html += decoder.decode(value.slice(0, maxSizeBytes - (bytesRead - value.byteLength)), {
